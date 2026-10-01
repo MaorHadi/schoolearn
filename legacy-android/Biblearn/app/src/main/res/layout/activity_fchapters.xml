@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/whiteb"
+    tools:context=".Fchapters">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="272dp"
+        android:layout_weight="0.8">
+
+        <Button
+            android:id="@+id/go_Back"
+            android:layout_width="71dp"
+            android:layout_height="51dp"
+            android:background="@drawable/backb"
+            android:textColor="@color/COLOR2"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.047"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.252" />
+
+        <TextView
+            android:id="@+id/textView3"
+            android:layout_width="199dp"
+            android:layout_height="43dp"
+            android:gravity="center"
+            android:text="פרקים מלאים"
+            android:textColor="@color/Background_mainA"
+            android:textSize="22dp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.71" />
+
+        <TextView
+            android:id="@+id/textView7"
+            android:layout_width="305dp"
+            android:layout_height="25dp"
+            android:gravity="center"
+            android:textColor="@color/Background_mainA"
+            android:textSize="18dp"
+            android:text="פתיחת הפרקים באתר מאגר ספרות הקודש"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.952" />
+
+        <Button
+            android:id="@+id/logoB"
+            android:layout_width="238dp"
+            android:layout_height="63dp"
+            android:text=""
+            android:background="?android:attr/selectableItemBackground"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.502"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.183" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="0.99">
+
+        <LinearLayout
+            android:layout_weight="0.50"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/ch_1_fc"
+                android:layout_width="200dp"
+                android:layout_gravity="center"
+                android:layout_marginBottom="15dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/round_btn"
+                android:textColor="@color/white"
+                android:text="@string/chapter1" />
+
+            <Button
+                android:id="@+id/ch_2_fc"
+                android:layout_width="200dp"
+                android:layout_gravity="center"
+                android:layout_marginBottom="15dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/round_btn"
+                android:textColor="@color/white"
+                android:text="@string/chapter2" />
+
+            <Button
+                android:id="@+id/ch_3_fc"
+                android:layout_width="200dp"
+                android:layout_gravity="center"
+                android:layout_marginBottom="15dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/round_btn"
+                android:textColor="@color/white"
+                android:text="@string/chapter3" />
+
+            <Button
+                android:id="@+id/ch_4_fc"
+                android:layout_width="200dp"
+                android:layout_gravity="center"
+                android:layout_marginBottom="15dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/round_btn"
+                android:textColor="@color/white"
+                android:text="@string/chapter4" />
+
+            <Button
+                android:id="@+id/ch_5_fc"
+                android:layout_width="200dp"
+                android:layout_gravity="center"
+                android:layout_marginBottom="15dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/round_btn"
+                android:textColor="@color/white"
+                android:text="@string/chapter5" />
+
+            <Button
+                android:id="@+id/ch_6_fc"
+                android:layout_width="200dp"
+                android:layout_gravity="center"
+                android:layout_marginBottom="15dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/round_btn"
+                android:textColor="@color/white"
+                android:text="@string/chapter6" />
+
+            <Button
+                android:id="@+id/ch_7_fc"
+                android:layout_width="200dp"
+                android:layout_gravity="center"
+                android:layout_marginBottom="15dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/round_btn"
+                android:textColor="@color/white"
+                android:text="@string/chapter7" />
+
+            <Button
+                android:id="@+id/ch_8_fc"
+                android:layout_width="200dp"
+                android:layout_gravity="center"
+                android:layout_marginBottom="15dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/round_btn"
+                android:textColor="@color/white"
+                android:text="@string/chapter8" />
+
+            <Button
+                android:id="@+id/ch_9_fc"
+                android:layout_width="200dp"
+                android:layout_gravity="center"
+                android:layout_marginBottom="15dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/round_btn"
+                android:textColor="@color/white"
+                android:text="@string/chapter9" />
+
+            <Button
+                android:id="@+id/ch_10_fc"
+                android:layout_width="200dp"
+                android:layout_gravity="center"
+                android:layout_marginBottom="15dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/round_btn"
+                android:textColor="@color/white"
+                android:text="@string/chapter10" />
+
+            <Button
+                android:id="@+id/ch_11_fc"
+                android:layout_width="200dp"
+                android:layout_gravity="center"
+                android:layout_marginBottom="15dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/round_btn"
+                android:textColor="@color/white"
+                android:text="@string/chapter11" />
+
+            <Button
+                android:id="@+id/ch_12_fc"
+                android:layout_width="200dp"
+                android:layout_gravity="center"
+                android:layout_marginBottom="15dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/round_btn"
+                android:textColor="@color/white"
+                android:text="@string/chapter12" />
+
+            <Button
+                android:id="@+id/ch_13_fc"
+                android:layout_width="200dp"
+                android:layout_gravity="center"
+                android:layout_marginBottom="15dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/round_btn"
+                android:textColor="@color/white"
+                android:text="@string/chapter13" />
+        </LinearLayout>
+    </ScrollView>
+
+
+</LinearLayout>

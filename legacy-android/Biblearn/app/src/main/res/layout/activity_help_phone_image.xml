@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/greenb"
+    tools:context=".HelpPhoneImage">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="112dp"
+        android:layout_weight="0.">
+
+        <Button
+            android:id="@+id/go_Back"
+            android:layout_width="71dp"
+            android:layout_height="51dp"
+            android:background="@drawable/backgb"
+            android:textColor="@color/COLOR2"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.014"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.262"
+            tools:ignore="SpeakableTextPresentCheck" />
+
+        <Button
+            android:id="@+id/logoB"
+            android:layout_width="216dp"
+            android:layout_height="66dp"
+            android:text=""
+            android:background="?android:attr/selectableItemBackground"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.347" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <ScrollView
+        android:layout_width="409dp"
+        android:layout_height="338dp"
+        android:layout_weight="0.9"
+        tools:layout_editor_absoluteX="1dp"
+        tools:layout_editor_absoluteY="392dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+
+            <Button
+                android:id="@+id/BH1"
+                android:layout_width="250dp"
+                android:layout_height="wrap_content"
+                android:textColor="@color/lineC"
+                android:layout_gravity="center"
+                android:background="?android:attr/selectableItemBackground"
+                android:text="ניהול איש קשר (עזרה)"
+                tools:ignore="TextContrastCheck" />
+
+            <TextView
+                android:id="@+id/ConT1"
+                android:layout_width="250dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_margin="5dp"
+                android:textColor="@color/bitWBC"
+                android:text="@string/trying"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/textView8"
+                android:layout_width="300dp"
+                android:layout_height="10dp"
+                android:layout_gravity="center"
+                android:background="@color/testR"
+                android:text="" />
+
+            <Button
+                android:id="@+id/BH2"
+                android:layout_width="250dp"
+                android:layout_height="wrap_content"
+                android:textColor="@color/lineC"
+                android:layout_gravity="center"
+                android:background="?android:attr/selectableItemBackground"
+                android:text="שמיעת המספר באנגלית (עזרה)" />
+
+            <TextView
+                android:id="@+id/ConT2"
+                android:layout_width="250dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_margin="5dp"
+                android:textColor="@color/bitWBC"
+                android:text="@string/trying1"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/textView9"
+                android:layout_width="300dp"
+                android:layout_height="10dp"
+                android:layout_gravity="center"
+                android:background="@color/testR"
+                android:text="" />
+        </LinearLayout>
+    </ScrollView>
+
+
+</LinearLayout>

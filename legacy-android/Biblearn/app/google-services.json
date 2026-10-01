@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "720742169024",
+    "project_id": "biblearn-681e8",
+    "storage_bucket": "biblearn-681e8.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:720742169024:android:8ad6539af82db868ff3025",
+        "android_client_info": {
+          "package_name": "com.example.biblearn"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "720742169024-t14bcnbhvi1mklrsthds3qm6528g619o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD1P_bq3j-l8hFQmEVUy4ChAhsvxj2oaNQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "720742169024-t14bcnbhvi1mklrsthds3qm6528g619o.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:720742169024:android:f34dde6d989465fbff3025",
+        "android_client_info": {
+          "package_name": "com.example.finalproject"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "720742169024-t14bcnbhvi1mklrsthds3qm6528g619o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD1P_bq3j-l8hFQmEVUy4ChAhsvxj2oaNQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "720742169024-t14bcnbhvi1mklrsthds3qm6528g619o.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

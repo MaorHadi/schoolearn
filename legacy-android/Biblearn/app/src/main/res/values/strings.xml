@@ -1,0 +1,49 @@
+<resources>
+    <string name="app_name">Biblearn</string>
+
+    <string name="SubBanner_string">אפליקצית לימוד בראשית</string>
+    <string name="trying">כאשר תלחץ/י על הכפתור – "ניהול איש קשר" אתם תיכנסו למקום שבו תתבקשו לכתוב את מספר הפלאפון שלכם. המספר הפלאפון יהיה משומש רק בשביל לשלוח את התוצאה של המבחן ל – "סמס" שלכם, אם תבחרו שלא להכניס את מספר הפלאפון שום דבר לא יקרה חוץ מזה שאחרי שתסיימו מבחן לא תוכלו לשלוח את התוצאה ל"סמס" שלכם או של אדם אחר שאתם יודעים את המספר שלו. אתם תמיד תוכלו להיכנס בעזרת הכפתור שוב פעם ולערוך את המספר בכל זמן שתרצו, תוכלו לשמוע את המספר שלכם באנגלית בעזרת לחיצת כפתור. אחרי שתסגרו את האפליקציה תצטרכו להכניס את המספר בפעם הבאה</string>
+    <string name="trying1">אם את\ה רוצה לשמוע את מספר הפלאפון שלך באנגלית את\ה תצטרך ללחוץ על הכפתור - "ניהול איש קשר", להכניס את המספר שלכם, ללחוץ על הכפתור – שמירה ויציאה ורק אז ללחוץ שוב על הכפתור - "ניהול איש קשר" שנמצא במסך הבית, וללחוץ על הכפתור – "שמע מספר באנגלית". אם את\ה לא תלחץ על הכפתור של השמירה לא תוכל לשמוע את המספר, את\ה לא תשמע כלום כשאין מספר נוכחי.</string>
+    <string name="MS1">סיכומי פרקים</string>
+    <string name="MS2">תרגול</string>
+    <string name="MS3">מספר טלפון למשלוח תוצאות תרגול</string>
+    <string name="MS4">מבחן עם כתיבה</string>
+    <string name="MS5">קישורים לפרקים</string>
+
+    <string name="chapter1">פרק יב</string>
+    <string name="chapter2"> פרק יג</string>
+    <string name="chapter3"> פרק טו</string>
+    <string name="chapter4"> פרק טז</string>
+    <string name="chapter5"> פרק יח</string>
+    <string name="chapter6"> פרק כא</string>
+    <string name="chapter7"> פרק כב</string>
+    <string name="chapter8"> פרק כג</string>
+    <string name="chapter9"> פרק כד</string>
+    <string name="chapter10"> פרק כה</string>
+    <string name="chapter11"> פרק כז</string>
+    <string name="chapter12">פרק כח</string>
+    <string name="chapter13">פרק כט</string>
+
+    <string name="credit">האתר שהכפתורים שולחים אותך אליו הוא לא נוצר על ידי, כל הקרדיט והזכויות שמורות למאגר ספרות הקודש</string>
+    <string name="selfcredit">האתר נוצר עי מאור חדי תלמיד תיכון אורט אורנית</string>
+
+
+    <string name="go_Back">אחורה</string>
+    <string name="title_activity_ch1_f">Ch_1F</string>
+    <string name="login">Login</string>
+    <string name="RegisterUser">Register User</string>
+    <string name="register">להירשם</string>
+    <string name="forgotPass">שכחת סיסמה?</string>
+    <string name="go_Forward">הבא</string>
+
+
+    <string name="send_Result">שליחת תוצאה</string>
+    <string name="home_Bringer">לחזור</string>
+    <string name="again">עוד פעם</string>
+    <string name="RF">צדקת?</string>
+    <string name="F">טעית</string>
+    <string name="R">צדקת</string>
+
+    <string name="P_E">האפליקציה תשתמש במספר רק אם תרצה לשלוח ב - sms למספר הזה את תוצאות המבחן שלך בסוף המבחן</string>
+    <string name="passwor">אפליקציית לימוד תנ"ך ספר בראשית</string>
+</resources>
