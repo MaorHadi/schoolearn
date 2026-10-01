@@ -285,6 +285,7 @@ model LessonProgress {         // denormalized for fast unlock checks
 ```
 
 Notes:
+
 - Enrollment stays an implicit m:n. If per-subject metadata is ever needed (e.g.
   "last visited lesson"), replace it with an explicit `Enrollment` model; the only
   code touching enrollment is `subjects.server.ts`, so the swap is contained.
@@ -335,9 +336,11 @@ export const ParagraphBlock = Base.extend({ type: z.literal("paragraph"), conten
 export const QuoteBlock = Base.extend({
   type: z.literal("quote"),
   text: z.string(),
-  reference: z.string().optional(),   // e.g. a chapter/verse, "Magna Carta s.39", "Frost, 1916"
+  reference: z.string().optional(), // e.g. a chapter/verse, "Magna Carta s.39", "Frost, 1916"
   sourceLabel: z.string().optional(), // e.g. "Verse", "Primary source", "Poem"
-  highlights: z.array(z.object({ start: z.number().int().min(0), end: z.number().int() })).default([]),
+  highlights: z
+    .array(z.object({ start: z.number().int().min(0), end: z.number().int() }))
+    .default([]),
 });
 export const ImageBlock = Base.extend({
   type: z.literal("image"),
@@ -345,10 +348,18 @@ export const ImageBlock = Base.extend({
   alt: z.string().min(1),
   caption: z.string().optional(),
 });
-export const ListBlock = Base.extend({ type: z.literal("list"), ordered: z.boolean(), items: z.array(RichText) });
+export const ListBlock = Base.extend({
+  type: z.literal("list"),
+  ordered: z.boolean(),
+  items: z.array(RichText),
+});
 
 export const ContentBlock = z.discriminatedUnion("type", [
-  HeadingBlock, ParagraphBlock, QuoteBlock, ImageBlock, ListBlock,
+  HeadingBlock,
+  ParagraphBlock,
+  QuoteBlock,
+  ImageBlock,
+  ListBlock,
 ]);
 export const LessonContent = z.array(ContentBlock);
 export type ContentBlock = z.infer<typeof ContentBlock>;
@@ -393,7 +404,7 @@ interface StorageProvider {
   put(key: string, data: Buffer, meta: { mimeType: string }): Promise<void>;
   get(key: string): Promise<{ stream: ReadableStream; mimeType: string } | null>;
   delete(key: string): Promise<void>;
-  publicUrl(key: string): string;   // local: /assets/<key>
+  publicUrl(key: string): string; // local: /assets/<key>
 }
 ```
 
@@ -411,7 +422,7 @@ bundled placeholder PNG copied into the storage dir.
   password (min 8). Duplicate username or email returns the same generic
   "registration failed" message.
 - **Session**: on login, insert `Session { expirationDate = now + SESSION_EXPIRY_HOURS,
-  ip, sessionData: {} }`. Cookie `__session`: httpOnly, `secure` when
+ip, sessionData: {} }`. Cookie `__session`: httpOnly, `secure` when
   `NODE_ENV=production`, `sameSite=lax`, path `/`, signed with `SESSION_SECRET`
   via React Router's `createCookie`. Sliding expiry: when `lastActivity` is older
   than `SESSION_TOUCH_INTERVAL_MINUTES` (default 5), update `lastActivity` and push
@@ -434,17 +445,17 @@ bundled placeholder PNG copied into the storage dir.
 
 Config (`config/security.server.ts`), env-backed with zod defaults:
 
-| Env var | Default | Meaning |
-|---|---|---|
-| `AUTH_FAILURE_WINDOW_MINUTES` | 15 | Window for counting failures |
-| `AUTH_USERNAME_MAX_FAILURES` | 5 | Failures per username before lockout |
-| `AUTH_USERNAME_LOCKOUT_MINUTES` | 15 | Lockout length |
-| `AUTH_IP_MAX_FAILURES` | 20 | Failures per IP before IpBlock (validated to be > username max) |
-| `SESSION_EXPIRY_HOURS` | 720 | Sliding session life |
-| `SESSION_TOUCH_INTERVAL_MINUTES` | 5 | Min gap between lastActivity writes |
-| `DEFAULT_LESSON_PASSING_SCORE` | 60 | Percent |
-| `TRUSTED_PROXY_COUNT` | 0 | Hops to trust in X-Forwarded-For |
-| `AUTH_LOG_RETENTION_DAYS` | 30 | Cleanup threshold |
+| Env var                          | Default | Meaning                                                         |
+| -------------------------------- | ------- | --------------------------------------------------------------- |
+| `AUTH_FAILURE_WINDOW_MINUTES`    | 15      | Window for counting failures                                    |
+| `AUTH_USERNAME_MAX_FAILURES`     | 5       | Failures per username before lockout                            |
+| `AUTH_USERNAME_LOCKOUT_MINUTES`  | 15      | Lockout length                                                  |
+| `AUTH_IP_MAX_FAILURES`           | 20      | Failures per IP before IpBlock (validated to be > username max) |
+| `SESSION_EXPIRY_HOURS`           | 720     | Sliding session life                                            |
+| `SESSION_TOUCH_INTERVAL_MINUTES` | 5       | Min gap between lastActivity writes                             |
+| `DEFAULT_LESSON_PASSING_SCORE`   | 60      | Percent                                                         |
+| `TRUSTED_PROXY_COUNT`            | 0       | Hops to trust in X-Forwarded-For                                |
+| `AUTH_LOG_RETENTION_DAYS`        | 30      | Cleanup threshold                                               |
 
 In code, not env: `IP_BLOCK_ESCALATION_MINUTES = [15, 60, 360, 1440]` and
 `IP_BLOCK_ESCALATION_LOOKBACK_DAYS = 7`.
@@ -497,9 +508,9 @@ both work.
    - 2 אברהם: ברית ונסיון: פרק יח, כא, כב, כג
    - 3 יצחק ויעקב: פרק כד, כה, כז
    - 4 יעקב בחרן: פרק כח, כט
-   Each lesson has placeholder content containing a heading, a paragraph with
-   bold/italic/highlight spans, a quote block (reference, highlight range,
-   sourceLabel), the image asset with alt text, and a list. No questions.
+     Each lesson has placeholder content containing a heading, a paragraph with
+     bold/italic/highlight spans, a quote block (reference, highlight range,
+     sourceLabel), the image asset with alt text, and a list. No questions.
 4. **Subject 2, slug `sample-ltr`** (locale `en`, direction `ltr`), deliberately a
    different shape: two sections with 3 and 2 lessons. Placeholders include a quote
    with an English `sourceLabel` and one paragraph with `dir: "rtl"` to exercise the

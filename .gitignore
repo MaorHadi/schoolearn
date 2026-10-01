@@ -1,0 +1,8 @@
+node_modules
+build
+.react-router
+.env
+storage/
+prisma/generated
+coverage
+.superpowers

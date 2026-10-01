@@ -1,0 +1,8 @@
+build
+.react-router
+prisma/generated
+prisma/migrations
+legacy-android
+storage
+package-lock.json
+.superpowers

@@ -1,0 +1,225 @@
+// Database URL lives in prisma.config.ts (Prisma 7), not here.
+
+generator client {
+  provider = "prisma-client"
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  USER
+  ADMIN
+  SYSTEM_ADMIN
+}
+
+enum AuthLogType {
+  login
+  twoFactorAuthentication // reserved; 2FA not implemented (TODO(2fa))
+}
+
+enum TextDirection {
+  rtl
+  ltr
+}
+
+enum MaterialKind {
+  FILE
+  LINK
+  TEXT
+}
+
+// ---------------------------------------------------------------------------
+// Users, sessions, security
+// ---------------------------------------------------------------------------
+
+model User {
+  id           Int              @id @default(autoincrement())
+  username     String           @unique
+  email        String?          @unique
+  passwordHash String
+  role         Role             @default(USER)
+  isDisabled   Boolean          @default(false)
+  timezone     String           @default("Asia/Jerusalem") // for future streak calculation (TODO(streaks))
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  subjects     Subject[] // implicit m:n = enrollment
+  sessions     Session[]
+  attempts     LessonAttempt[]
+  progress     LessonProgress[]
+  assets       Asset[]
+}
+
+model Session {
+  id             String    @id @default(cuid(2))
+  expirationDate DateTime
+  createdAt      DateTime  @default(now())
+  lastActivity   DateTime?
+  ip             String?
+  sessionData    Json
+  user           User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         Int?
+
+  @@index([userId])
+  @@index([expirationDate])
+}
+
+model AuthLog {
+  id            Int         @id @default(autoincrement())
+  ipAddress     String
+  username      String
+  createdAt     DateTime    @default(now())
+  isSuccessful  Boolean
+  failureReason String?
+  type          AuthLogType
+
+  @@index([ipAddress, createdAt])
+  @@index([username, createdAt])
+}
+
+/// One row per IP. Repeat offenders are updated in place (strikeCount++, new expiresAt).
+model IpBlock {
+  id          Int      @id @default(autoincrement())
+  ipAddress   String   @unique
+  reason      String?
+  strikeCount Int      @default(1)
+  createdAt   DateTime @default(now()) // first block
+  updatedAt   DateTime @updatedAt // most recent block; drives escalation lookback and cleanup
+  expiresAt   DateTime
+
+  @@index([expiresAt])
+}
+
+// ---------------------------------------------------------------------------
+// Content hierarchy: Subject -> Section -> Lesson -> Question
+// ---------------------------------------------------------------------------
+
+model Subject {
+  id          Int           @id @default(autoincrement())
+  slug        String        @unique
+  name        String
+  description String?       @db.Text
+  locale      String // BCP-47, e.g. "he", "en"
+  direction   TextDirection // content direction; UI shell stays RTL
+  isActive    Boolean       @default(true)
+  sortOrder   Int           @default(0)
+  sections    Section[]
+  users       User[]
+}
+
+/// A difficulty bracket. sortOrder 1 is easiest and defines unlock order.
+model Section {
+  id        Int      @id @default(autoincrement())
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  subjectId Int
+  title     String
+  sortOrder Int
+  lessons   Lesson[]
+
+  @@unique([subjectId, sortOrder])
+}
+
+/// Content (JSON block array) followed by questions. Completed by reaching passingScore.
+model Lesson {
+  id           Int              @id @default(autoincrement())
+  section      Section          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  sectionId    Int
+  title        String
+  sortOrder    Int
+  passingScore Int? // percent 0-100; null -> env DEFAULT_LESSON_PASSING_SCORE
+  content      Json // ContentBlock[] validated by zod (app/lib/content/blocks.ts)
+  questions    Question[]
+  materials    Material[]
+  attempts     LessonAttempt[]
+  progress     LessonProgress[]
+
+  @@unique([sectionId, sortOrder])
+}
+
+/// Schema only in the foundation phase; no UI and no seed data yet (TODO(quiz)).
+model Question {
+  id        Int              @id @default(autoincrement())
+  lesson    Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId  Int
+  prompt    String           @db.Text
+  sortOrder Int
+  options   QuestionOption[]
+
+  @@unique([lessonId, sortOrder])
+}
+
+model QuestionOption {
+  id         Int      @id @default(autoincrement())
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  questionId Int
+  text       String   @db.Text
+  isCorrect  Boolean
+  sortOrder  Int
+}
+
+/// Optional attachments on a lesson.
+model Material {
+  id        Int          @id @default(autoincrement())
+  lesson    Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId  Int
+  kind      MaterialKind
+  title     String
+  url       String?
+  body      String?      @db.Text
+  asset     Asset?       @relation(fields: [assetId], references: [id])
+  assetId   Int?
+  sortOrder Int          @default(0)
+}
+
+/// Uploaded file stored via StorageProvider (app/lib/storage).
+model Asset {
+  id           Int        @id @default(autoincrement())
+  storageKey   String     @unique // provider-relative key
+  mimeType     String
+  byteSize     Int
+  width        Int?
+  height       Int?
+  uploadedBy   User?      @relation(fields: [uploadedById], references: [id])
+  uploadedById Int?
+  createdAt    DateTime   @default(now())
+  materials    Material[]
+}
+
+// ---------------------------------------------------------------------------
+// Progress
+// ---------------------------------------------------------------------------
+
+/// One row per try. createdAt supports daily streak calculation later.
+model LessonAttempt {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId  Int
+  score     Int // percent
+  passed    Boolean
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, lessonId])
+}
+
+/// Denormalized best result per user+lesson for fast unlock checks.
+model LessonProgress {
+  id          Int       @id @default(autoincrement())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      Int
+  lesson      Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId    Int
+  bestScore   Int
+  completedAt DateTime? // set once on first pass; never cleared
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([userId, lessonId])
+}
