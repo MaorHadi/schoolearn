@@ -11,11 +11,14 @@ export default [
   // Guarded: any signed-in user
   layout("routes/app/layout.tsx", [route("subjects", "routes/app/subjects.tsx")]),
 
-  // Guarded: ADMIN and above
-  ...prefix("admin", [
-    layout("routes/admin/layout.tsx", [
-      index("routes/admin/index.tsx"),
-      route("users", "routes/admin/users.tsx"),
+  // Guarded: ADMIN and above (content management)
+  ...prefix("admin", [layout("routes/admin/layout.tsx", [index("routes/admin/index.tsx")])]),
+
+  // Guarded: SYSTEM_ADMIN only (users, system settings)
+  ...prefix("system-admin", [
+    layout("routes/system-admin/layout.tsx", [
+      index("routes/system-admin/index.tsx"),
+      route("users", "routes/system-admin/users.tsx"),
     ]),
   ]),
 ] satisfies RouteConfig;

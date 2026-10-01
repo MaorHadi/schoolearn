@@ -23,7 +23,16 @@ describe("isPublicPath", () => {
   });
 
   it("denies everything else", () => {
-    for (const p of ["/", "/subjects", "/subjects.data", "/admin", "/loginx", "/login/extra"]) {
+    for (const p of [
+      "/",
+      "/subjects",
+      "/subjects.data",
+      "/admin",
+      "/system-admin",
+      "/system-admin/users",
+      "/loginx",
+      "/login/extra",
+    ]) {
       expect(isPublicPath(p), p).toBe(false);
     }
   });

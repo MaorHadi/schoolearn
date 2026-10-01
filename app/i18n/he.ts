@@ -31,8 +31,11 @@ export const he = {
   "lesson.back": "חזרה למקצוע",
   "admin.title": "ניהול תוכן",
   "admin.todo": "עורך התוכן ייבנה בשלב הבא.",
-  "admin.users.title": "ניהול משתמשים",
-  "admin.users.todo": "ניהול המשתמשים ייבנה בשלב הבא.",
+  "nav.systemAdmin": "ניהול מערכת",
+  "systemAdmin.title": "ניהול מערכת",
+  "systemAdmin.todo": "הגדרות המערכת ייבנו בשלב הבא.",
+  "systemAdmin.users.title": "ניהול משתמשים",
+  "systemAdmin.users.todo": "ניהול המשתמשים ייבנה בשלב הבא.",
 } as const;
 
 export type TranslationKey = keyof typeof he;

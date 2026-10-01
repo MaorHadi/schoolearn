@@ -99,7 +99,7 @@ app/
     app/subjects.$slug.lessons.$lessonId.tsx   # content + questions placeholder
     assets.$.tsx                 # resource route streaming stored assets
     admin/layout.tsx             # requireRole(ADMIN); stubs
-    admin/users.tsx              # requireRole(SYSTEM_ADMIN); stub
+    system-admin/layout.tsx, index.tsx, users.tsx   # requireRole(SYSTEM_ADMIN); stubs
 prisma/
   schema.prisma
   seed.ts

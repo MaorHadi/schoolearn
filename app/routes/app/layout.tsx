@@ -6,7 +6,11 @@ import { hasRole } from "~/lib/auth/roles";
 
 export function loader({ context }: Route.LoaderArgs) {
   const user = requireUser(context);
-  return { username: user.username, isAdmin: hasRole(user.role, "ADMIN") };
+  return {
+    username: user.username,
+    isAdmin: hasRole(user.role, "ADMIN"),
+    isSystemAdmin: hasRole(user.role, "SYSTEM_ADMIN"),
+  };
 }
 
 export default function AppLayout({ loaderData }: Route.ComponentProps) {
@@ -19,6 +23,7 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
         <nav>
           <Link to="/subjects">{t("nav.subjects")}</Link>
           {loaderData.isAdmin ? <Link to="/admin">{t("nav.admin")}</Link> : null}
+          {loaderData.isSystemAdmin ? <Link to="/system-admin">{t("nav.systemAdmin")}</Link> : null}
           <span>{loaderData.username}</span>
           <Form method="post" action="/logout">
             <button type="submit">{t("nav.logout")}</button>
