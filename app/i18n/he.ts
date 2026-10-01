@@ -30,12 +30,12 @@ export const he = {
   "lesson.questionsPlaceholder": "כאן יופיעו שאלות התרגול בסוף השיעור.",
   "lesson.back": "חזרה למקצוע",
   "admin.title": "ניהול תוכן",
-  "admin.todo": "עורך התוכן ייבנה בשלב הבא.",
+  "admin.todo": "עורך התוכן עדיין לא זמין.",
   "nav.systemAdmin": "ניהול מערכת",
   "systemAdmin.title": "ניהול מערכת",
-  "systemAdmin.todo": "הגדרות המערכת ייבנו בשלב הבא.",
+  "systemAdmin.todo": "הגדרות המערכת עדיין לא זמינות.",
   "systemAdmin.users.title": "ניהול משתמשים",
-  "systemAdmin.users.todo": "ניהול המשתמשים ייבנה בשלב הבא.",
+  "systemAdmin.users.todo": "ניהול המשתמשים עדיין לא זמין.",
 } as const;
 
 export type TranslationKey = keyof typeof he;

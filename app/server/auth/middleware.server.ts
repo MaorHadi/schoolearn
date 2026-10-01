@@ -4,7 +4,12 @@ import { t } from "~/i18n";
 import { getClientIp } from "~/server/auth/client-ip.server";
 import { clientIpContext, sessionContext, userContext } from "~/server/auth/context.server";
 import { findActiveIpBlock } from "~/server/auth/ip-block.server";
-import { getSessionFromRequest, sessionCookie, touchSession } from "~/server/auth/session.server";
+import {
+  getSessionFromRequest,
+  refreshSessionCookie,
+  sessionCookie,
+  touchSession,
+} from "~/server/auth/session.server";
 
 /**
  * The single route guard, registered on root.tsx so it runs for every request.
@@ -32,8 +37,14 @@ export const authMiddleware: MiddlewareFunction<Response> = async ({ request, co
     });
   }
 
-  await touchSession(session);
+  const extended = await touchSession(session);
   context.set(sessionContext, session);
   context.set(userContext, session.user);
-  return next();
+
+  const response = await next();
+  if (extended) {
+    // Slide the browser cookie's Max-Age along with the server-side expiry.
+    response.headers.append("Set-Cookie", await refreshSessionCookie(session.id));
+  }
+  return response;
 };

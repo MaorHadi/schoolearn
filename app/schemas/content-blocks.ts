@@ -92,6 +92,15 @@ export const ContentBlock = z.discriminatedUnion("type", [
 
 export const LessonContent = z.array(ContentBlock);
 
+/** Unique asset ids referenced by image blocks, in first-seen order. */
+export function extractAssetIds(blocks: z.infer<typeof LessonContent>): number[] {
+  const ids: number[] = [];
+  for (const block of blocks) {
+    if (block.type === "image" && !ids.includes(block.assetId)) ids.push(block.assetId);
+  }
+  return ids;
+}
+
 export type InlineSpan = z.infer<typeof InlineSpan>;
 export type RichText = z.infer<typeof RichText>;
 export type ContentBlock = z.infer<typeof ContentBlock>;

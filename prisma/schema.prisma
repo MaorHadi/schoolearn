@@ -35,6 +35,11 @@ enum MaterialKind {
   TEXT
 }
 
+enum QuestionType {
+  MULTIPLE_CHOICE
+  // Future: TRUE_FALSE, FILL_IN, ORDERING, ...
+}
+
 // ---------------------------------------------------------------------------
 // Users, sessions, security
 // ---------------------------------------------------------------------------
@@ -63,8 +68,8 @@ model Session {
   lastActivity   DateTime?
   ip             String?
   sessionData    Json
-  user           User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId         Int?
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         Int
 
   @@index([userId])
   @@index([expirationDate])
@@ -109,20 +114,25 @@ model Subject {
   direction   TextDirection // content direction; UI shell stays RTL
   isActive    Boolean       @default(true)
   sortOrder   Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
   sections    Section[]
   users       User[]
 }
 
-/// A difficulty bracket. sortOrder 1 is easiest and defines unlock order.
+/// A difficulty bracket. Lowest sortOrder is easiest and defines unlock order.
+/// sortOrder is intentionally not unique so reordering is a plain update.
 model Section {
   id        Int      @id @default(autoincrement())
   subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   subjectId Int
   title     String
   sortOrder Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   lessons   Lesson[]
 
-  @@unique([subjectId, sortOrder])
+  @@index([subjectId, sortOrder])
 }
 
 /// Content (JSON block array) followed by questions. Completed by reaching passingScore.
@@ -133,13 +143,28 @@ model Lesson {
   title        String
   sortOrder    Int
   passingScore Int? // percent 0-100; null -> env DEFAULT_LESSON_PASSING_SCORE
-  content      Json // ContentBlock[] validated by zod (app/lib/content/blocks.ts)
+  content      Json // ContentBlock[] validated by zod (app/schemas/content-blocks.ts)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
   questions    Question[]
   materials    Material[]
+  assets       LessonAsset[]
   attempts     LessonAttempt[]
   progress     LessonProgress[]
 
-  @@unique([sectionId, sortOrder])
+  @@index([sectionId, sortOrder])
+}
+
+/// Which assets a lesson's content references. Maintained by saveLessonContent() on every
+/// write, so asset usage is queryable and a used asset cannot be deleted (Restrict).
+model LessonAsset {
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId Int
+  asset    Asset  @relation(fields: [assetId], references: [id], onDelete: Restrict)
+  assetId  Int
+
+  @@id([lessonId, assetId])
+  @@index([assetId])
 }
 
 /// Schema only in the foundation phase; no UI and no seed data yet (TODO(quiz)).
@@ -147,11 +172,12 @@ model Question {
   id        Int              @id @default(autoincrement())
   lesson    Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   lessonId  Int
+  type      QuestionType     @default(MULTIPLE_CHOICE)
   prompt    String           @db.Text
   sortOrder Int
   options   QuestionOption[]
 
-  @@unique([lessonId, sortOrder])
+  @@index([lessonId, sortOrder])
 }
 
 model QuestionOption {
@@ -179,16 +205,17 @@ model Material {
 
 /// Uploaded file stored via StorageProvider (app/lib/storage).
 model Asset {
-  id           Int        @id @default(autoincrement())
-  storageKey   String     @unique // provider-relative key
+  id           Int           @id @default(autoincrement())
+  storageKey   String        @unique // provider-relative key
   mimeType     String
   byteSize     Int
   width        Int?
   height       Int?
-  uploadedBy   User?      @relation(fields: [uploadedById], references: [id])
+  uploadedBy   User?         @relation(fields: [uploadedById], references: [id])
   uploadedById Int?
-  createdAt    DateTime   @default(now())
+  createdAt    DateTime      @default(now())
   materials    Material[]
+  lessons      LessonAsset[]
 }
 
 // ---------------------------------------------------------------------------

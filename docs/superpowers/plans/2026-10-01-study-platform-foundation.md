@@ -3666,6 +3666,8 @@ User can verify:
 
 ## Stage 7: Seed, subject pages, docs
 
+> Schema hardening (post-Stage 6): `sortOrder` is no longer unique, so the seed cannot upsert by `subjectId_sortOrder` / `sectionId_sortOrder`. Use findFirst-by-(parent, sortOrder) then create/update. Write lesson content via `saveLessonContent()` so `LessonAsset` rows are created.
+
 ### Task 7.1: Seed data modules and seed script
 
 **Files:**

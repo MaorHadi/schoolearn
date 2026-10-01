@@ -23,7 +23,7 @@ CREATE TABLE `Session` (
     `lastActivity` DATETIME(3) NULL,
     `ip` VARCHAR(191) NULL,
     `sessionData` JSON NOT NULL,
-    `userId` INTEGER NULL,
+    `userId` INTEGER NOT NULL,
 
     INDEX `Session_userId_idx`(`userId`),
     INDEX `Session_expirationDate_idx`(`expirationDate`),
@@ -70,6 +70,8 @@ CREATE TABLE `Subject` (
     `direction` ENUM('rtl', 'ltr') NOT NULL,
     `isActive` BOOLEAN NOT NULL DEFAULT true,
     `sortOrder` INTEGER NOT NULL DEFAULT 0,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
 
     UNIQUE INDEX `Subject_slug_key`(`slug`),
     PRIMARY KEY (`id`)
@@ -81,8 +83,10 @@ CREATE TABLE `Section` (
     `subjectId` INTEGER NOT NULL,
     `title` VARCHAR(191) NOT NULL,
     `sortOrder` INTEGER NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
 
-    UNIQUE INDEX `Section_subjectId_sortOrder_key`(`subjectId`, `sortOrder`),
+    INDEX `Section_subjectId_sortOrder_idx`(`subjectId`, `sortOrder`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -94,19 +98,31 @@ CREATE TABLE `Lesson` (
     `sortOrder` INTEGER NOT NULL,
     `passingScore` INTEGER NULL,
     `content` JSON NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
 
-    UNIQUE INDEX `Lesson_sectionId_sortOrder_key`(`sectionId`, `sortOrder`),
+    INDEX `Lesson_sectionId_sortOrder_idx`(`sectionId`, `sortOrder`),
     PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `LessonAsset` (
+    `lessonId` INTEGER NOT NULL,
+    `assetId` INTEGER NOT NULL,
+
+    INDEX `LessonAsset_assetId_idx`(`assetId`),
+    PRIMARY KEY (`lessonId`, `assetId`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `Question` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `lessonId` INTEGER NOT NULL,
+    `type` ENUM('MULTIPLE_CHOICE') NOT NULL DEFAULT 'MULTIPLE_CHOICE',
     `prompt` TEXT NOT NULL,
     `sortOrder` INTEGER NOT NULL,
 
-    UNIQUE INDEX `Question_lessonId_sortOrder_key`(`lessonId`, `sortOrder`),
+    INDEX `Question_lessonId_sortOrder_idx`(`lessonId`, `sortOrder`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -194,6 +210,12 @@ ALTER TABLE `Section` ADD CONSTRAINT `Section_subjectId_fkey` FOREIGN KEY (`subj
 
 -- AddForeignKey
 ALTER TABLE `Lesson` ADD CONSTRAINT `Lesson_sectionId_fkey` FOREIGN KEY (`sectionId`) REFERENCES `Section`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `LessonAsset` ADD CONSTRAINT `LessonAsset_lessonId_fkey` FOREIGN KEY (`lessonId`) REFERENCES `Lesson`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `LessonAsset` ADD CONSTRAINT `LessonAsset_assetId_fkey` FOREIGN KEY (`assetId`) REFERENCES `Asset`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Question` ADD CONSTRAINT `Question_lessonId_fkey` FOREIGN KEY (`lessonId`) REFERENCES `Lesson`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

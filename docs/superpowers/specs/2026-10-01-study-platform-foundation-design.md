@@ -99,182 +99,54 @@ tests/                           # mirrors app/; helpers/db.ts has resetDb + req
 
 ## 5. Prisma schema
 
-```prisma
-enum Role { USER ADMIN SYSTEM_ADMIN }
-enum AuthLogType { login twoFactorAuthentication }   // 2FA unused: TODO
-enum TextDirection { rtl ltr }
-enum MaterialKind { FILE LINK TEXT }
+The authoritative schema is `prisma/schema.prisma`; this section records the design and the
+decisions behind it. Revised after Stage 6 (see "Schema hardening" below).
 
-model User {
-  id           Int       @id @default(autoincrement())
-  username     String    @unique
-  email        String?   @unique
-  passwordHash String
-  role         Role      @default(USER)
-  isDisabled   Boolean   @default(false)
-  timezone     String    @default("Asia/Jerusalem")   // for future streak calculation
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  subjects     Subject[]          // implicit m:n = enrollment
-  sessions     Session[]
-  attempts     LessonAttempt[]
-  progress     LessonProgress[]
-  assets       Asset[]
-}
+- `User`: username (unique), optional unique email, `passwordHash`, `role`, `isDisabled`,
+  `timezone` (default `Asia/Jerusalem`, for future streaks), timestamps. Implicit m:n
+  `subjects` is enrollment.
+- `Session`: `id` cuid, **required** `userId` (cascade), `expirationDate`, `lastActivity`,
+  `ip`, `sessionData` Json. Indexed on `userId` and `expirationDate`.
+- `AuthLog`: ip, username (free text, so attempts against unknown names are recorded),
+  `isSuccessful`, `failureReason`, `type`. Indexed on `(ipAddress, createdAt)` and
+  `(username, createdAt)`.
+- `IpBlock`: **one row per IP** (`ipAddress` unique), `strikeCount`, `createdAt`,
+  `updatedAt` (drives escalation lookback and cleanup), `expiresAt`.
+- `Subject`: slug, name, description, `locale`, `direction` (rtl|ltr), `isActive`,
+  `sortOrder`, timestamps.
+- `Section`: subject, title, `sortOrder`, timestamps. `sortOrder` is **indexed, not unique**,
+  so reordering is a plain update.
+- `Lesson`: section, title, `sortOrder` (indexed, not unique), `passingScore?`,
+  `content` Json (block array), timestamps.
+- `LessonAsset` (`lessonId`, `assetId`): which assets a lesson's content references.
+  Maintained by `saveLessonContent()` on every write. `onDelete: Restrict` on the asset side,
+  so a used asset cannot be deleted; cascade from the lesson side.
+- `Question`: lesson, `type` (`QuestionType`, default `MULTIPLE_CHOICE`, extensible), prompt,
+  `sortOrder`. `QuestionOption`: text, `isCorrect`, `sortOrder`. Schema only in this phase.
+- `Material`: optional lesson attachment (`FILE | LINK | TEXT`), optional asset.
+- `Asset`: `storageKey` (unique, provider-relative), mimeType, byteSize, dimensions, uploader.
+- `LessonAttempt`: one row per try (`score`, `passed`, `createdAt`), indexed on
+  `(userId, createdAt)` for streaks and `(userId, lessonId)`.
+- `LessonProgress`: unique per `(userId, lessonId)`, `bestScore`, `completedAt` (set once,
+  never cleared), `updatedAt`.
 
-model Session {
-  id             String    @id @default(cuid(2))
-  expirationDate DateTime
-  createdAt      DateTime  @default(now())
-  lastActivity   DateTime?
-  ip             String?
-  sessionData    Json
-  user           User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId         Int?
-  @@index([userId])
-  @@index([expirationDate])
-}
+### Schema hardening (after Stage 6)
 
-model AuthLog {
-  id            Int         @id @default(autoincrement())
-  ipAddress     String
-  username      String
-  createdAt     DateTime    @default(now())
-  isSuccessful  Boolean
-  failureReason String?
-  type          AuthLogType
-  @@index([ipAddress, createdAt])
-  @@index([username, createdAt])
-}
+Decisions taken on review before any real content existed:
 
-model IpBlock {                // one row per IP; repeat offenders are updated in place
-  id          Int      @id @default(autoincrement())
-  ipAddress   String   @unique
-  reason      String?
-  strikeCount Int      @default(1)      // incremented on each new block within the lookback
-  createdAt   DateTime @default(now())  // first block
-  updatedAt   DateTime @updatedAt       // most recent block; drives lookback and cleanup
-  expiresAt   DateTime
-  @@index([expiresAt])
-}
+1. Sliding expiry re-issues the session cookie when the server-side expiry is extended
+   (code change in the middleware; previously only the DB row slid).
+2. `LessonAsset` join table added so image references inside lesson JSON have integrity.
+3. `sortOrder` uniqueness dropped on `Section` and `Lesson` (indexed instead).
+4. `Session.userId` made required.
+5. `Question.type` added with the `QuestionType` enum.
+6. `createdAt`/`updatedAt` added to `Subject`, `Section`, `Lesson`.
 
-model Subject {
-  id          Int           @id @default(autoincrement())
-  slug        String        @unique
-  name        String
-  description String?       @db.Text
-  locale      String        // BCP-47, e.g. "he", "en"
-  direction   TextDirection // content direction; UI stays RTL
-  isActive    Boolean       @default(true)
-  sortOrder   Int           @default(0)
-  sections    Section[]
-  users       User[]
-}
+Roles stay global per user by design: a single admin account manages content; regular
+accounts are self-created learners.
 
-model Section {
-  id        Int      @id @default(autoincrement())
-  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  subjectId Int
-  title     String
-  sortOrder Int      // 1 = easiest; defines unlock order
-  lessons   Lesson[]
-  @@unique([subjectId, sortOrder])
-}
-
-model Lesson {
-  id           Int        @id @default(autoincrement())
-  section      Section    @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  sectionId    Int
-  title        String
-  sortOrder    Int
-  passingScore Int?       // percent 0-100; null -> env DEFAULT_LESSON_PASSING_SCORE
-  content      Json       // ContentBlock[] (validated by zod, section 7)
-  questions    Question[]
-  materials    Material[]
-  attempts     LessonAttempt[]
-  progress     LessonProgress[]
-  @@unique([sectionId, sortOrder])
-}
-
-model Question {              // schema only; no UI, no seed data in this phase
-  id        Int              @id @default(autoincrement())
-  lesson    Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  lessonId  Int
-  prompt    String           @db.Text
-  sortOrder Int
-  options   QuestionOption[]
-  @@unique([lessonId, sortOrder])
-}
-
-model QuestionOption {
-  id         Int      @id @default(autoincrement())
-  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  questionId Int
-  text       String   @db.Text
-  isCorrect  Boolean
-  sortOrder  Int
-}
-
-model Material {              // optional lesson attachments
-  id        Int          @id @default(autoincrement())
-  lesson    Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  lessonId  Int
-  kind      MaterialKind
-  title     String
-  url       String?
-  body      String?      @db.Text
-  asset     Asset?       @relation(fields: [assetId], references: [id])
-  assetId   Int?
-  sortOrder Int          @default(0)
-}
-
-model Asset {
-  id           Int        @id @default(autoincrement())
-  storageKey   String     @unique   // provider-relative key
-  mimeType     String
-  byteSize     Int
-  width        Int?
-  height       Int?
-  uploadedBy   User?      @relation(fields: [uploadedById], references: [id])
-  uploadedById Int?
-  createdAt    DateTime   @default(now())
-  materials    Material[]
-}
-
-model LessonAttempt {          // one row per try; timestamps support daily streaks later
-  id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int
-  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  lessonId  Int
-  score     Int      // percent
-  passed    Boolean
-  createdAt DateTime @default(now())
-  @@index([userId, createdAt])
-  @@index([userId, lessonId])
-}
-
-model LessonProgress {         // denormalized for fast unlock checks
-  id          Int       @id @default(autoincrement())
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      Int
-  lesson      Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  lessonId    Int
-  bestScore   Int
-  completedAt DateTime? // set once on first pass; never cleared
-  updatedAt   DateTime  @updatedAt
-  @@unique([userId, lessonId])
-}
-```
-
-Notes:
-
-- Enrollment stays an implicit m:n. If per-subject metadata is ever needed (e.g.
-  "last visited lesson"), replace it with an explicit `Enrollment` model; the only
-  code touching enrollment is `subjects.server.ts`, so the swap is contained.
-- `Question`/`QuestionOption` exist so the seed can later import the Firebase export
-  without a migration. Legacy mapping: `question -> prompt`, split `options` into
-  four `QuestionOption` rows, `answer` index -> `isCorrect`.
+Legacy question mapping for a future import: `question -> prompt`, split `options` into
+four `QuestionOption` rows, `answer` index -> `isCorrect`.
 
 ## 6. Progression and unlock rules
 

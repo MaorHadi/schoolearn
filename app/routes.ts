@@ -10,7 +10,11 @@ export default [
   route("assets/*", "routes/assets.$.tsx"),
 
   // Guarded: any signed-in user
-  layout("routes/app/layout.tsx", [route("subjects", "routes/app/subjects.tsx")]),
+  layout("routes/app/layout.tsx", [
+    route("subjects", "routes/app/subjects.tsx"),
+    route("subjects/:slug", "routes/app/subjects.$slug.tsx"),
+    route("subjects/:slug/lessons/:lessonId", "routes/app/subjects.$slug.lessons.$lessonId.tsx"),
+  ]),
 
   // Guarded: ADMIN and above (content management)
   ...prefix("admin", [layout("routes/admin/layout.tsx", [index("routes/admin/index.tsx")])]),

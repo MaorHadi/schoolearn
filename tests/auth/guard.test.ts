@@ -80,6 +80,20 @@ describe("authMiddleware", () => {
     expect(await prisma.session.count()).toBe(0);
   });
 
+  it("re-issues the cookie when the sliding expiry is extended", async () => {
+    // Fresh session: within the touch interval, no cookie refresh.
+    const fresh = await run(requestWithCookie("http://x/subjects", cookie));
+    expect(fresh.response?.headers.get("Set-Cookie")).toBeNull();
+
+    // Aged session: touch extends expiry and the browser must learn the new Max-Age.
+    await prisma.session.updateMany({ data: { lastActivity: new Date(Date.now() - 10 * 60_000) } });
+    const aged = await run(requestWithCookie("http://x/subjects", cookie));
+    const setCookie = aged.response?.headers.get("Set-Cookie");
+    expect(setCookie).toMatch(/^__session=/);
+    expect(setCookie).toMatch(/Max-Age=\d+/);
+    expect(setCookie).not.toMatch(/Max-Age=0/);
+  });
+
   it("returns 403 for a blocked IP even on public paths", async () => {
     await applyIpBlock("5.5.5.5", "test");
     const blockedRequest = new Request("http://x/login", {

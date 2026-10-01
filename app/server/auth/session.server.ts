@@ -50,24 +50,34 @@ export async function getSessionFromRequest(request: Request): Promise<SessionWi
   if (!id) return null;
 
   const session = await prisma.session.findUnique({ where: { id }, include: { user: true } });
-  if (!session?.user) return null;
+  if (!session) return null;
 
   if (session.expirationDate.getTime() <= Date.now() || session.user.isDisabled) {
     await prisma.session.deleteMany({ where: { id } });
     return null;
   }
-  return session as SessionWithUser;
+  return session;
 }
 
-/** Sliding expiry, throttled so the DB is not written on every request. */
-export async function touchSession(session: SessionWithUser): Promise<void> {
+/**
+ * Sliding expiry, throttled so the DB is not written on every request.
+ * Returns true when the expiry was extended; the caller must then re-issue the cookie
+ * so the browser's Max-Age slides along with the server-side session.
+ */
+export async function touchSession(session: SessionWithUser): Promise<boolean> {
   const interval = env.SESSION_TOUCH_INTERVAL_MINUTES * 60 * 1000;
   const last = session.lastActivity?.getTime() ?? 0;
-  if (Date.now() - last < interval) return;
+  if (Date.now() - last < interval) return false;
   await prisma.session.update({
     where: { id: session.id },
     data: { lastActivity: new Date(), expirationDate: expiryFromNow() },
   });
+  return true;
+}
+
+/** Set-Cookie value that re-issues the session cookie with a fresh Max-Age. */
+export function refreshSessionCookie(sessionId: string): Promise<string> {
+  return sessionCookie.serialize(sessionId);
 }
 
 /** Delete the session row (if any) and return a Set-Cookie value that clears the cookie. */

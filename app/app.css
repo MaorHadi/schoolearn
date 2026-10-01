@@ -117,3 +117,23 @@ mark {
   padding: 1rem;
   border: 1px dashed #999;
 }
+
+/* --- Subject pages --- */
+.subject-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e3e3e0;
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  margin-block: 1rem;
+}
+
+.card h2 {
+  margin-block-start: 0;
+}

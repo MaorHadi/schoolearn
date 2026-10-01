@@ -9,8 +9,8 @@ export async function resetDb() {
     prisma.lessonAttempt.deleteMany(),
     prisma.lessonProgress.deleteMany(),
     prisma.material.deleteMany(),
-    prisma.asset.deleteMany(),
-    prisma.subject.deleteMany(),
+    prisma.subject.deleteMany(), // cascades Section, Lesson, LessonAsset
+    prisma.asset.deleteMany(), // after subjects: LessonAsset restricts asset deletion
     prisma.user.deleteMany(),
   ]);
 }
