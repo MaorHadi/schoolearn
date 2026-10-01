@@ -1,0 +1,38 @@
+// Hebrew UI strings. Keys are stable identifiers; add a sibling file per language.
+export const he = {
+  "app.name": "פלטפורמת לימוד",
+  "nav.subjects": "מקצועות",
+  "nav.admin": "ניהול",
+  "nav.logout": "התנתקות",
+  "auth.username": "שם משתמש",
+  "auth.email": "אימייל (לא חובה)",
+  "auth.password": "סיסמה",
+  "auth.login": "התחברות",
+  "auth.register": "הרשמה",
+  "auth.noAccount": "אין לך חשבון?",
+  "auth.haveAccount": "כבר רשום?",
+  "auth.loginFailed": "שם המשתמש או הסיסמה שגויים",
+  "auth.registerFailed": "ההרשמה נכשלה. בדקו את הפרטים ונסו שוב.",
+  "auth.registerRules":
+    "שם משתמש: 3–32 תווים באנגלית, ספרות, נקודה, מקף או קו תחתון. סיסמה: 8 תווים לפחות.",
+  "error.forbidden": "אין לך הרשאה לצפות בדף זה.",
+  "error.ipBlocked": "הגישה מכתובת זו נחסמה זמנית עקב ניסיונות התחברות כושלים רבים.",
+  "error.lessonLocked": "השיעור הזה עדיין נעול. סיימו את השיעור הקודם כדי לפתוח אותו.",
+  "error.notFound": "הדף לא נמצא.",
+  "error.generic": "אירעה שגיאה בלתי צפויה.",
+  "subjects.title": "בחרו מקצוע",
+  "subjects.enroll": "הצטרפות",
+  "subjects.enrolled": "רשום",
+  "subjects.open": "כניסה",
+  "subject.locked": "נעול",
+  "subject.completed": "הושלם",
+  "subject.bestScore": "ציון מיטבי",
+  "lesson.questionsPlaceholder": "כאן יופיעו שאלות התרגול בסוף השיעור.",
+  "lesson.back": "חזרה למקצוע",
+  "admin.title": "ניהול תוכן",
+  "admin.todo": "עורך התוכן ייבנה בשלב הבא.",
+  "admin.users.title": "ניהול משתמשים",
+  "admin.users.todo": "ניהול המשתמשים ייבנה בשלב הבא.",
+} as const;
+
+export type TranslationKey = keyof typeof he;

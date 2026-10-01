@@ -7,7 +7,16 @@ import {
   ScrollRestoration,
 } from "react-router";
 import type { Route } from "./+types/root";
+import { authMiddleware } from "~/middleware/auth.server";
 import "./app.css";
+
+/** Single route guard for the whole app. See app/config/public-routes.ts for the allowlist. */
+export const middleware: Route.MiddlewareFunction[] = [authMiddleware];
+
+/** A root loader forces the middleware to run on every client-side navigation as well. */
+export function loader() {
+  return null;
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (

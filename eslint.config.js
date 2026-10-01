@@ -27,6 +27,17 @@ export default tseslint.config(
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrorsIgnorePattern: "^_" },
       ],
+      // React Router's idiom is to `throw redirect(...)` / `throw data(...)` from loaders,
+      // actions and middleware. Allow those two shapes; everything else must be an Error.
+      "@typescript-eslint/only-throw-error": [
+        "error",
+        {
+          allow: [
+            { from: "lib", name: "Response" },
+            { from: "package", package: "react-router", name: "DataWithResponseInit" },
+          ],
+        },
+      ],
     },
   },
   {
@@ -55,7 +66,7 @@ export default tseslint.config(
                 "Server modules may only be imported from other *.server.ts files or from route modules (React Router strips loaders/actions/middleware from the client bundle).",
             },
             {
-              group: ["@prisma/client", "**/prisma/generated/*", "~/lib/db.server"],
+              group: ["@prisma/client", "**/prisma/generated/*", "~/lib/database.server"],
               message: "Prisma only in *.server.ts files.",
             },
           ],

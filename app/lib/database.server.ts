@@ -16,7 +16,7 @@ function createClient() {
 }
 
 declare global {
-  // eslint-disable-next-line no-var -- global cache survives Vite HMR in dev
+  // `var` is required for global augmentation; the cache survives Vite HMR in dev.
   var __prisma: PrismaClient | undefined;
 }
 

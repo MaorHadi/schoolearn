@@ -59,7 +59,7 @@ app/
     security.server.ts           # brute-force + session settings (env-backed) and escalation steps (code)
     public-routes.ts             # explicit public allowlist
   lib/
-    db.server.ts                 # Prisma singleton
+    database.server.ts           # Prisma singleton
     auth/
       password.server.ts         # argon2id hash / verify
       session.server.ts          # create, load, touch, destroy; cookie (de)serialization
