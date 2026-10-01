@@ -1,7 +1,7 @@
-import type { Route } from "./+types/assets.$";
+import type { Route } from "./+types/media.$";
 import { getStorage } from "~/server/storage/index.server";
 
-/** Streams a stored asset. Public (see config/public-routes.ts); keys are random, not guessable. */
+/** Streams a stored asset. Public (see config/public-routes.ts). Served under /media so it never collides with the build's /assets bundle directory. */
 export async function loader({ params }: Route.LoaderArgs) {
   const key = params["*"];
   if (!key) throw new Response("Not found", { status: 404 });

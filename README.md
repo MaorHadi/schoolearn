@@ -32,21 +32,21 @@ Inside the container it is still 3306.
 
 ## Scripts
 
-| Script                            | What it does                                                     |
-| --------------------------------- | ---------------------------------------------------------------- |
-| `npm run dev`                     | Dev server with HMR                                              |
-| `npm run build` / `npm start`     | Production build / serve it (env must be set in the environment) |
-| `npm run typecheck`               | Route typegen + `tsc`                                            |
-| `npm run lint`                    | ESLint, Prettier check, subject-leakage check                    |
-| `npm run format`                  | Prettier write                                                   |
-| `npm test` / `npm run test:watch` | Vitest (DB tests need `npm run db:up`)                           |
-| `npm run db:up` / `db:down`       | Start / stop MariaDB                                             |
-| `npm run db:migrate`              | `prisma migrate dev`                                             |
-| `npm run db:deploy`               | `prisma migrate deploy` (production)                             |
-| `npm run db:seed`                 | Run the seed                                                     |
-| `npm run db:reset`                | Drop, migrate, seed (asks for consent)                           |
-| `npm run db:studio`               | Prisma Studio                                                    |
-| `npm run cleanup`                 | Delete expired IP blocks and old auth logs                       |
+| Script                            | What it does                                                                |
+| --------------------------------- | --------------------------------------------------------------------------- |
+| `npm run dev`                     | Dev server with HMR                                                         |
+| `npm run build` / `npm start`     | Production build / serve it (env must be set in the environment)            |
+| `npm run typecheck`               | Route typegen + `tsc`                                                       |
+| `npm run lint`                    | ESLint, Prettier check, subject-leakage check                               |
+| `npm run format`                  | Prettier write                                                              |
+| `npm test` / `npm run test:watch` | Vitest (DB tests need `npm run db:up`)                                      |
+| `npm run db:up` / `db:down`       | Start / stop MariaDB                                                        |
+| `npm run db:migrate`              | `prisma migrate dev`                                                        |
+| `npm run db:deploy`               | `prisma migrate deploy` (production)                                        |
+| `npm run db:seed`                 | Run the seed                                                                |
+| `npm run db:reset`                | Drop, migrate, seed. **Destructive, no prompt**; check `DATABASE_URL` first |
+| `npm run db:studio`               | Prisma Studio                                                               |
+| `npm run cleanup`                 | Delete expired IP blocks and old auth logs                                  |
 
 ## Environment variables
 

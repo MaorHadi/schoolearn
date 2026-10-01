@@ -1,9 +1,22 @@
 import { createCookie } from "react-router";
-import type { Session, User } from "../../../prisma/generated/client/client";
+import type { Prisma, Session } from "../../../prisma/generated/client/client";
 import { env } from "~/server/env.server";
 import { prisma } from "~/server/database.server";
 
-export type SessionWithUser = Session & { user: User };
+/** Fields of User that may travel with a request. Never the password hash. */
+const SESSION_USER_SELECT = {
+  id: true,
+  username: true,
+  email: true,
+  role: true,
+  isDisabled: true,
+  timezone: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.UserSelect;
+
+export type SessionUser = Prisma.UserGetPayload<{ select: typeof SESSION_USER_SELECT }>;
+export type SessionWithUser = Session & { user: SessionUser };
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -49,7 +62,10 @@ export async function getSessionFromRequest(request: Request): Promise<SessionWi
   const id = await readSessionId(request);
   if (!id) return null;
 
-  const session = await prisma.session.findUnique({ where: { id }, include: { user: true } });
+  const session = await prisma.session.findUnique({
+    where: { id },
+    include: { user: { select: SESSION_USER_SELECT } },
+  });
   if (!session) return null;
 
   if (session.expirationDate.getTime() <= Date.now() || session.user.isDisabled) {

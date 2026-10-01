@@ -23,26 +23,26 @@ describe("applyIpBlock", () => {
   beforeEach(resetDb);
 
   it("creates a first strike, then escalates in place keeping one row per IP", async () => {
-    const b1 = await applyIpBlock("1.2.3.4", "test");
-    expect(b1.strikeCount).toBe(1);
-    const b2 = await applyIpBlock("1.2.3.4", "test");
-    expect(b2.id).toBe(b1.id);
-    expect(b2.strikeCount).toBe(2);
-    expect(b2.expiresAt.getTime()).toBeGreaterThan(b1.expiresAt.getTime());
+    const firstBlock = await applyIpBlock("1.2.3.4", "test");
+    expect(firstBlock.strikeCount).toBe(1);
+    const secondBlock = await applyIpBlock("1.2.3.4", "test");
+    expect(secondBlock.id).toBe(firstBlock.id);
+    expect(secondBlock.strikeCount).toBe(2);
+    expect(secondBlock.expiresAt.getTime()).toBeGreaterThan(firstBlock.expiresAt.getTime());
     expect(await prisma.ipBlock.count()).toBe(1);
   });
 
   it("resets strikes when the previous block is older than the lookback", async () => {
-    const b1 = await applyIpBlock("1.2.3.4", "test");
+    const firstBlock = await applyIpBlock("1.2.3.4", "test");
     await prisma.ipBlock.update({
-      where: { id: b1.id },
+      where: { id: firstBlock.id },
       data: {
         updatedAt: new Date(Date.now() - 8 * DAY),
         expiresAt: new Date(Date.now() - 7 * DAY),
       },
     });
-    const b2 = await applyIpBlock("1.2.3.4", "test");
-    expect(b2.strikeCount).toBe(1);
+    const secondBlock = await applyIpBlock("1.2.3.4", "test");
+    expect(secondBlock.strikeCount).toBe(1);
   });
 
   it("refuses to block the unknown-IP sentinel", async () => {

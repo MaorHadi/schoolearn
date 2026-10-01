@@ -1,6 +1,6 @@
 import { security } from "~/server/security.server";
 import { prisma } from "~/server/database.server";
-import { countRecentFailures, recordAuthAttempt } from "./auth-log.server";
+import { countRecentFailures, lastCredentialFailureAt, recordAuthAttempt } from "./auth-log.server";
 import { UNKNOWN_IP } from "./client-ip.server";
 import { applyIpBlock, findActiveIpBlock } from "./ip-block.server";
 import { DUMMY_HASH, verifyPassword } from "./password.server";
@@ -19,6 +19,19 @@ export async function authenticate(input: LoginInput): Promise<AuthResult> {
   if (!valid) return { ok: false, reason: "BAD_PASSWORD" };
   if (user.isDisabled) return { ok: false, reason: "USER_DISABLED" };
   return { ok: true, userId: user.id };
+}
+
+/**
+ * A username is locked when it has reached N credential failures inside the failure window
+ * and the lockout period since the last of those failures has not elapsed. Attempts made while
+ * locked are logged as USERNAME_LOCKED and never counted, so the lock cannot self-extend.
+ */
+async function isUsernameLocked(username: string): Promise<boolean> {
+  const failures = await countRecentFailures({ username, sinceMs: security.failureWindowMs });
+  if (failures < security.usernameMaxFailures) return false;
+  const lastFailure = await lastCredentialFailureAt(username);
+  if (!lastFailure) return false;
+  return Date.now() - lastFailure.getTime() < security.usernameLockoutMs;
 }
 
 /**
@@ -42,11 +55,7 @@ export async function login(input: LoginInput, ip: string): Promise<AuthResult> 
 
   if (await findActiveIpBlock(ip)) return fail("IP_BLOCKED");
 
-  const userFailures = await countRecentFailures({
-    username: input.username,
-    sinceMs: security.usernameLockoutMs,
-  });
-  if (userFailures >= security.usernameMaxFailures) return fail("USERNAME_LOCKED");
+  if (await isUsernameLocked(input.username)) return fail("USERNAME_LOCKED");
 
   const result = await authenticate(input);
   if (!result.ok) return fail(result.reason);

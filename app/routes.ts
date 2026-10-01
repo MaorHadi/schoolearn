@@ -7,7 +7,7 @@ export default [
   route("login", "routes/public/login.tsx"),
   route("register", "routes/public/register.tsx"),
   route("logout", "routes/public/logout.tsx"),
-  route("assets/*", "routes/assets.$.tsx"),
+  route("media/*", "routes/media.$.tsx"),
 
   // Guarded: any signed-in user
   layout("routes/app/layout.tsx", [

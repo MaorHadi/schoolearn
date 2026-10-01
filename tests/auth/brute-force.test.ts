@@ -54,6 +54,22 @@ describe("login with brute-force protection", () => {
     expect(last?.failureReason).toBe("IP_BLOCKED");
   });
 
+  it("attempts made while locked do not extend the lockout", async () => {
+    for (let attempt = 0; attempt < security.usernameMaxFailures; attempt++) {
+      await login({ username: "alice", password: "bad" }, "10.0.0.1");
+    }
+    // Keep hammering while locked: these are logged as USERNAME_LOCKED and must not count.
+    for (let attempt = 0; attempt < security.usernameMaxFailures; attempt++) {
+      await login({ username: "alice", password: "password1" }, "10.0.0.1");
+    }
+    // Age only the credential failures past the lockout; the LOCKED rows stay recent.
+    await prisma.authLog.updateMany({
+      where: { failureReason: "BAD_PASSWORD" },
+      data: { createdAt: new Date(Date.now() - security.usernameLockoutMs - 60_000) },
+    });
+    expect((await login({ username: "alice", password: "password1" }, "10.0.0.1")).ok).toBe(true);
+  });
+
   it("M is strictly greater than N (shared school IP)", () => {
     expect(security.ipMaxFailures).toBeGreaterThan(security.usernameMaxFailures);
   });

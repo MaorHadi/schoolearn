@@ -17,12 +17,21 @@ export async function listActiveSubjectsForUser(userId: number) {
   return subjects.map(({ users, ...subject }) => ({ ...subject, enrolled: users.length > 0 }));
 }
 
-/** Enrollment is the implicit User<->Subject relation. Idempotent. */
-export async function enrollUser(userId: number, subjectId: number): Promise<void> {
+/**
+ * Enrollment is the implicit User<->Subject relation. Idempotent.
+ * Returns false (and changes nothing) if the subject does not exist or is inactive.
+ */
+export async function enrollUser(userId: number, subjectId: number): Promise<boolean> {
+  const subject = await prisma.subject.findFirst({
+    where: { id: subjectId, isActive: true },
+    select: { id: true },
+  });
+  if (!subject) return false;
   await prisma.user.update({
     where: { id: userId },
-    data: { subjects: { connect: { id: subjectId } } },
+    data: { subjects: { connect: { id: subject.id } } },
   });
+  return true;
 }
 
 /** The subject only if it is active and the user is enrolled; otherwise null. */

@@ -39,7 +39,7 @@ const blocks: Blocks = [
 describe("LessonContent", () => {
   it("renders every block type with the subject direction", () => {
     const { container } = render(
-      <LessonContent blocks={blocks} direction="rtl" assetUrls={{ 7: "/assets/x.png" }} />,
+      <LessonContent blocks={blocks} direction="rtl" assetUrls={{ 7: "/media/x.png" }} />,
     );
     expect(container.firstElementChild?.getAttribute("dir")).toBe("rtl");
     expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("Title");
@@ -53,7 +53,7 @@ describe("LessonContent", () => {
     expect(quote).toHaveTextContent("Ref");
     expect(quote).toHaveTextContent("Src");
 
-    expect(screen.getByAltText("An image").getAttribute("src")).toBe("/assets/x.png");
+    expect(screen.getByAltText("An image").getAttribute("src")).toBe("/media/x.png");
     expect(screen.getByText("Cap")).toBeTruthy();
     expect(container.querySelectorAll("ul li")).toHaveLength(2);
   });

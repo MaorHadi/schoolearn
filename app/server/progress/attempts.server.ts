@@ -11,12 +11,26 @@ export interface AttemptResult {
   completedAt: Date | null;
 }
 
+/** MariaDB/Prisma codes for transient write conflicts that are safe to retry. */
+const TRANSIENT_CODES = new Set(["P2034", "1020", "1213", "1205"]);
+const MAX_RETRIES = 5;
+
+function isTransientConflict(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const candidate = error as { code?: unknown; message?: unknown };
+  if (typeof candidate.code === "string" && TRANSIENT_CODES.has(candidate.code)) return true;
+  const message = typeof candidate.message === "string" ? candidate.message : "";
+  return /Code: `(1020|1213|1205)`/.test(message);
+}
+
 /**
  * Record one try. The only writer of LessonAttempt and LessonProgress.
  *
  * Attempts are append-only (createdAt feeds future streak calculation). Progress keeps the
- * best score and the first completion time; a later failure never lowers the score or clears
- * completion, so nothing ever re-locks.
+ * best score and the first completion time. The progress write is a single atomic SQL
+ * statement (INSERT ... ON DUPLICATE KEY UPDATE with GREATEST / COALESCE), so concurrent
+ * attempts for the same user and lesson can never lose a higher score or a completion.
+ * Transient conflicts between concurrent transactions are retried.
  */
 export async function recordAttempt(input: {
   userId: number;
@@ -32,26 +46,49 @@ export async function recordAttempt(input: {
     select: { passingScore: true },
   });
   const passed = input.score >= effectivePassingScore(lesson);
+
+  for (let retry = 0; ; retry++) {
+    try {
+      return await writeAttempt(input, passed);
+    } catch (error) {
+      if (retry >= MAX_RETRIES || !isTransientConflict(error)) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 10 * (retry + 1)));
+    }
+  }
+}
+
+async function writeAttempt(
+  input: { userId: number; lessonId: number; score: number },
+  passed: boolean,
+): Promise<AttemptResult> {
   const now = new Date();
-  const key = { userId: input.userId, lessonId: input.lessonId };
+  const completedAtIfPassed = passed ? now : null;
 
   return prisma.$transaction(async (transaction) => {
     await transaction.lessonAttempt.create({
-      data: { ...key, score: input.score, passed, createdAt: now },
+      data: {
+        userId: input.userId,
+        lessonId: input.lessonId,
+        score: input.score,
+        passed,
+        createdAt: now,
+      },
     });
 
-    const existing = await transaction.lessonProgress.findUnique({
-      where: { userId_lessonId: key },
-    });
-    const bestScore = Math.max(existing?.bestScore ?? 0, input.score);
-    const completedAt = existing?.completedAt ?? (passed ? now : null);
+    // Monotonic upsert: bestScore only rises, completedAt is only ever set once.
+    await transaction.$executeRaw`
+      INSERT INTO LessonProgress (userId, lessonId, bestScore, completedAt, updatedAt)
+      VALUES (${input.userId}, ${input.lessonId}, ${input.score}, ${completedAtIfPassed}, ${now})
+      ON DUPLICATE KEY UPDATE
+        bestScore = GREATEST(bestScore, VALUES(bestScore)),
+        completedAt = COALESCE(completedAt, VALUES(completedAt)),
+        updatedAt = VALUES(updatedAt)
+    `;
 
-    await transaction.lessonProgress.upsert({
-      where: { userId_lessonId: key },
-      create: { ...key, bestScore, completedAt },
-      update: { bestScore, completedAt },
+    const progress = await transaction.lessonProgress.findUniqueOrThrow({
+      where: { userId_lessonId: { userId: input.userId, lessonId: input.lessonId } },
+      select: { bestScore: true, completedAt: true },
     });
-
-    return { passed, bestScore, completedAt };
+    return { passed, bestScore: progress.bestScore, completedAt: progress.completedAt };
   });
 }

@@ -1,12 +1,13 @@
 /**
  * Explicit allowlist of paths reachable without a session. Everything else is guarded
- * by app/middleware/auth.server.ts. Keep this list short and deliberate.
+ * by app/server/auth/middleware.server.ts. Keep this list short and deliberate.
  */
 const EXACT = new Set(["/login", "/register", "/logout", "/favicon.ico"]);
 
 // Stored assets, plus Vite dev-server and build-asset paths.
 const PREFIXES = [
-  "/assets/",
+  "/media/", // stored assets (user content)
+  "/assets/", // Vite build output (hashed JS/CSS)
   "/@vite/",
   "/@fs/",
   "/@id/",

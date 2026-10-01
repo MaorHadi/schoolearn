@@ -203,7 +203,7 @@ model Material {
   sortOrder Int          @default(0)
 }
 
-/// Uploaded file stored via StorageProvider (app/lib/storage).
+/// Uploaded file stored via StorageProvider (app/server/storage).
 model Asset {
   id           Int           @id @default(autoincrement())
   storageKey   String        @unique // provider-relative key

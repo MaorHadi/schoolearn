@@ -30,10 +30,10 @@ with TODOs.
 
 ## 3. Stack and global conventions
 
-- React Router v7, framework mode (loaders/actions/middleware), Vite, TypeScript `strict`.
+- React Router v8, framework mode (loaders/actions/middleware), Vite, TypeScript `strict`.
 - MariaDB via Prisma (`provider = "mysql"`), run locally with Docker Compose.
 - All Prisma access and secrets live in `*.server.ts` modules. Nothing under
-  `app/lib/**/*.server.ts` may be imported from a client component.
+  `app/server/**/*.server.ts` may be imported from a client component.
 - Shared, environment-agnostic code (block schemas, i18n keys, role constants)
   lives in plain `.ts` files and must not import Prisma or Node APIs.
 - UI language: Hebrew, `dir="rtl"` on `<html>`. Content direction is a property of
@@ -89,7 +89,7 @@ app/
     app/                         # layout (any user), subjects, subject tree, lesson page
     admin/                       # layout (ADMIN+), content editor stub
     system-admin/                # layout (SYSTEM_ADMIN), settings stub, users stub
-    assets.$.tsx                 # (Stage 6) streams stored assets
+    media.$.tsx                  # streams stored assets at /media/*
 prisma/
   schema.prisma, seed.ts, seed-lib.ts, seed-data/
 scripts/
@@ -150,7 +150,7 @@ four `QuestionOption` rows, `answer` index -> `isCorrect`.
 
 ## 6. Progression and unlock rules
 
-Implemented in `lib/progress/unlock.server.ts` and `attempts.server.ts`.
+Implemented in `app/shared/unlock.ts` (pure rules), `app/server/progress/unlock.server.ts` and `attempts.server.ts`.
 
 - Lesson 1 of Section 1 is always unlocked.
 - Lesson n (n > 1) in a section is unlocked when lesson n-1 in the same section has
@@ -172,7 +172,7 @@ Implemented in `lib/progress/unlock.server.ts` and `attempts.server.ts`.
 
 ## 7. Lesson content blocks
 
-### 7.1 Block schema (`lib/content/blocks.ts`, shared)
+### 7.1 Block schema (`app/schemas/content-blocks.ts`, shared)
 
 ```ts
 const Direction = z.enum(["rtl", "ltr"]);
@@ -220,7 +220,7 @@ export const LessonContent = z.array(ContentBlock);
 export type ContentBlock = z.infer<typeof ContentBlock>;
 ```
 
-- `lesson-content.server.ts` exposes `parseLessonContent(json)` (throws a typed
+- `app/server/lesson-content.server.ts` exposes `parseLessonContent(json)` (throws a typed
   error on invalid stored data) and `serializeLessonContent(blocks)`; every DB read
   and write of `Lesson.content` goes through them, including the seed.
 - Direction: `resolveDirection(subject.direction, block.dir)` returns the block
@@ -259,12 +259,12 @@ interface StorageProvider {
   put(key: string, data: Buffer, meta: { mimeType: string }): Promise<void>;
   get(key: string): Promise<{ stream: ReadableStream; mimeType: string } | null>;
   delete(key: string): Promise<void>;
-  publicUrl(key: string): string; // local: /assets/<key>
+  publicUrl(key: string): string; // local: /media/<key>
 }
 ```
 
 `local-disk.server.ts` writes under `env.STORAGE_LOCAL_DIR` (default `./storage`),
-and the resource route `routes/assets.$.tsx` streams files with the stored MIME
+and the resource route `routes/media.$.tsx` streams files with the stored MIME
 type. `getStorage()` picks the provider from `STORAGE_PROVIDER` (only `local` now).
 A cloud provider is a new file implementing the interface plus one case in the
 factory. Upload UI is out of scope; the seed inserts `Asset` rows pointing at a
@@ -283,22 +283,22 @@ ip, sessionData: {} }`. Cookie `__session`: httpOnly, `secure` when
   than `SESSION_TOUCH_INTERVAL_MINUTES` (default 5), update `lastActivity` and push
   `expirationDate` forward by the full expiry. Logout deletes the row and clears
   the cookie.
-- **Guard** (`middleware/auth.server.ts`, registered on the root route):
+- **Guard** (`app/server/auth/middleware.server.ts`, registered on the root route):
   1. `clientIp = getClientIp(request)`, stored in context.
   2. If an `IpBlock` with `expiresAt > now` exists for that IP: 403 (translated page).
   3. If the pathname matches `config/public-routes.ts` (login, register, logout,
-     `/assets/*`, `/favicon.ico`, build assets): continue.
+     `/media/*` (stored assets), `/assets/*` (build output), `/favicon.ico`, dev files): continue.
   4. Load session from cookie; if missing, expired, or user `isDisabled`: delete
      the session row if present, clear cookie, redirect to `/login?redirectTo=...`.
   5. Touch sliding expiry; set `context.user`, `context.session`; continue.
-- **Roles** (`lib/auth/roles.ts`): `RANK = { USER: 0, ADMIN: 1, SYSTEM_ADMIN: 2 }`;
+- **Roles** (`app/shared/roles.ts`): `RANK = { USER: 0, ADMIN: 1, SYSTEM_ADMIN: 2 }`;
   `hasRole(user, min)`; `requireUser(context)`, `requireRole(context, min)` throw
   a 403 response. ADMIN edits content; SYSTEM_ADMIN additionally manages users and
   settings.
 
 ## 10. Brute-force protection
 
-Config (`config/security.server.ts`), env-backed with zod defaults:
+Config (`app/server/security.server.ts`), env-backed with zod defaults:
 
 | Env var                          | Default | Meaning                                                         |
 | -------------------------------- | ------- | --------------------------------------------------------------- |

@@ -5,23 +5,20 @@ import { LoginSchema } from "~/schemas/auth";
 import { login } from "~/server/auth/login.server";
 import { createSession } from "~/server/auth/session.server";
 import { getClientIp } from "~/server/auth/client-ip.server";
-
-/** Only allow same-origin relative paths as a post-login destination. */
-function safeRedirect(to: string | null): string {
-  return to && to.startsWith("/") && !to.startsWith("//") ? to : "/subjects";
-}
+import { safeRedirect } from "~/shared/safe-redirect";
 
 export async function action({ request }: Route.ActionArgs) {
   const form = Object.fromEntries(await request.formData());
   const parsed = LoginSchema.safeParse(form);
   if (!parsed.success) return data({ error: t("auth.loginFailed") }, { status: 400 });
 
-  const result = await login(parsed.data, getClientIp(request));
+  const clientIp = getClientIp(request);
+  const result = await login(parsed.data, clientIp);
   if (!result.ok) return data({ error: t("auth.loginFailed") }, { status: 400 });
 
-  const { cookie } = await createSession(result.userId, getClientIp(request));
-  const to = safeRedirect(new URL(request.url).searchParams.get("redirectTo"));
-  return redirect(to, { headers: { "Set-Cookie": cookie } });
+  const { cookie } = await createSession(result.userId, clientIp);
+  const target = safeRedirect(new URL(request.url).searchParams.get("redirectTo"), request.url);
+  return redirect(target, { headers: { "Set-Cookie": cookie } });
 }
 
 export default function Login({ actionData }: Route.ComponentProps) {

@@ -88,6 +88,22 @@ describe("recordAttempt", () => {
     expect(await prisma.lessonAttempt.count()).toBe(0);
   });
 
+  it("concurrent attempts never lose the best score or the completion", async () => {
+    const { lessonIds } = await makeSubjectWithLessons([1]);
+    const lessonId = firstLesson(lessonIds);
+    await Promise.all([
+      recordAttempt({ userId, lessonId, score: 90 }),
+      recordAttempt({ userId, lessonId, score: 40 }),
+      recordAttempt({ userId, lessonId, score: 10 }),
+    ]);
+    const progress = await prisma.lessonProgress.findUniqueOrThrow({
+      where: { userId_lessonId: { userId, lessonId } },
+    });
+    expect(progress.bestScore).toBe(90);
+    expect(progress.completedAt).not.toBeNull();
+    expect(await prisma.lessonAttempt.count({ where: { userId, lessonId } })).toBe(3);
+  });
+
   it("attempt timestamps are recorded for future streak calculation", async () => {
     const { lessonIds } = await makeSubjectWithLessons([1]);
     const before = Date.now() - 1000;

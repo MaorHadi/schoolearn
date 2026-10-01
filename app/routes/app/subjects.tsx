@@ -1,4 +1,4 @@
-import { Form, Link } from "react-router";
+import { Form, Link, data } from "react-router";
 import type { Route } from "./+types/subjects";
 import { t } from "~/i18n";
 import { requireUser } from "~/server/auth/context.server";
@@ -13,7 +13,9 @@ export async function action({ request, context }: Route.ActionArgs) {
   const user = requireUser(context);
   const form = await request.formData();
   const subjectId = Number(form.get("subjectId"));
-  if (Number.isInteger(subjectId) && subjectId > 0) await enrollUser(user.id, subjectId);
+  const enrolled =
+    Number.isInteger(subjectId) && subjectId > 0 && (await enrollUser(user.id, subjectId));
+  if (!enrolled) throw data(t("error.notFound"), { status: 404 });
   return null;
 }
 

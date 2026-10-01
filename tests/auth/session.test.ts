@@ -34,6 +34,14 @@ describe("sessions", () => {
     expect(loaded?.ip).toBe("1.2.3.4");
   });
 
+  it("never exposes the password hash on the loaded session user", async () => {
+    const user = await makeUser();
+    const { cookie } = await createSession(user.id, null);
+    const loaded = await getSessionFromRequest(requestWithCookie("http://x/", cookie));
+    expect(loaded).not.toBeNull();
+    expect(Object.keys(loaded?.user ?? {})).not.toContain("passwordHash");
+  });
+
   it("returns null for a tampered cookie", async () => {
     const user = await makeUser();
     const { cookie } = await createSession(user.id, null);
@@ -66,25 +74,25 @@ describe("sessions", () => {
   it("touch extends expiry only after the throttle interval", async () => {
     const user = await makeUser();
     const { id, cookie } = await createSession(user.id, null);
-    const s1 = await getSessionFromRequest(requestWithCookie("http://x/", cookie));
-    if (!s1) throw new Error("session not loaded");
+    const firstLoad = await getSessionFromRequest(requestWithCookie("http://x/", cookie));
+    if (!firstLoad) throw new Error("session not loaded");
 
     // Fresh session: lastActivity was just set, so touch is a no-op.
-    await touchSession(s1);
+    await touchSession(firstLoad);
     const afterNoop = await prisma.session.findUniqueOrThrow({ where: { id } });
-    expect(afterNoop.expirationDate.getTime()).toBe(s1.expirationDate.getTime());
+    expect(afterNoop.expirationDate.getTime()).toBe(firstLoad.expirationDate.getTime());
 
     // Age lastActivity beyond the interval.
     await prisma.session.update({
       where: { id },
       data: { lastActivity: new Date(Date.now() - 10 * 60_000) },
     });
-    const s2 = await getSessionFromRequest(requestWithCookie("http://x/", cookie));
-    if (!s2) throw new Error("session not loaded");
-    await touchSession(s2);
+    const secondLoad = await getSessionFromRequest(requestWithCookie("http://x/", cookie));
+    if (!secondLoad) throw new Error("session not loaded");
+    await touchSession(secondLoad);
     const afterTouch = await prisma.session.findUniqueOrThrow({ where: { id } });
-    expect(afterTouch.expirationDate.getTime()).toBeGreaterThan(s1.expirationDate.getTime());
-    expect(afterTouch.lastActivity!.getTime()).toBeGreaterThan(s2.lastActivity!.getTime());
+    expect(afterTouch.expirationDate.getTime()).toBeGreaterThan(firstLoad.expirationDate.getTime());
+    expect(afterTouch.lastActivity!.getTime()).toBeGreaterThan(secondLoad.lastActivity!.getTime());
   });
 
   it("destroy deletes the row and returns a clearing cookie", async () => {

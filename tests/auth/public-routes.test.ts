@@ -3,14 +3,14 @@ import { isPublicPath } from "~/config/public-routes";
 
 describe("isPublicPath", () => {
   it("allows login/register/logout (and their .data variants), assets, favicon, dev/build files", () => {
-    for (const p of [
+    for (const path of [
       "/login",
       "/register",
       "/logout",
       "/login.data",
       "/register.data",
-      "/assets/abc.png",
-      "/assets/2026/x.webp",
+      "/media/abc.png",
+      "/assets/app-abc123.js",
       "/favicon.ico",
       "/@vite/client",
       "/@fs/C:/x",
@@ -18,12 +18,12 @@ describe("isPublicPath", () => {
       "/node_modules/.vite/deps/react.js",
       "/__manifest",
     ]) {
-      expect(isPublicPath(p), p).toBe(true);
+      expect(isPublicPath(path), path).toBe(true);
     }
   });
 
   it("denies everything else", () => {
-    for (const p of [
+    for (const path of [
       "/",
       "/subjects",
       "/subjects.data",
@@ -33,7 +33,7 @@ describe("isPublicPath", () => {
       "/loginx",
       "/login/extra",
     ]) {
-      expect(isPublicPath(p), p).toBe(false);
+      expect(isPublicPath(path), path).toBe(false);
     }
   });
 });

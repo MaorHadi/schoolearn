@@ -23,7 +23,7 @@ async function seedAdmin(): Promise<void> {
   await prisma.user.upsert({
     where: { username },
     create: { username, email, passwordHash, role: "SYSTEM_ADMIN" },
-    update: { role: "SYSTEM_ADMIN", email, passwordHash },
+    update: { role: "SYSTEM_ADMIN" }, // never overwrite a password changed in-app
   });
 }
 
