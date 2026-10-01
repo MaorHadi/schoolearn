@@ -65,3 +65,55 @@ body {
 .locked {
   opacity: 0.5;
 }
+
+/* --- Lesson content blocks --- */
+.lesson-content {
+  line-height: 1.7;
+}
+
+.block {
+  margin-block: 1rem;
+}
+
+.block-quote {
+  border-inline-start: 4px solid #8a8a8a;
+  padding-inline-start: 1rem;
+  margin-inline: 0;
+}
+
+.quote-label {
+  display: block;
+  font-size: 0.85em;
+  opacity: 0.7;
+}
+
+.quote-reference {
+  display: block;
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
+.block-image {
+  margin-inline: 0;
+}
+
+.block-image img {
+  max-width: 100%;
+  height: auto;
+}
+
+.image-missing {
+  padding: 1rem;
+  border: 1px dashed #999;
+  opacity: 0.8;
+}
+
+mark {
+  background: #ffe58a;
+}
+
+.questions-placeholder {
+  margin-block-start: 2rem;
+  padding: 1rem;
+  border: 1px dashed #999;
+}

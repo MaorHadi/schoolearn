@@ -66,7 +66,7 @@ export default tseslint.config(
                 "Server modules may only be imported from other *.server.ts files or from route modules (React Router strips loaders/actions/middleware from the client bundle).",
             },
             {
-              group: ["@prisma/client", "**/prisma/generated/*", "~/lib/database.server"],
+              group: ["@prisma/client", "**/prisma/generated/*", "~/server/database.server"],
               message: "Prisma only in *.server.ts files.",
             },
           ],

@@ -1,5 +1,5 @@
-import { security } from "~/config/security.server";
-import { prisma } from "~/lib/database.server";
+import { security } from "~/server/security.server";
+import { prisma } from "~/server/database.server";
 
 /**
  * Remove IpBlocks that are both expired and older than the escalation lookback

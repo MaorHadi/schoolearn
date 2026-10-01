@@ -5,7 +5,7 @@ export const USERNAME_RE = /^[a-zA-Z0-9_.-]{3,32}$/;
 
 export const RegisterSchema = z.object({
   username: z.string().regex(USERNAME_RE),
-  email: z.preprocess((v) => (v === "" ? undefined : v), z.email().optional()),
+  email: z.preprocess((value) => (value === "" ? undefined : value), z.email().optional()),
   password: z.string().min(8).max(200),
 });
 export type RegisterInput = z.infer<typeof RegisterSchema>;

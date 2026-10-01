@@ -1,4 +1,4 @@
-import { prisma } from "~/lib/database.server";
+import { prisma } from "~/server/database.server";
 
 /** Wipe all tables. Cascades handle children of User and Subject. */
 export async function resetDb() {

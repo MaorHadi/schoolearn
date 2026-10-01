@@ -404,7 +404,7 @@ export default tseslint.config(
                 "Server modules can only be imported from other *.server.ts files or from route loaders/actions via the route module (which React Router strips).",
             },
             {
-              group: ["@prisma/client", "prisma/generated/*", "~/lib/database.server"],
+              group: ["@prisma/client", "prisma/generated/*", "~/server/database.server"],
               message: "Prisma only in *.server.ts",
             },
           ],
@@ -495,7 +495,7 @@ Expected: ESLint passes, Prettier check passes (run `npm run format` first if ne
 
 **Interfaces:**
 
-- Produces: `env` object from `~/config/env.server` with typed fields listed below; `parseEnv(raw: Record<string, string | undefined>)` for tests.
+- Produces: `env` object from `~/server/env.server` with typed fields listed below; `parseEnv(raw: Record<string, string | undefined>)` for tests.
 
 - [ ] **Step 1: docker-compose.yml**
 
@@ -567,7 +567,7 @@ Copy to `.env` (`cp .env.example .env`); `.env` is gitignored.
 ```ts
 // tests/config/env.test.ts
 import { describe, expect, it } from "vitest";
-import { parseEnv } from "~/config/env.server";
+import { parseEnv } from "~/server/env.server";
 
 const base = { DATABASE_URL: "mysql://x", SESSION_SECRET: "s".repeat(16) };
 
@@ -619,7 +619,7 @@ process.env.SESSION_SECRET ??= "test-secret-test-secret";
 - [ ] **Step 4: Run, expect failure**
 
 Run: `npx vitest run tests/config`
-Expected: FAIL, cannot resolve `~/config/env.server`.
+Expected: FAIL, cannot resolve `~/server/env.server`.
 
 - [ ] **Step 5: Implement env.server.ts**
 
@@ -708,7 +708,7 @@ User can verify:
 
 **Interfaces:**
 
-- Produces: `prisma` (PrismaClient) from `~/lib/database.server`; generated types from `prisma/generated/client`.
+- Produces: `prisma` (PrismaClient) from `~/server/database.server`; generated types from `prisma/generated/client`.
 
 - [ ] **Step 1: prisma.config.ts**
 
@@ -943,7 +943,7 @@ Expected: `prisma/migrations/<ts>_init/migration.sql` created, client generated 
 // app/lib/database.server.ts
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "../../prisma/generated/client";
-import { env } from "~/config/env.server";
+import { env } from "~/server/env.server";
 
 function createClient() {
   const url = new URL(env.DATABASE_URL);
@@ -972,7 +972,7 @@ if (env.NODE_ENV !== "production") globalThis.__prisma = prisma;
 ```ts
 // tests/db/schema.test.ts
 import { describe, expect, it } from "vitest";
-import { prisma } from "~/lib/database.server";
+import { prisma } from "~/server/database.server";
 
 describe("database", () => {
   it("connects and sees the tables", async () => {
@@ -1014,7 +1014,7 @@ User can verify:
 ```ts
 // tests/auth/password.test.ts
 import { describe, expect, it } from "vitest";
-import { DUMMY_HASH, hashPassword, verifyPassword } from "~/lib/auth/password.server";
+import { DUMMY_HASH, hashPassword, verifyPassword } from "~/server/auth/password.server";
 
 describe("password", () => {
   it("round-trips", async () => {
@@ -1079,7 +1079,7 @@ export const DUMMY_HASH: string = await argon2.hash(crypto.randomUUID(), OPTIONS
 
 ```ts
 // tests/helpers/db.ts
-import { prisma } from "~/lib/database.server";
+import { prisma } from "~/server/database.server";
 
 export async function resetDb() {
   // Order matters for FKs; Cascade handles children of User/Subject.
@@ -1108,8 +1108,8 @@ export function requestWithCookie(url: string, cookie: string | null, init: Requ
 ```ts
 // tests/auth/session.test.ts
 import { beforeEach, describe, expect, it } from "vitest";
-import { prisma } from "~/lib/database.server";
-import { hashPassword } from "~/lib/auth/password.server";
+import { prisma } from "~/server/database.server";
+import { hashPassword } from "~/server/auth/password.server";
 import {
   createSession,
   destroySession,
@@ -1205,8 +1205,8 @@ describe("sessions", () => {
 // app/lib/auth/session.server.ts
 import { createCookie } from "react-router";
 import type { Session, User } from "../../../prisma/generated/client";
-import { env } from "~/config/env.server";
-import { prisma } from "~/lib/database.server";
+import { env } from "~/server/env.server";
+import { prisma } from "~/server/database.server";
 
 export type SessionWithUser = Session & { user: User };
 
@@ -1293,9 +1293,9 @@ export async function destroySession(request: Request): Promise<string> {
 ```ts
 // tests/auth/register.test.ts
 import { beforeEach, describe, expect, it } from "vitest";
-import { registerUser } from "~/lib/auth/register.server";
+import { registerUser } from "~/server/auth/register.server";
 import { RegisterSchema } from "~/lib/auth/validation";
-import { prisma } from "~/lib/database.server";
+import { prisma } from "~/server/database.server";
 import { resetDb } from "../helpers/db";
 
 describe("RegisterSchema", () => {
@@ -1334,8 +1334,8 @@ describe("registerUser", () => {
 // tests/auth/login.test.ts
 import { beforeEach, describe, expect, it } from "vitest";
 import { authenticate } from "~/lib/auth/login.server";
-import { registerUser } from "~/lib/auth/register.server";
-import { prisma } from "~/lib/database.server";
+import { registerUser } from "~/server/auth/register.server";
+import { prisma } from "~/server/database.server";
 import { resetDb } from "../helpers/db";
 
 describe("authenticate", () => {
@@ -1394,7 +1394,7 @@ export type LoginFailureReason =
 
 ```ts
 // app/lib/auth/register.server.ts
-import { prisma } from "~/lib/database.server";
+import { prisma } from "~/server/database.server";
 import { hashPassword } from "./password.server";
 import type { RegisterInput } from "./validation";
 
@@ -1416,7 +1416,7 @@ export async function registerUser(
 
 ```ts
 // app/lib/auth/login.server.ts
-import { prisma } from "~/lib/database.server";
+import { prisma } from "~/server/database.server";
 import { DUMMY_HASH, verifyPassword } from "./password.server";
 import type { LoginFailureReason, LoginInput } from "./validation";
 
@@ -1584,7 +1584,7 @@ import { Form, Link, data, redirect } from "react-router";
 import type { Route } from "./+types/register";
 import { t } from "~/i18n";
 import { RegisterSchema } from "~/lib/auth/validation";
-import { registerUser } from "~/lib/auth/register.server";
+import { registerUser } from "~/server/auth/register.server";
 import { createSession } from "~/lib/auth/session.server";
 import { getClientIp } from "~/lib/auth/client-ip.server";
 
@@ -1717,7 +1717,7 @@ describe("getClientIp", () => {
 
 ```ts
 // app/lib/auth/client-ip.server.ts
-import { env } from "~/config/env.server";
+import { env } from "~/server/env.server";
 
 /** Sentinel when no trustworthy IP is available. Never block this value. */
 export const UNKNOWN_IP = "unknown";
@@ -1809,7 +1809,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { escalationDurationMs } from "~/config/security.server";
 import { applyIpBlock, findActiveIpBlock } from "~/lib/auth/ip-block.server";
 import { cleanupSecurityTables } from "~/lib/auth/cleanup.server";
-import { prisma } from "~/lib/database.server";
+import { prisma } from "~/server/database.server";
 import { resetDb } from "../helpers/db";
 
 describe("escalationDurationMs", () => {
@@ -1911,8 +1911,8 @@ Note on `updatedAt`: Prisma's `@updatedAt` overwrites on update, so the test set
 import { beforeEach, describe, expect, it } from "vitest";
 import { security } from "~/config/security.server";
 import { login } from "~/lib/auth/login.server";
-import { registerUser } from "~/lib/auth/register.server";
-import { prisma } from "~/lib/database.server";
+import { registerUser } from "~/server/auth/register.server";
+import { prisma } from "~/server/database.server";
 import { resetDb } from "../helpers/db";
 
 describe("login with brute-force protection", () => {
@@ -1977,7 +1977,7 @@ describe("login with brute-force protection", () => {
 
 ```ts
 // app/lib/auth/auth-log.server.ts
-import { prisma } from "~/lib/database.server";
+import { prisma } from "~/server/database.server";
 import type { LoginFailureReason } from "./validation";
 
 export async function recordAuthAttempt(p: {
@@ -2017,7 +2017,7 @@ export async function countRecentFailures(p: {
 ```ts
 // app/lib/auth/ip-block.server.ts
 import { escalationDurationMs, security } from "~/config/security.server";
-import { prisma } from "~/lib/database.server";
+import { prisma } from "~/server/database.server";
 import type { IpBlock } from "../../../prisma/generated/client";
 import { UNKNOWN_IP } from "./client-ip.server";
 
@@ -2046,7 +2046,7 @@ export async function applyIpBlock(ip: string, reason: string): Promise<IpBlock>
 ```ts
 // app/lib/auth/cleanup.server.ts
 import { security } from "~/config/security.server";
-import { prisma } from "~/lib/database.server";
+import { prisma } from "~/server/database.server";
 
 export async function cleanupSecurityTables(now: Date = new Date()) {
   const lookbackCutoff = new Date(now.getTime() - security.escalationLookbackMs);
@@ -2065,7 +2065,7 @@ export async function cleanupSecurityTables(now: Date = new Date()) {
 // scripts/cleanup.ts
 import "dotenv/config";
 import { cleanupSecurityTables } from "../app/lib/auth/cleanup.server";
-import { prisma } from "../app/lib/database.server";
+import { prisma } from "../app/server/database.server";
 
 const r = await cleanupSecurityTables();
 console.log(`Deleted ${r.ipBlocks} expired IP blocks and ${r.authLogs} old auth log rows.`);
@@ -2132,7 +2132,7 @@ In `login.tsx`, replace `authenticate(parsed.data)` with `login(parsed.data, get
 ```ts
 // tests/auth/roles.test.ts
 import { describe, expect, it } from "vitest";
-import { hasRole } from "~/lib/auth/roles";
+import { hasRole } from "~/shared/roles";
 
 describe("hasRole", () => {
   it("is hierarchical", () => {
@@ -2177,11 +2177,11 @@ describe("isPublicPath", () => {
 import { beforeEach, describe, expect, it } from "vitest";
 import { RouterContextProvider } from "react-router";
 import { authMiddleware } from "~/middleware/auth.server";
-import { userContext } from "~/lib/auth/context.server";
+import { userContext } from "~/server/auth/context.server";
 import { createSession } from "~/lib/auth/session.server";
-import { registerUser } from "~/lib/auth/register.server";
+import { registerUser } from "~/server/auth/register.server";
 import { applyIpBlock } from "~/lib/auth/ip-block.server";
-import { prisma } from "~/lib/database.server";
+import { prisma } from "~/server/database.server";
 import { requestWithCookie, resetDb } from "../helpers/db";
 
 async function run(request: Request) {
@@ -2317,7 +2317,7 @@ import { data, redirect, type MiddlewareFunction } from "react-router";
 import { isPublicPath } from "~/config/public-routes";
 import { t } from "~/i18n";
 import { getClientIp } from "~/lib/auth/client-ip.server";
-import { clientIpContext, sessionContext, userContext } from "~/lib/auth/context.server";
+import { clientIpContext, sessionContext, userContext } from "~/server/auth/context.server";
 import { findActiveIpBlock } from "~/lib/auth/ip-block.server";
 import { getSessionFromRequest, sessionCookie, touchSession } from "~/lib/auth/session.server";
 
@@ -2396,8 +2396,8 @@ export function loader() {
 import { Form, Link, Outlet } from "react-router";
 import type { Route } from "./+types/layout";
 import { t } from "~/i18n";
-import { requireUser } from "~/lib/auth/context.server";
-import { hasRole } from "~/lib/auth/roles";
+import { requireUser } from "~/server/auth/context.server";
+import { hasRole } from "~/shared/roles";
 
 export async function loader({ context }: Route.LoaderArgs) {
   const user = requireUser(context);
@@ -2440,7 +2440,7 @@ export default function Subjects() {
 // app/routes/admin/layout.tsx
 import { Outlet } from "react-router";
 import type { Route } from "./+types/layout";
-import { requireRole } from "~/lib/auth/context.server";
+import { requireRole } from "~/server/auth/context.server";
 
 export async function loader({ context }: Route.LoaderArgs) {
   requireRole(context, "ADMIN");
@@ -2469,7 +2469,7 @@ export default function AdminIndex() {
 // app/routes/admin/users.tsx
 import type { Route } from "./+types/users";
 import { t } from "~/i18n";
-import { requireRole } from "~/lib/auth/context.server";
+import { requireRole } from "~/server/auth/context.server";
 
 export async function loader({ context }: Route.LoaderArgs) {
   requireRole(context, "SYSTEM_ADMIN");
@@ -2520,7 +2520,7 @@ User can verify:
 ```ts
 // tests/content/blocks.test.ts
 import { describe, expect, it } from "vitest";
-import { ContentBlock, LessonContent } from "~/lib/content/blocks";
+import { ContentBlock, LessonContent } from "~/schemas/content-blocks";
 
 const ok = (b: unknown) => expect(ContentBlock.safeParse(b).success, JSON.stringify(b)).toBe(true);
 const bad = (b: unknown) =>
@@ -2571,7 +2571,7 @@ describe("ContentBlock", () => {
 ```ts
 // tests/content/direction.test.ts
 import { describe, expect, it } from "vitest";
-import { resolveDirection } from "~/lib/content/direction";
+import { resolveDirection } from "~/shared/direction";
 
 describe("resolveDirection", () => {
   it("uses the block override when present, else the subject direction", () => {
@@ -2719,7 +2719,7 @@ Add to `vitest.config.ts` test options: `environmentMatchGlobs: [["tests/**/*.te
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { LessonContent } from "~/components/lesson-content/LessonContent";
-import type { LessonContent as Blocks } from "~/lib/content/blocks";
+import type { LessonContent as Blocks } from "~/schemas/content-blocks";
 
 const blocks: Blocks = [
   { id: "h", type: "heading", level: 2, text: "Title" },
@@ -2792,7 +2792,7 @@ Add `import "@testing-library/jest-dom/vitest";` to `tests/setup.ts` and install
 
 ```tsx
 // app/components/lesson-content/RichText.tsx
-import type { RichText as RichTextT } from "~/lib/content/blocks";
+import type { RichText as RichTextT } from "~/schemas/content-blocks";
 
 export function RichText({ content }: { content: RichTextT }) {
   return (
@@ -2907,8 +2907,8 @@ export function List({ block, dirAttr }: BlockProps<"list">) {
 
 ```ts
 // app/components/lesson-content/types.ts
-import type { ContentBlock, ContentBlockType } from "~/lib/content/blocks";
-import type { TextDirection } from "~/lib/content/direction";
+import type { ContentBlock, ContentBlockType } from "~/schemas/content-blocks";
+import type { TextDirection } from "~/shared/direction";
 
 export type BlockOf<T extends ContentBlockType> = Extract<ContentBlock, { type: T }>;
 export interface BlockProps<T extends ContentBlockType> {
@@ -2923,8 +2923,12 @@ export interface BlockProps<T extends ContentBlockType> {
 
 ```tsx
 // app/components/lesson-content/LessonContent.tsx
-import type { ContentBlock, ContentBlockType, LessonContent as Blocks } from "~/lib/content/blocks";
-import { resolveDirection, type TextDirection } from "~/lib/content/direction";
+import type {
+  ContentBlock,
+  ContentBlockType,
+  LessonContent as Blocks,
+} from "~/schemas/content-blocks";
+import { resolveDirection, type TextDirection } from "~/shared/direction";
 import type { BlockProps } from "./types";
 import { Heading } from "./blocks/Heading";
 import { Paragraph } from "./blocks/Paragraph";
@@ -3055,11 +3059,13 @@ User can verify:
 
 ## Stage 6: Progression logic and storage
 
+> Folder layout changed after Stage 5 (see spec §4): pure code → `app/shared/`, server code → `app/server/<domain>/`, schemas → `app/schemas/`. Paths below were updated accordingly.
+
 ### Task 6.1: Unlock computation (pure) and subject tree
 
 **Files:**
 
-- Create: `app/lib/progress/unlock.ts` (pure, shared), `app/lib/progress/unlock.server.ts`, `tests/progress/unlock.test.ts`
+- Create: `app/shared/unlock.ts` (pure, shared), `app/server/progress/unlock.server.ts`, `tests/progress/unlock.test.ts`
 
 **Interfaces:**
 
@@ -3080,7 +3086,7 @@ User can verify:
 ```ts
 // tests/progress/unlock.test.ts
 import { describe, expect, it } from "vitest";
-import { computeTree, isLessonUnlocked, type SectionNode } from "~/lib/progress/unlock";
+import { computeTree, isLessonUnlocked, type SectionNode } from "~/shared/unlock";
 
 const L = (id: number, sortOrder: number) => ({
   id,
@@ -3152,7 +3158,7 @@ describe("computeTree", () => {
 - [ ] **Step 3: Implement**
 
 ```ts
-// app/lib/progress/unlock.ts  (pure, shared)
+// app/shared/unlock.ts  (pure, shared)
 export interface LessonNode {
   id: number;
   title: string;
@@ -3225,8 +3231,8 @@ export function isLessonUnlocked(tree: SectionState[], lessonId: number): boolea
 ```
 
 ```ts
-// app/lib/progress/unlock.server.ts
-import { prisma } from "~/lib/database.server";
+// app/server/progress/unlock.server.ts
+import { prisma } from "~/server/database.server";
 import { computeTree, type SectionState } from "./unlock";
 
 export async function getSubjectTree(userId: number, subjectId: number): Promise<SectionState[]> {
@@ -3255,7 +3261,7 @@ export async function getSubjectTree(userId: number, subjectId: number): Promise
 
 **Files:**
 
-- Create: `app/lib/progress/attempts.server.ts`, `tests/progress/attempts.test.ts`, `tests/helpers/content.ts`
+- Create: `app/server/progress/attempts.server.ts`, `tests/progress/attempts.test.ts`, `tests/helpers/content.ts`
 
 **Interfaces:**
 
@@ -3265,7 +3271,7 @@ export async function getSubjectTree(userId: number, subjectId: number): Promise
 
 ```ts
 // tests/helpers/content.ts
-import { prisma } from "~/lib/database.server";
+import { prisma } from "~/server/database.server";
 
 export async function makeSubjectWithLessons(
   lessonsPerSection: number[],
@@ -3308,11 +3314,11 @@ export async function makeSubjectWithLessons(
 ```ts
 // tests/progress/attempts.test.ts
 import { beforeEach, describe, expect, it } from "vitest";
-import { env } from "~/config/env.server";
-import { recordAttempt, effectivePassingScore } from "~/lib/progress/attempts.server";
-import { getSubjectTree } from "~/lib/progress/unlock.server";
-import { registerUser } from "~/lib/auth/register.server";
-import { prisma } from "~/lib/database.server";
+import { env } from "~/server/env.server";
+import { recordAttempt, effectivePassingScore } from "~/server/progress/attempts.server";
+import { getSubjectTree } from "~/server/progress/unlock.server";
+import { registerUser } from "~/server/auth/register.server";
+import { prisma } from "~/server/database.server";
 import { resetDb } from "../helpers/db";
 import { makeSubjectWithLessons } from "../helpers/content";
 
@@ -3383,9 +3389,9 @@ describe("recordAttempt", () => {
 - [ ] **Step 4: Implement**
 
 ```ts
-// app/lib/progress/attempts.server.ts
-import { env } from "~/config/env.server";
-import { prisma } from "~/lib/database.server";
+// app/server/progress/attempts.server.ts
+import { env } from "~/server/env.server";
+import { prisma } from "~/server/database.server";
 
 export function effectivePassingScore(lesson: { passingScore: number | null }): number {
   return lesson.passingScore ?? env.DEFAULT_LESSON_PASSING_SCORE;
@@ -3430,7 +3436,7 @@ export async function recordAttempt(p: { userId: number; lessonId: number; score
 
 **Files:**
 
-- Create: `app/lib/storage/storage.ts`, `app/lib/storage/local-disk.server.ts`, `app/lib/storage/index.server.ts`, `app/lib/storage/assets.server.ts`, `app/routes/assets.$.tsx`, `tests/storage/local-disk.test.ts`
+- Create: `app/server/storage/storage.ts`, `app/server/storage/local-disk.server.ts`, `app/server/storage/index.server.ts`, `app/server/storage/assets.server.ts`, `app/routes/assets.$.tsx`, `tests/storage/local-disk.test.ts`
 - Modify: `app/routes.ts`
 
 **Interfaces:**
@@ -3457,7 +3463,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import { LocalDiskStorage } from "~/lib/storage/local-disk.server";
+import { LocalDiskStorage } from "~/server/storage/local-disk.server";
 
 const dir = mkdtempSync(join(tmpdir(), "storage-"));
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
@@ -3486,7 +3492,7 @@ describe("LocalDiskStorage", () => {
 - [ ] **Step 3: Implement**
 
 ```ts
-// app/lib/storage/storage.ts  (shared types)
+// app/server/storage/storage.ts  (shared types)
 export interface StoredObject {
   body: ReadableStream<Uint8Array>;
   mimeType: string;
@@ -3501,7 +3507,7 @@ export interface StorageProvider {
 ```
 
 ```ts
-// app/lib/storage/local-disk.server.ts
+// app/server/storage/local-disk.server.ts
 import { createReadStream } from "node:fs";
 import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve, sep } from "node:path";
@@ -3558,8 +3564,8 @@ export class LocalDiskStorage implements StorageProvider {
 ```
 
 ```ts
-// app/lib/storage/index.server.ts
-import { env } from "~/config/env.server";
+// app/server/storage/index.server.ts
+import { env } from "~/server/env.server";
 import { LocalDiskStorage } from "./local-disk.server";
 import type { StorageProvider } from "./storage";
 
@@ -3576,9 +3582,9 @@ export function getStorage(): StorageProvider {
 ```
 
 ```ts
-// app/lib/storage/assets.server.ts
+// app/server/storage/assets.server.ts
 import { randomUUID } from "node:crypto";
-import { prisma } from "~/lib/database.server";
+import { prisma } from "~/server/database.server";
 import { getStorage } from "./index.server";
 
 const EXT: Record<string, string> = {
@@ -3627,7 +3633,7 @@ export async function assetUrlMap(assetIds: number[]): Promise<Record<number, st
 ```ts
 // app/routes/assets.$.tsx
 import type { Route } from "./+types/assets.$";
-import { getStorage } from "~/lib/storage/index.server";
+import { getStorage } from "~/server/storage/index.server";
 
 export async function loader({ params }: Route.LoaderArgs) {
   const key = params["*"];
@@ -3674,7 +3680,7 @@ User can verify:
 
 ```ts
 // prisma/seed-data/types.ts
-import type { LessonContent } from "../../app/lib/content/blocks";
+import type { LessonContent } from "../../app/schemas/content-blocks";
 
 export interface SeedLesson {
   title: string;
@@ -3704,7 +3710,7 @@ Create `placeholder.png` as a 64×64 solid PNG (generate with a tiny script, e.g
 
 ```ts
 // prisma/seed-data/genesis.ts
-import type { LessonContent } from "../../app/lib/content/blocks";
+import type { LessonContent } from "../../app/schemas/content-blocks";
 import type { SeedSubject } from "./types";
 
 const chapterLesson = (title: string, sortOrder: number) => ({
@@ -3782,7 +3788,7 @@ function chapters(...titles: string[]) {
 
 ```ts
 // prisma/seed-data/sample-ltr.ts
-import type { LessonContent } from "../../app/lib/content/blocks";
+import type { LessonContent } from "../../app/schemas/content-blocks";
 import type { SeedSubject } from "./types";
 
 const lesson = (title: string, sortOrder: number, passingScore?: number) => ({
@@ -3860,8 +3866,8 @@ export const sampleLtr: SeedSubject = {
 // tests/seed/seed.test.ts
 import { beforeEach, describe, expect, it } from "vitest";
 import { seedAll } from "../../prisma/seed-lib";
-import { prisma } from "~/lib/database.server";
-import { parseLessonContent } from "~/lib/content/lesson-content.server";
+import { prisma } from "~/server/database.server";
+import { parseLessonContent } from "~/server/lesson-content.server";
 import { resetDb } from "../helpers/db";
 
 describe("seed", () => {
@@ -3910,10 +3916,10 @@ describe("seed", () => {
 // prisma/seed-lib.ts
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { prisma } from "../app/lib/database.server";
-import { hashPassword } from "../app/lib/auth/password.server";
-import { serializeLessonContent } from "../app/lib/content/lesson-content.server";
-import { createAssetFromBuffer } from "../app/lib/storage/assets.server";
+import { prisma } from "../app/server/database.server";
+import { hashPassword } from "../app/server/auth/password.server";
+import { serializeLessonContent } from "../app/server/lesson-content.server";
+import { createAssetFromBuffer } from "../app/server/storage/assets.server";
 import { genesis } from "./seed-data/genesis";
 import { sampleLtr } from "./seed-data/sample-ltr";
 import type { SeedSubject } from "./seed-data/types";
@@ -4000,7 +4006,7 @@ export async function seedAll() {
 ```ts
 // prisma/seed.ts  (CLI entry used by `prisma db seed`)
 import "dotenv/config";
-import { prisma } from "../app/lib/database.server";
+import { prisma } from "../app/server/database.server";
 import { seedAll } from "./seed-lib";
 
 try {
@@ -4017,7 +4023,7 @@ try {
 
 **Files:**
 
-- Create: `app/lib/content/subjects.server.ts`, `app/lib/content/lessons.server.ts`, `app/routes/app/subjects.$slug.tsx`, `app/routes/app/subjects.$slug.lessons.$lessonId.tsx`, `tests/content/lesson-loader.test.ts`
+- Create: `app/server/content/subjects.server.ts`, `app/server/content/lessons.server.ts`, `app/routes/app/subjects.$slug.tsx`, `app/routes/app/subjects.$slug.lessons.$lessonId.tsx`, `tests/content/lesson-loader.test.ts`
 - Modify: `app/routes/app/subjects.tsx`, `app/routes.ts`
 
 **Interfaces:**
@@ -4029,11 +4035,11 @@ try {
 ```ts
 // tests/content/lesson-loader.test.ts
 import { beforeEach, describe, expect, it } from "vitest";
-import { registerUser } from "~/lib/auth/register.server";
-import { enrollUser } from "~/lib/content/subjects.server";
-import { getLessonForUser } from "~/lib/content/lessons.server";
-import { recordAttempt } from "~/lib/progress/attempts.server";
-import { prisma } from "~/lib/database.server";
+import { registerUser } from "~/server/auth/register.server";
+import { enrollUser } from "~/server/content/subjects.server";
+import { getLessonForUser } from "~/server/content/lessons.server";
+import { recordAttempt } from "~/server/progress/attempts.server";
+import { prisma } from "~/server/database.server";
 import { resetDb } from "../helpers/db";
 import { makeSubjectWithLessons } from "../helpers/content";
 
@@ -4082,8 +4088,8 @@ describe("getLessonForUser", () => {
 - [ ] **Step 3: Implement server modules**
 
 ```ts
-// app/lib/content/subjects.server.ts
-import { prisma } from "~/lib/database.server";
+// app/server/content/subjects.server.ts
+import { prisma } from "~/server/database.server";
 
 export async function listActiveSubjectsForUser(userId: number) {
   const subjects = await prisma.subject.findMany({
@@ -4117,15 +4123,15 @@ export function getSubjectBySlugForUser(userId: number, slug: string) {
 ```
 
 ```ts
-// app/lib/content/lessons.server.ts
+// app/server/content/lessons.server.ts
 import { data } from "react-router";
 import { t } from "~/i18n";
-import { prisma } from "~/lib/database.server";
+import { prisma } from "~/server/database.server";
 import { LessonContentError, parseLessonContent } from "./lesson-content.server";
 import { getSubjectBySlugForUser } from "./subjects.server";
-import { getSubjectTree } from "~/lib/progress/unlock.server";
-import { isLessonUnlocked } from "~/lib/progress/unlock";
-import { assetUrlMap } from "~/lib/storage/assets.server";
+import { getSubjectTree } from "~/server/progress/unlock.server";
+import { isLessonUnlocked } from "~/shared/unlock";
+import { assetUrlMap } from "~/server/storage/assets.server";
 
 export async function getLessonForUser(userId: number, slug: string, lessonId: number) {
   const subject = await getSubjectBySlugForUser(userId, slug);
@@ -4172,8 +4178,8 @@ layout("routes/app/layout.tsx", [
 import { Form, Link } from "react-router";
 import type { Route } from "./+types/subjects";
 import { t } from "~/i18n";
-import { requireUser } from "~/lib/auth/context.server";
-import { enrollUser, listActiveSubjectsForUser } from "~/lib/content/subjects.server";
+import { requireUser } from "~/server/auth/context.server";
+import { enrollUser, listActiveSubjectsForUser } from "~/server/content/subjects.server";
 
 export async function loader({ context }: Route.LoaderArgs) {
   const user = requireUser(context);
@@ -4218,9 +4224,9 @@ export default function Subjects({ loaderData }: Route.ComponentProps) {
 import { Link, data } from "react-router";
 import type { Route } from "./+types/subjects.$slug";
 import { t } from "~/i18n";
-import { requireUser } from "~/lib/auth/context.server";
-import { getSubjectBySlugForUser } from "~/lib/content/subjects.server";
-import { getSubjectTree } from "~/lib/progress/unlock.server";
+import { requireUser } from "~/server/auth/context.server";
+import { getSubjectBySlugForUser } from "~/server/content/subjects.server";
+import { getSubjectTree } from "~/server/progress/unlock.server";
 
 export async function loader({ context, params }: Route.LoaderArgs) {
   const user = requireUser(context);
@@ -4275,8 +4281,8 @@ export default function SubjectPage({ loaderData }: Route.ComponentProps) {
 import { Link } from "react-router";
 import type { Route } from "./+types/subjects.$slug.lessons.$lessonId";
 import { t } from "~/i18n";
-import { requireUser } from "~/lib/auth/context.server";
-import { getLessonForUser } from "~/lib/content/lessons.server";
+import { requireUser } from "~/server/auth/context.server";
+import { getLessonForUser } from "~/server/content/lessons.server";
 import { LessonContent } from "~/components/lesson-content/LessonContent";
 import { QuestionsPlaceholder } from "~/components/QuestionsPlaceholder";
 
@@ -4337,13 +4343,13 @@ Spec: `docs/superpowers/specs/2026-10-01-study-platform-foundation-design.md`. P
 
 - React Router v8 framework mode (middleware on by default). The single route guard is `app/middleware/auth.server.ts`, registered on `root.tsx`. Public paths are listed in `app/config/public-routes.ts`; everything else requires a session.
 - Server-only code lives in `*.server.ts`. Prisma is only imported from `app/lib/database.server.ts` consumers that are themselves `.server.ts`, or from route modules (loaders/actions/middleware are stripped from the client bundle). ESLint enforces this.
-- Shared pure modules (no Node/Prisma imports): `app/lib/content/blocks.ts`, `direction.ts`, `app/lib/auth/roles.ts`, `app/lib/auth/validation.ts`, `app/lib/progress/unlock.ts`, `app/i18n/*`.
+- Shared pure modules (no Node/Prisma imports): `app/lib/content/blocks.ts`, `direction.ts`, `app/lib/auth/roles.ts`, `app/lib/auth/validation.ts`, `app/shared/unlock.ts`, `app/i18n/*`.
 - Prisma 7 with `@prisma/adapter-mariadb`; `DATABASE_URL` is read in `prisma.config.ts`, not in the schema. Generated client: `prisma/generated/client`.
 - Lesson content is a JSON array of blocks validated by zod on every read and write (`lesson-content.server.ts`). Renderers live in `app/components/lesson-content/blocks/` and are registered in `LessonContent.tsx`; the registry is exhaustive over the union.
 - Content direction comes from `Subject.direction` with optional per-block `dir`. The UI shell is Hebrew RTL; strings go through `t()` in `app/i18n`.
-- Progression: `computeTree` in `app/lib/progress/unlock.ts` is the single source of unlock rules. `recordAttempt` is the only writer of `LessonAttempt`/`LessonProgress`.
+- Progression: `computeTree` in `app/shared/unlock.ts` is the single source of unlock rules. `recordAttempt` is the only writer of `LessonAttempt`/`LessonProgress`.
 - Brute-force settings are env-backed in `app/config/security.server.ts`; escalation steps are constants there. IpBlock has one row per IP and escalates in place.
-- Storage goes through `StorageProvider` (`app/lib/storage/`); only `local` exists.
+- Storage goes through `StorageProvider` (`app/server/storage/`); only `local` exists.
 
 ## Conventions
 

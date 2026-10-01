@@ -1,10 +1,10 @@
 import { data, redirect, type MiddlewareFunction } from "react-router";
 import { isPublicPath } from "~/config/public-routes";
 import { t } from "~/i18n";
-import { getClientIp } from "~/lib/auth/client-ip.server";
-import { clientIpContext, sessionContext, userContext } from "~/lib/auth/context.server";
-import { findActiveIpBlock } from "~/lib/auth/ip-block.server";
-import { getSessionFromRequest, sessionCookie, touchSession } from "~/lib/auth/session.server";
+import { getClientIp } from "~/server/auth/client-ip.server";
+import { clientIpContext, sessionContext, userContext } from "~/server/auth/context.server";
+import { findActiveIpBlock } from "~/server/auth/ip-block.server";
+import { getSessionFromRequest, sessionCookie, touchSession } from "~/server/auth/session.server";
 
 /**
  * The single route guard, registered on root.tsx so it runs for every request.

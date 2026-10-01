@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { escalationDurationMs } from "~/config/security.server";
-import { applyIpBlock, findActiveIpBlock } from "~/lib/auth/ip-block.server";
-import { cleanupSecurityTables } from "~/lib/auth/cleanup.server";
-import { UNKNOWN_IP } from "~/lib/auth/client-ip.server";
-import { prisma } from "~/lib/database.server";
+import { escalationDurationMs } from "~/server/security.server";
+import { applyIpBlock, findActiveIpBlock } from "~/server/auth/ip-block.server";
+import { cleanupSecurityTables } from "~/server/auth/cleanup.server";
+import { UNKNOWN_IP } from "~/server/auth/client-ip.server";
+import { prisma } from "~/server/database.server";
 import { resetDb } from "../helpers/db";
 
 const DAY = 86_400_000;
@@ -51,10 +51,10 @@ describe("applyIpBlock", () => {
   });
 
   it("findActiveIpBlock ignores expired rows", async () => {
-    const b = await applyIpBlock("1.2.3.4", "test");
+    const block = await applyIpBlock("1.2.3.4", "test");
     expect(await findActiveIpBlock("1.2.3.4")).not.toBeNull();
     await prisma.ipBlock.update({
-      where: { id: b.id },
+      where: { id: block.id },
       data: { expiresAt: new Date(Date.now() - 1) },
     });
     expect(await findActiveIpBlock("1.2.3.4")).toBeNull();
@@ -94,9 +94,9 @@ describe("cleanupSecurityTables", () => {
       ],
     });
 
-    const r = await cleanupSecurityTables();
-    expect(r.ipBlocks).toBe(1);
-    expect(r.authLogs).toBe(1);
+    const result = await cleanupSecurityTables();
+    expect(result.ipBlocks).toBe(1);
+    expect(result.authLogs).toBe(1);
     expect(await prisma.ipBlock.findUnique({ where: { ipAddress: "1.1.1.1" } })).not.toBeNull();
     expect(await prisma.ipBlock.findUnique({ where: { ipAddress: "2.2.2.2" } })).toBeNull();
     expect(await prisma.authLog.count()).toBe(1);

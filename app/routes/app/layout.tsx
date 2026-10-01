@@ -1,8 +1,8 @@
 import { Form, Link, Outlet } from "react-router";
 import type { Route } from "./+types/layout";
 import { t } from "~/i18n";
-import { requireUser } from "~/lib/auth/context.server";
-import { hasRole } from "~/lib/auth/roles";
+import { requireUser } from "~/server/auth/context.server";
+import { hasRole } from "~/shared/roles";
 
 export function loader({ context }: Route.LoaderArgs) {
   const user = requireUser(context);

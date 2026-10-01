@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { prisma } from "~/lib/database.server";
-import { hashPassword } from "~/lib/auth/password.server";
+import { prisma } from "~/server/database.server";
+import { hashPassword } from "~/server/auth/password.server";
 import {
   createSession,
   destroySession,
   getSessionFromRequest,
   touchSession,
-} from "~/lib/auth/session.server";
+} from "~/server/auth/session.server";
 import { requestWithCookie, resetDb } from "../helpers/db";
 
 async function makeUser(overrides: Partial<{ isDisabled: boolean }> = {}) {

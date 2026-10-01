@@ -1,7 +1,7 @@
 import { createContext, data, type RouterContextProvider } from "react-router";
 import type { User } from "../../../prisma/generated/client/client";
 import { t } from "~/i18n";
-import { hasRole, type Role } from "./roles";
+import { hasRole, type Role } from "~/shared/roles";
 import type { SessionWithUser } from "./session.server";
 
 /** Populated by authMiddleware for every guarded request. */

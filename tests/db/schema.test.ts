@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { prisma } from "~/lib/database.server";
+import { prisma } from "~/server/database.server";
 
 describe("database", () => {
   it("connects and sees the tables", async () => {

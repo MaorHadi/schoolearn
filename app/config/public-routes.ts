@@ -20,5 +20,5 @@ export function isPublicPath(pathname: string): boolean {
   // React Router fetches loader data for client navigations at `<path>.data`.
   const base = pathname.endsWith(".data") ? pathname.slice(0, -".data".length) : pathname;
   if (EXACT.has(base)) return true;
-  return PREFIXES.some((p) => pathname.startsWith(p));
+  return PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }

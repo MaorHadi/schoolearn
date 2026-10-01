@@ -1,4 +1,4 @@
-import { env } from "~/config/env.server";
+import { env } from "~/server/env.server";
 
 /** Sentinel when no trustworthy IP is available. Never block this value. */
 export const UNKNOWN_IP = "unknown";
@@ -11,8 +11,8 @@ export interface ClientIpOptions {
 }
 
 function normalize(ip: string): string {
-  const t = ip.trim();
-  return t.startsWith("::ffff:") ? t.slice("::ffff:".length) : t;
+  const trimmed = ip.trim();
+  return trimmed.startsWith("::ffff:") ? trimmed.slice("::ffff:".length) : trimmed;
 }
 
 /**
@@ -22,9 +22,9 @@ function normalize(ip: string): string {
  * `trustedProxyCount` from the right, which is the address appended by the first trusted
  * proxy. Anything further left was supplied by the client and can be spoofed.
  */
-export function getClientIp(request: Request, opts: ClientIpOptions = {}): string {
-  const trusted = opts.trustedProxyCount ?? env.TRUSTED_PROXY_COUNT;
-  const socket = opts.socketAddress ? normalize(opts.socketAddress) : null;
+export function getClientIp(request: Request, options: ClientIpOptions = {}): string {
+  const trusted = options.trustedProxyCount ?? env.TRUSTED_PROXY_COUNT;
+  const socket = options.socketAddress ? normalize(options.socketAddress) : null;
   if (trusted <= 0) return socket ?? UNKNOWN_IP;
 
   const header = request.headers.get("x-forwarded-for");
@@ -33,6 +33,6 @@ export function getClientIp(request: Request, opts: ClientIpOptions = {}): strin
   const hops = header.split(",").map(normalize).filter(Boolean);
   if (hops.length === 0) return socket ?? UNKNOWN_IP;
 
-  const idx = Math.max(0, hops.length - trusted);
-  return hops[idx] ?? UNKNOWN_IP;
+  const index = Math.max(0, hops.length - trusted);
+  return hops[index] ?? UNKNOWN_IP;
 }

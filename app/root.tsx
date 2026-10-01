@@ -7,7 +7,7 @@ import {
   ScrollRestoration,
 } from "react-router";
 import type { Route } from "./+types/root";
-import { authMiddleware } from "~/middleware/auth.server";
+import { authMiddleware } from "~/server/auth/middleware.server";
 import "./app.css";
 
 /** Single route guard for the whole app. See app/config/public-routes.ts for the allowlist. */

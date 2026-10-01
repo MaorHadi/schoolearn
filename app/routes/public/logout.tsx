@@ -1,6 +1,6 @@
 import { redirect } from "react-router";
 import type { Route } from "./+types/logout";
-import { destroySession } from "~/lib/auth/session.server";
+import { destroySession } from "~/server/auth/session.server";
 
 /** Logout is POST-only so a crafted link cannot log a user out. */
 export async function action({ request }: Route.ActionArgs) {

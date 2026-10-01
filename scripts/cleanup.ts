@@ -1,11 +1,13 @@
 // Run periodically (e.g. nightly cron): `npm run cleanup`
 import "dotenv/config";
-import { cleanupSecurityTables } from "../app/lib/auth/cleanup.server";
-import { prisma } from "../app/lib/database.server";
+import { cleanupSecurityTables } from "../app/server/auth/cleanup.server";
+import { prisma } from "../app/server/database.server";
 
 try {
-  const r = await cleanupSecurityTables();
-  console.log(`Deleted ${r.ipBlocks} expired IP block(s) and ${r.authLogs} old auth log row(s).`);
+  const result = await cleanupSecurityTables();
+  console.log(
+    `Deleted ${result.ipBlocks} expired IP block(s) and ${result.authLogs} old auth log row(s).`,
+  );
 } finally {
   await prisma.$disconnect();
 }

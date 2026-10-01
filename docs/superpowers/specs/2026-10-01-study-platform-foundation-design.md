@@ -46,72 +46,55 @@ with TODOs.
 
 ## 4. Folder structure
 
+Files are grouped by role, not dumped under a generic `lib/`. The `.server.ts` suffix still
+marks every module that must never reach the client bundle.
+
 ```
+env.schema.ts                    # zod schema for .env (pure); lives next to .env / .env.example
 app/
-  root.tsx                       # <html lang="he" dir="rtl">, global layout, error boundary
+  root.tsx                       # <html lang="he" dir="rtl">, registers the auth middleware
   routes.ts                      # route tree; public vs guarded
   entry.server.tsx / entry.client.tsx
-  i18n/
-    he.ts                        # UI strings
-    index.ts                     # t()
+  app.css
+  schemas/                       # zod schemas + inferred types, client-safe
+    content-blocks.ts            # lesson content block union
+    auth.ts                      # Register/Login schemas, LoginFailureReason
+  shared/                        # pure helpers used on both sides, client-safe
+    roles.ts                     # Role, ROLE_RANK, hasRole()
+    direction.ts                 # TextDirection, resolveDirection()
+    unlock.ts                    # (Stage 6) computeTree(), isLessonUnlocked()
   config/
-    env.server.ts                # zod-validated process.env -> typed Env object
-    security.server.ts           # brute-force + session settings (env-backed) and escalation steps (code)
     public-routes.ts             # explicit public allowlist
-  lib/
-    database.server.ts           # Prisma singleton
+  i18n/
+    he.ts, index.ts              # UI strings and t()
+  server/                        # server-only modules
+    env.server.ts                # parses process.env through /env.schema.ts once
+    database.server.ts           # Prisma client singleton
+    security.server.ts           # brute-force thresholds (env) + escalation table (code)
+    lesson-content.server.ts     # parse/serialize Lesson.content
     auth/
-      password.server.ts         # argon2id hash / verify
-      session.server.ts          # create, load, touch, destroy; cookie (de)serialization
-      auth-log.server.ts         # record attempt, count recent failures (by ip / by username)
-      ip-block.server.ts         # find active block, create with escalation, cleanup
-      login.server.ts            # login orchestration (checks -> verify -> session)
-      register.server.ts
-      roles.ts                   # Role mirror, hierarchy, hasRole()  (shared)
-      client-ip.server.ts        # trusted-proxy aware IP extraction
-      cleanup.server.ts          # expire IpBlocks, prune AuthLogs
-    content/
-      blocks.ts                  # zod discriminated union of content blocks (shared)
-      direction.ts               # resolveDirection(subjectDir, blockDir)  (shared)
-      lesson-content.server.ts   # parse/validate on read and write
-      subjects.server.ts, sections.server.ts, lessons.server.ts
-    progress/
-      unlock.server.ts           # isLessonUnlocked, isSectionUnlocked, getSubjectTree
-      attempts.server.ts         # recordAttempt(): writes LessonAttempt + upserts LessonProgress
-    storage/
-      storage.ts                 # StorageProvider interface (shared types)
-      local-disk.server.ts       # implementation writing under STORAGE_LOCAL_DIR
-      index.server.ts            # getStorage() factory chosen by env
-      assets.server.ts           # Asset model helpers
-  middleware/
-    auth.server.ts               # route guard; populates context
+      password.server.ts, session.server.ts, login.server.ts, register.server.ts
+      client-ip.server.ts, auth-log.server.ts, ip-block.server.ts, cleanup.server.ts
+      context.server.ts          # userContext, requireUser(), requireRole()
+      middleware.server.ts       # the route guard
+    content/                     # (Stage 7) subjects, lessons queries
+    progress/                    # (Stage 6) unlock.server.ts, attempts.server.ts
+    storage/                     # (Stage 6) StorageProvider, local-disk, assets
   components/
-    lesson-content/
-      LessonContent.tsx          # dispatcher
-      blocks/Heading.tsx, Paragraph.tsx, Quote.tsx, Image.tsx, List.tsx
-      RichText.tsx               # inline bold/italic/highlight renderer
+    lesson-content/              # LessonContent dispatcher, RichText, blocks/*
     QuestionsPlaceholder.tsx
   routes/
-    public/login.tsx, register.tsx, logout.tsx
-    app/layout.tsx               # requires user
-    app/subjects.tsx             # subject picker + enroll action
-    app/subjects.$slug.tsx       # section/lesson tree with lock state
-    app/subjects.$slug.lessons.$lessonId.tsx   # content + questions placeholder
-    assets.$.tsx                 # resource route streaming stored assets
-    admin/layout.tsx             # requireRole(ADMIN); stubs
-    system-admin/layout.tsx, index.tsx, users.tsx   # requireRole(SYSTEM_ADMIN); stubs
+    home.tsx                     # redirects to /subjects
+    public/                      # login, register, logout
+    app/                         # layout (any user), subjects, subject tree, lesson page
+    admin/                       # layout (ADMIN+), content editor stub
+    system-admin/                # layout (SYSTEM_ADMIN), settings stub, users stub
+    assets.$.tsx                 # (Stage 6) streams stored assets
 prisma/
-  schema.prisma
-  seed.ts
-  seed-data/
-    genesis.ts                   # subject 1 (Hebrew, RTL)
-    sample-ltr.ts                # subject 2 (English, LTR dummy)
-    placeholder.png
+  schema.prisma, seed.ts, seed-lib.ts, seed-data/
 scripts/
-  cleanup.ts
-  check-no-subject-leakage.ts
-docker-compose.yml  .env.example  README.md  CLAUDE.md
-eslint.config.js  .prettierrc
+  cleanup.ts, check-no-subject-leakage.ts
+tests/                           # mirrors app/; helpers/db.ts has resetDb + requestWithCookie
 ```
 
 ## 5. Prisma schema

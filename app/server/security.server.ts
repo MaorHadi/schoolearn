@@ -25,6 +25,6 @@ export const security = {
 
 /** Block duration for the n-th strike, clamped to the escalation table. */
 export function escalationDurationMs(strikeCount: number): number {
-  const idx = Math.min(Math.max(strikeCount, 1), IP_BLOCK_ESCALATION_MINUTES.length) - 1;
-  return (IP_BLOCK_ESCALATION_MINUTES[idx] ?? IP_BLOCK_ESCALATION_MINUTES[0]) * MINUTE_MS;
+  const index = Math.min(Math.max(strikeCount, 1), IP_BLOCK_ESCALATION_MINUTES.length) - 1;
+  return (IP_BLOCK_ESCALATION_MINUTES[index] ?? IP_BLOCK_ESCALATION_MINUTES[0]) * MINUTE_MS;
 }

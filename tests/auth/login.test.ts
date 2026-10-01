@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { authenticate } from "~/lib/auth/login.server";
-import { registerUser } from "~/lib/auth/register.server";
-import { prisma } from "~/lib/database.server";
+import { authenticate } from "~/server/auth/login.server";
+import { registerUser } from "~/server/auth/register.server";
+import { prisma } from "~/server/database.server";
 import { resetDb } from "../helpers/db";
 
 describe("authenticate", () => {
@@ -11,8 +11,8 @@ describe("authenticate", () => {
   });
 
   it("succeeds with correct credentials", async () => {
-    const r = await authenticate({ username: "alice", password: "password1" });
-    expect(r.ok).toBe(true);
+    const result = await authenticate({ username: "alice", password: "password1" });
+    expect(result.ok).toBe(true);
   });
 
   it("reports BAD_PASSWORD, USER_NOT_FOUND, USER_DISABLED", async () => {

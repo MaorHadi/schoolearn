@@ -1,7 +1,7 @@
 import { createCookie } from "react-router";
 import type { Session, User } from "../../../prisma/generated/client/client";
-import { env } from "~/config/env.server";
-import { prisma } from "~/lib/database.server";
+import { env } from "~/server/env.server";
+import { prisma } from "~/server/database.server";
 
 export type SessionWithUser = Session & { user: User };
 

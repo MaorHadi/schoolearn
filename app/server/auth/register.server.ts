@@ -1,6 +1,6 @@
-import { prisma } from "~/lib/database.server";
+import { prisma } from "~/server/database.server";
 import { hashPassword } from "./password.server";
-import type { RegisterInput } from "./validation";
+import type { RegisterInput } from "~/schemas/auth";
 
 export type RegisterResult = { ok: true; userId: number } | { ok: false };
 

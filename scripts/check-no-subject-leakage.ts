@@ -19,8 +19,8 @@ const FORBIDDEN = [
 
 function walk(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
-    const p = join(dir, name);
-    return statSync(p).isDirectory() ? walk(p) : [p];
+    const path = join(dir, name);
+    return statSync(path).isDirectory() ? walk(path) : [path];
   });
 }
 

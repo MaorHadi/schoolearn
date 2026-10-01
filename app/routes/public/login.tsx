@@ -1,10 +1,10 @@
 import { Form, Link, data, redirect } from "react-router";
 import type { Route } from "./+types/login";
 import { t } from "~/i18n";
-import { LoginSchema } from "~/lib/auth/validation";
-import { login } from "~/lib/auth/login.server";
-import { createSession } from "~/lib/auth/session.server";
-import { getClientIp } from "~/lib/auth/client-ip.server";
+import { LoginSchema } from "~/schemas/auth";
+import { login } from "~/server/auth/login.server";
+import { createSession } from "~/server/auth/session.server";
+import { getClientIp } from "~/server/auth/client-ip.server";
 
 /** Only allow same-origin relative paths as a post-login destination. */
 function safeRedirect(to: string | null): string {

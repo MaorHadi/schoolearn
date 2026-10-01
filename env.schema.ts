@@ -1,8 +1,11 @@
+// Schema for the variables in .env / .env.example. Pure: no process.env access here.
+// app/server/env.server.ts parses process.env through this once at startup.
 import { z } from "zod";
 
-const intFrom = (def: number, min = 0) => z.coerce.number().int().min(min).default(def);
+const intFrom = (defaultValue: number, min = 0) =>
+  z.coerce.number().int().min(min).default(defaultValue);
 
-const EnvSchema = z
+export const EnvSchema = z
   .object({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
     DATABASE_URL: z.string().min(1),
@@ -22,7 +25,7 @@ const EnvSchema = z
     SEED_ADMIN_PASSWORD: z.string().optional(),
     SEED_ADMIN_EMAIL: z.string().optional(),
   })
-  .refine((e) => e.AUTH_IP_MAX_FAILURES > e.AUTH_USERNAME_MAX_FAILURES, {
+  .refine((values) => values.AUTH_IP_MAX_FAILURES > values.AUTH_USERNAME_MAX_FAILURES, {
     message:
       "AUTH_IP_MAX_FAILURES must be greater than AUTH_USERNAME_MAX_FAILURES (many users share one IP)",
     path: ["AUTH_IP_MAX_FAILURES"],
@@ -33,20 +36,11 @@ export type Env = z.infer<typeof EnvSchema>;
 /** Parse and validate raw environment variables. Empty strings count as unset. */
 export function parseEnv(raw: Record<string, string | undefined>): Env {
   const cleaned = Object.fromEntries(
-    Object.entries(raw).filter(([, v]) => v !== "" && v !== undefined),
+    Object.entries(raw).filter(([, value]) => value !== "" && value !== undefined),
   );
   const result = EnvSchema.safeParse(cleaned);
   if (!result.success) {
     throw new Error("Invalid environment:\n" + JSON.stringify(result.error.issues, null, 2));
   }
   return result.data;
-}
-
-export const env: Env = parseEnv(process.env);
-
-if (env.NODE_ENV === "production" && env.TRUSTED_PROXY_COUNT === 0) {
-  console.warn(
-    "[security] TRUSTED_PROXY_COUNT=0 in production: client IPs resolve to 'unknown', so per-IP " +
-      "blocking is inactive. Run behind a reverse proxy and set TRUSTED_PROXY_COUNT to the number of trusted hops.",
-  );
 }

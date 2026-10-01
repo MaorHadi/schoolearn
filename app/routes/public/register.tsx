@@ -1,10 +1,10 @@
 import { Form, Link, data, redirect } from "react-router";
 import type { Route } from "./+types/register";
 import { t } from "~/i18n";
-import { RegisterSchema } from "~/lib/auth/validation";
-import { registerUser } from "~/lib/auth/register.server";
-import { createSession } from "~/lib/auth/session.server";
-import { getClientIp } from "~/lib/auth/client-ip.server";
+import { RegisterSchema } from "~/schemas/auth";
+import { registerUser } from "~/server/auth/register.server";
+import { createSession } from "~/server/auth/session.server";
+import { getClientIp } from "~/server/auth/client-ip.server";
 
 export async function action({ request }: Route.ActionArgs) {
   const form = Object.fromEntries(await request.formData());

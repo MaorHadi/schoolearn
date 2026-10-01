@@ -1,10 +1,10 @@
-import { security } from "~/config/security.server";
-import { prisma } from "~/lib/database.server";
+import { security } from "~/server/security.server";
+import { prisma } from "~/server/database.server";
 import { countRecentFailures, recordAuthAttempt } from "./auth-log.server";
 import { UNKNOWN_IP } from "./client-ip.server";
 import { applyIpBlock, findActiveIpBlock } from "./ip-block.server";
 import { DUMMY_HASH, verifyPassword } from "./password.server";
-import type { LoginFailureReason, LoginInput } from "./validation";
+import type { LoginFailureReason, LoginInput } from "~/schemas/auth";
 
 export type AuthResult = { ok: true; userId: number } | { ok: false; reason: LoginFailureReason };
 

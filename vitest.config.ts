@@ -8,5 +8,6 @@ export default defineConfig({
     include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
     setupFiles: ["tests/setup.ts"],
     fileParallelism: false,
+    // Component tests opt into jsdom with a `// @vitest-environment jsdom` docblock.
   },
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hasRole } from "~/lib/auth/roles";
+import { hasRole } from "~/shared/roles";
 
 describe("hasRole", () => {
   it("is hierarchical: SYSTEM_ADMIN > ADMIN > USER", () => {

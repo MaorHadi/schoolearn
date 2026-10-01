@@ -1,5 +1,5 @@
-import { escalationDurationMs, security } from "~/config/security.server";
-import { prisma } from "~/lib/database.server";
+import { escalationDurationMs, security } from "~/server/security.server";
+import { prisma } from "~/server/database.server";
 import type { IpBlock } from "../../../prisma/generated/client/client";
 import { UNKNOWN_IP } from "./client-ip.server";
 

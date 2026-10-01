@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseEnv } from "~/config/env.server";
+import { parseEnv } from "../../env.schema";
 
 const base = { DATABASE_URL: "mysql://x", SESSION_SECRET: "s".repeat(16) };
 
