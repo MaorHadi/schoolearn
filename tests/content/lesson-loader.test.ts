@@ -55,6 +55,28 @@ describe("subjects", () => {
     expect(enrolled.subjects).toHaveLength(0);
   });
 
+  it("includes theme and lesson progress counts per subject", async () => {
+    const { subject, lessonIds } = await makeSubjectWithLessons([2, 1]);
+    await prisma.subject.update({
+      where: { id: subject.id },
+      data: { accentColor: "#059669", icon: "flask-conical" },
+    });
+    await enrollUser(userId, subject.id);
+    const first = lessonIds[0]?.[0];
+    if (!first) throw new Error("fixture");
+    await recordAttempt({ userId, lessonId: first, score: 100 });
+    await recordAttempt({ userId, lessonId: first, score: 50 }); // retake must not double count
+
+    const [listed] = await listActiveSubjectsForUser(userId);
+    expect(listed).toMatchObject({
+      accentColor: "#059669",
+      icon: "flask-conical",
+      totalLessons: 3,
+      completedLessons: 1,
+      enrolled: true,
+    });
+  });
+
   it("getSubjectBySlugForUser requires enrollment and an active subject", async () => {
     const { subject } = await makeSubjectWithLessons([1]);
     expect(await getSubjectBySlugForUser(userId, subject.slug)).toBeNull();

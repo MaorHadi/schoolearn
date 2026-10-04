@@ -7,24 +7,31 @@ import {
   ScrollRestoration,
 } from "react-router";
 import type { Route } from "./+types/root";
+import { useRouteLoaderData } from "react-router";
 import { t } from "~/i18n";
 import { authMiddleware } from "~/server/auth/middleware.server";
+import { getTheme } from "~/server/theme.server";
+import "@fontsource-variable/heebo";
+import "@fontsource-variable/noto-serif-hebrew";
 import "./app.css";
 
 /** Single route guard for the whole app. See app/config/public-routes.ts for the allowlist. */
 export const middleware: Route.MiddlewareFunction[] = [authMiddleware];
 
-/** A root loader forces the middleware to run on every client-side navigation as well. */
-export function loader() {
-  return null;
+/** Runs on every navigation (which also forces the middleware to run); supplies the theme. */
+export async function loader({ request }: Route.LoaderArgs) {
+  return { theme: await getTheme(request) };
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const rootData = useRouteLoaderData<typeof loader>("root");
+  const theme = rootData?.theme ?? undefined;
   return (
-    <html lang="he" dir="rtl">
+    <html lang="he" dir="rtl" data-theme={theme}>
       <head>
         <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="color-scheme" content={theme ?? "light dark"} />
         <Meta />
         <Links />
       </head>

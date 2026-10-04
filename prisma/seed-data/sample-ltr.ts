@@ -60,6 +60,8 @@ export const sampleLtr: SeedSubject = {
   locale: "en",
   direction: "ltr",
   sortOrder: 99,
+  accentColor: "#059669",
+  icon: "flask-conical",
   sections: [
     {
       title: "Basics",

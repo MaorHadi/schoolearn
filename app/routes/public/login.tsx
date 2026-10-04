@@ -1,10 +1,11 @@
-import { Form, Link, data, redirect } from "react-router";
+import { Form, Link, data, redirect, useNavigation } from "react-router";
 import type { Route } from "./+types/login";
+import { AuthPage, Field } from "~/components/AuthPage";
 import { t } from "~/i18n";
 import { LoginSchema } from "~/schemas/auth";
+import { getClientIp } from "~/server/auth/client-ip.server";
 import { login } from "~/server/auth/login.server";
 import { replaceSession } from "~/server/auth/session.server";
-import { getClientIp } from "~/server/auth/client-ip.server";
 import { safeRedirect } from "~/shared/safe-redirect";
 
 export async function action({ request }: Route.ActionArgs) {
@@ -22,24 +23,41 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Login({ actionData }: Route.ComponentProps) {
+  const navigation = useNavigation();
+  const busy = navigation.state !== "idle";
   return (
-    <main className="container">
-      <h1>{t("auth.login")}</h1>
-      <Form method="post" className="form">
-        <label>
-          {t("auth.username")}
-          <input name="username" autoComplete="username" required />
-        </label>
-        <label>
-          {t("auth.password")}
-          <input name="password" type="password" autoComplete="current-password" required />
-        </label>
-        {actionData?.error ? <p role="alert">{actionData.error}</p> : null}
-        <button type="submit">{t("auth.login")}</button>
+    <AuthPage title={t("auth.login")} lead={t("auth.loginLead")}>
+      <Form method="post" className="form" noValidate>
+        <Field label={t("auth.username")}>
+          <input
+            className="field__input"
+            name="username"
+            autoComplete="username"
+            required
+            autoFocus
+          />
+        </Field>
+        <Field label={t("auth.password")}>
+          <input
+            className="field__input"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            required
+          />
+        </Field>
+        {actionData?.error ? (
+          <p className="alert" role="alert">
+            {actionData.error}
+          </p>
+        ) : null}
+        <button type="submit" className="btn btn--primary btn--block" disabled={busy}>
+          {busy ? t("auth.loggingIn") : t("auth.login")}
+        </button>
       </Form>
-      <p>
+      <p className="auth__switch">
         {t("auth.noAccount")} <Link to="/register">{t("auth.register")}</Link>
       </p>
-    </main>
+    </AuthPage>
   );
 }

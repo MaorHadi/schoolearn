@@ -115,6 +115,9 @@ model Subject {
   direction   TextDirection // content direction; UI shell stays RTL
   isActive    Boolean       @default(true)
   sortOrder   Int           @default(0)
+  /// Per-subject theme, stored as data so no code knows about a specific subject.
+  accentColor String        @default("#2563EB") // hex, drives the subject's line/accent color
+  icon        String        @default("book-open") // lucide icon name (kebab-case)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   sections    Section[]

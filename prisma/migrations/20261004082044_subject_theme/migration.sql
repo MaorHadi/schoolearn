@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `Subject` ADD COLUMN `accentColor` VARCHAR(191) NOT NULL DEFAULT '#2563EB',
+    ADD COLUMN `icon` VARCHAR(191) NOT NULL DEFAULT 'book-open';

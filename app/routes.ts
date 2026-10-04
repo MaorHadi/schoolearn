@@ -8,6 +8,7 @@ export default [
   route("register", "routes/public/register.tsx"),
   route("logout", "routes/public/logout.tsx"),
   route("media/*", "routes/media.$.tsx"),
+  route("theme", "routes/theme.tsx"),
 
   // Guarded: any signed-in user
   layout("routes/app/layout.tsx", [

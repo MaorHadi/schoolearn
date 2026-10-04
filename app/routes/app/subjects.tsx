@@ -1,12 +1,14 @@
-import { Form, Link, data } from "react-router";
+import { data } from "react-router";
 import type { Route } from "./+types/subjects";
+import { SubjectCard } from "~/components/SubjectCard";
 import { t } from "~/i18n";
 import { requireUser } from "~/server/auth/context.server";
 import { enrollUser, listActiveSubjectsForUser } from "~/server/content/subjects.server";
 
-export async function loader({ context }: Route.LoaderArgs) {
+export async function loader({ request, context }: Route.LoaderArgs) {
   const user = requireUser(context);
-  return { subjects: await listActiveSubjectsForUser(user.id) };
+  const welcome = new URL(request.url).searchParams.has("welcome");
+  return { subjects: await listActiveSubjectsForUser(user.id), welcome };
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -20,25 +22,33 @@ export async function action({ request, context }: Route.ActionArgs) {
 }
 
 export default function Subjects({ loaderData }: Route.ComponentProps) {
+  const { subjects, welcome } = loaderData;
+  const enrolledCount = subjects.filter((subject) => subject.enrolled).length;
+
   return (
-    <main className="container">
-      <h1>{t("subjects.title")}</h1>
-      <ul className="subject-list">
-        {loaderData.subjects.map((subject) => (
-          <li key={subject.id} className="card">
-            <h2 dir={subject.direction}>{subject.name}</h2>
-            {subject.description ? <p dir={subject.direction}>{subject.description}</p> : null}
-            {subject.enrolled ? (
-              <Link to={`/subjects/${subject.slug}`}>{t("subjects.open")}</Link>
-            ) : (
-              <Form method="post">
-                <input type="hidden" name="subjectId" value={subject.id} />
-                <button type="submit">{t("subjects.enroll")}</button>
-              </Form>
-            )}
-          </li>
-        ))}
-      </ul>
+    <main className="container page">
+      {welcome ? (
+        <p className="banner" role="status">
+          {t("subjects.welcome")}
+        </p>
+      ) : null}
+
+      <header className="page__head">
+        <h1 className="page__title">{t("subjects.title")}</h1>
+        <p className="page__lead">
+          {enrolledCount === 0 ? t("subjects.leadNew") : t("subjects.leadReturning")}
+        </p>
+      </header>
+
+      {subjects.length === 0 ? (
+        <p className="empty">{t("subjects.empty")}</p>
+      ) : (
+        <div className="subject-grid">
+          {subjects.map((subject) => (
+            <SubjectCard key={subject.id} subject={subject} />
+          ))}
+        </div>
+      )}
     </main>
   );
 }

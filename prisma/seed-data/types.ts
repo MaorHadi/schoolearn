@@ -21,5 +21,8 @@ export interface SeedSubject {
   locale: string;
   direction: "rtl" | "ltr";
   sortOrder: number;
+  /** Validated by SubjectThemeSchema at seed time. */
+  accentColor: string;
+  icon: string;
   sections: SeedSection[];
 }

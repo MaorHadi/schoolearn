@@ -2,7 +2,7 @@
  * Explicit allowlist of paths reachable without a session. Everything else is guarded
  * by app/server/auth/middleware.server.ts. Keep this list short and deliberate.
  */
-const EXACT = new Set(["/login", "/register", "/logout", "/favicon.ico"]);
+const EXACT = new Set(["/login", "/register", "/logout", "/theme", "/favicon.ico"]);
 
 // Stored assets, plus Vite dev-server and build-asset paths.
 const PREFIXES = [

@@ -59,6 +59,8 @@ export const genesis: SeedSubject = {
   locale: "he",
   direction: "rtl",
   sortOrder: 1,
+  accentColor: "#7C3AED",
+  icon: "scroll",
   sections: [
     {
       title: "אברהם: הבטחה ומסע",

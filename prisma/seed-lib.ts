@@ -8,6 +8,7 @@ import { createAssetFromBuffer } from "../app/server/storage/assets.server";
 import { genesis } from "./seed-data/genesis";
 import { sampleLtr } from "./seed-data/sample-ltr";
 import type { SeedSubject } from "./seed-data/types";
+import { SubjectThemeSchema } from "../app/shared/subject-theme";
 
 /** Stable key so re-running the seed finds the same asset instead of uploading again. */
 const PLACEHOLDER_KEY = "seed-placeholder/placeholder.png";
@@ -43,23 +44,22 @@ async function seedPlaceholderAsset(): Promise<number> {
 
 /** sortOrder is not unique, so look up by (parent, sortOrder) then create or update. */
 async function seedSubject(definition: SeedSubject, assetId: number): Promise<void> {
+  const theme = SubjectThemeSchema.parse({
+    accentColor: definition.accentColor,
+    icon: definition.icon,
+  });
+  const subjectData = {
+    name: definition.name,
+    description: definition.description,
+    locale: definition.locale,
+    direction: definition.direction,
+    sortOrder: definition.sortOrder,
+    ...theme,
+  };
   const subject = await prisma.subject.upsert({
     where: { slug: definition.slug },
-    create: {
-      slug: definition.slug,
-      name: definition.name,
-      description: definition.description,
-      locale: definition.locale,
-      direction: definition.direction,
-      sortOrder: definition.sortOrder,
-    },
-    update: {
-      name: definition.name,
-      description: definition.description,
-      locale: definition.locale,
-      direction: definition.direction,
-      sortOrder: definition.sortOrder,
-    },
+    create: { slug: definition.slug, ...subjectData },
+    update: subjectData,
   });
 
   for (const sectionDefinition of definition.sections) {

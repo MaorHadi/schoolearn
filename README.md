@@ -169,8 +169,17 @@ npm run db:up
 npm test
 ```
 
-Tests live in `tests/` mirroring `app/`. Database tests reset all tables, so point
-`DATABASE_URL` at the Docker database, never at anything you care about.
+Tests live in `tests/` mirroring `app/`. Database tests reset all tables, so they always run
+against a separate database, `study_test`, in the same container (`tests/setup.ts` forces
+`DATABASE_URL`; override with `TEST_DATABASE_URL`). Create and migrate it once:
+
+```bash
+docker exec schoolearn-db-1 mariadb -ustudy -pstudy -e "CREATE DATABASE IF NOT EXISTS study_test;"
+npm run db:test:migrate
+```
+
+Re-run `npm run db:test:migrate` after adding a migration. Your seeded dev database is never touched
+by tests.
 
 ## Not yet built
 

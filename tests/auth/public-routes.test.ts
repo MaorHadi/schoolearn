@@ -7,6 +7,7 @@ describe("isPublicPath", () => {
       "/login",
       "/register",
       "/logout",
+      "/theme",
       "/login.data",
       "/register.data",
       "/media/abc.png",

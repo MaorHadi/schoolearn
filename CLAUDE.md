@@ -65,7 +65,9 @@ changing the schema or the progression rules.
   `req`, `v`, `i`). Generic type parameters like `T` are the exception.
 - New block type: schema → renderer → register. No migration.
 - New subject: data only. If it seems to need code, generalize the model instead.
-- Tests live in `tests/` mirroring `app/`. DB tests call `resetDb()` and need `npm run db:up`.
+- Tests live in `tests/` mirroring `app/`. DB tests call `resetDb()` and run against the separate
+  `study_test` database (forced in `tests/setup.ts`; `npm run db:test:migrate` after migrations).
+  Never point tests at the seeded dev database.
   Component tests opt into jsdom with `// @vitest-environment jsdom`. TDD: failing test first.
 - Future hooks are marked `TODO(<feature>)`: `quiz`, `content-editor`, `user-management`,
   `system-settings`, `cloud-storage`, `streaks`, `2fa`, `subjects`.

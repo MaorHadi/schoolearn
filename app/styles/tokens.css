@@ -1,0 +1,124 @@
+/*
+  Design tokens. The single place for color, type, spacing, radii, motion.
+  Direction: "transit line" — signage vocabulary, flat saturated color, strong ink, lots of air.
+
+  Color roles (never use raw hex outside this file):
+    --bg        page background
+    --surface   raised panels, cards
+    --surface-2 sunken/secondary panels
+    --ink       primary text
+    --ink-2     secondary text
+    --line      hairlines, borders
+    --accent    the current subject's color (set per page via data attribute / inline var)
+    --accent-ink text on top of --accent
+    --ok / --warn / --danger semantic
+    --focus     focus ring
+*/
+
+:root {
+  /* --- Type --- */
+  --font-ui: "Heebo Variable", "Heebo", "Segoe UI", system-ui, sans-serif;
+  --font-quote: "Noto Serif Hebrew Variable", "Noto Serif Hebrew", "David", Georgia, serif;
+
+  --text-xs: 0.8125rem; /* 13 */
+  --text-sm: 0.9375rem; /* 15 */
+  --text-md: 1.0625rem; /* 17 — body on phones */
+  --text-lg: 1.25rem; /* 20 */
+  --text-xl: 1.5rem; /* 24 */
+  --text-2xl: 1.875rem; /* 30 */
+  --text-3xl: 2.375rem; /* 38 */
+
+  --leading-tight: 1.2;
+  --leading-body: 1.65;
+  --leading-quote: 1.85;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-bold: 700;
+  --weight-black: 900;
+
+  /* --- Space (4px base) --- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* --- Shape --- */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.125rem;
+  --radius-pill: 999px;
+
+  /* --- Layout --- */
+  --content-max: 42rem; /* reading width */
+  --page-max: 60rem;
+  --gutter: var(--space-4);
+  --header-h: 3.5rem;
+
+  /* --- Motion --- */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+
+  /* --- Transit line geometry --- */
+  --line-w: 0.375rem; /* thickness of the section line */
+  --station: 1.75rem; /* station marker diameter */
+  --station-ring: 0.25rem;
+
+  /* --- Light palette (default) --- */
+  color-scheme: light;
+  --bg: #ffffff;
+  --surface: #f4f6fa;
+  --surface-2: #e9ecf2;
+  --ink: #14213d;
+  --ink-2: #5b6478;
+  --line: #dde2ec;
+  --accent: #2563eb;
+  --accent-ink: #ffffff;
+  --accent-soft: color-mix(in oklab, var(--accent) 14%, var(--bg));
+  --ok: #15803d;
+  --warn: #b45309;
+  --danger: #b91c1c;
+  --focus: #f59e0b;
+  --shadow-1: 0 1px 2px rgb(20 33 61 / 0.06);
+}
+
+/* Dark palette: applied when the user chose dark, or when following the OS and it is dark. */
+:root[data-theme="dark"],
+:root:not([data-theme="light"]):not([data-theme="dark"]).theme-system-dark {
+  color-scheme: dark;
+  --bg: #0f1a33;
+  --surface: #172342;
+  --surface-2: #1f2d50;
+  --ink: #f2f4f8;
+  --ink-2: #a7b0c4;
+  --line: #2a3858;
+  --accent-ink: #0f1a33;
+  --ok: #4ade80;
+  --warn: #fbbf24;
+  --danger: #f87171;
+  --focus: #fbbf24;
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    color-scheme: dark;
+    --bg: #0f1a33;
+    --surface: #172342;
+    --surface-2: #1f2d50;
+    --ink: #f2f4f8;
+    --ink-2: #a7b0c4;
+    --line: #2a3858;
+    --accent-ink: #0f1a33;
+    --ok: #4ade80;
+    --warn: #fbbf24;
+    --danger: #f87171;
+    --focus: #fbbf24;
+    --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
+  }
+}
