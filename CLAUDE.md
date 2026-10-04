@@ -56,6 +56,26 @@ changing the schema or the progression rules.
   that enforces the role.
 - **Storage** goes through `StorageProvider` (`app/server/storage/`); only `local` exists.
 
+## UI
+
+Design direction "transit line": the lesson path is a vertical rail with stations; signage-style
+type (Heebo), flat saturated subject accents, strong ink, generous space.
+
+- **Tokens** live only in `app/styles/tokens.css` (color roles, type scale, spacing, radii, motion,
+  rail geometry). Never use raw hex in component CSS; use `var(--ink)`, `var(--accent)`, etc.
+- **Theme**: `<html data-theme="light|dark">` from the `theme` cookie (root loader); no attribute
+  means "follow the system" via `prefers-color-scheme`. `ThemeToggle` is one button, two icons.
+- **Per-subject accent**: set `--accent` (and `--progress` where relevant) as an inline CSS variable
+  on the page or card root from `resolveSubjectTheme(subject)`. Icons come from the allowlist in
+  `app/shared/subject-theme.ts` and render through `SubjectIcon`.
+- **Logical properties only** (`inline-size`, `margin-inline-start`, `inset-inline-start`), so LTR
+  subjects mirror correctly inside the RTL shell. Icons that must mirror get `.rtl-flip`.
+- **Shared pieces**: `AppHeader`, `AuthPage` + `Field`, `SubjectCard`, `lesson-path/LessonPath`,
+  `QuestionsPlaceholder`, `StubPage` for not-yet-built admin areas.
+- Fonts are self-hosted via `@fontsource-variable/*`; UI uses `--font-ui`, quotes use `--font-quote`.
+- Focus is always visible (`:focus-visible` ring in `--focus`); motion respects
+  `prefers-reduced-motion`.
+
 ## Conventions
 
 - **No subject-specific names, strings, or logic outside `prisma/seed-data/`.** `npm run lint`
