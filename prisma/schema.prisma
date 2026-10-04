@@ -21,6 +21,7 @@ enum Role {
 
 enum AuthLogType {
   login
+  register
   twoFactorAuthentication // reserved; 2FA not implemented (TODO(2fa))
 }
 

@@ -17,6 +17,8 @@ export const EnvSchema = z
     AUTH_USERNAME_LOCKOUT_MINUTES: intFrom(15, 1),
     AUTH_IP_MAX_FAILURES: intFrom(20, 1),
     AUTH_LOG_RETENTION_DAYS: intFrom(30, 1),
+    AUTH_REGISTER_MAX_PER_IP: intFrom(5, 1),
+    AUTH_REGISTER_WINDOW_MINUTES: intFrom(60, 1),
     TRUSTED_PROXY_COUNT: intFrom(0, 0),
     DEFAULT_LESSON_PASSING_SCORE: z.coerce.number().int().min(0).max(100).default(60),
     STORAGE_PROVIDER: z.enum(["local"]).default("local"),

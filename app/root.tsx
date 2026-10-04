@@ -7,6 +7,7 @@ import {
   ScrollRestoration,
 } from "react-router";
 import type { Route } from "./+types/root";
+import { t } from "~/i18n";
 import { authMiddleware } from "~/server/auth/middleware.server";
 import "./app.css";
 
@@ -41,11 +42,16 @@ export default function App() {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  let title = "שגיאה";
-  let detail = "אירעה שגיאה בלתי צפויה.";
+  let title = t("error.title");
+  let detail = t("error.generic");
   if (isRouteErrorResponse(error)) {
     title = String(error.status);
-    detail = typeof error.data === "string" ? error.data : error.statusText;
+    if (error.status === 404) {
+      // Covers our own data() 404s and React Router's English "No route matches URL" default.
+      detail = t("error.notFound");
+    } else if (typeof error.data === "string" && error.data.length > 0) {
+      detail = error.data;
+    }
   }
   return (
     <main className="container">

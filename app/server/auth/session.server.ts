@@ -96,6 +96,16 @@ export function refreshSessionCookie(sessionId: string): Promise<string> {
   return sessionCookie.serialize(sessionId);
 }
 
+/**
+ * Log a user in from a request that may already carry a session cookie: the old session row
+ * (if any) is deleted so a stale or shared cookie can never outlive the new login.
+ */
+export async function replaceSession(request: Request, userId: number, ip: string | null) {
+  const previousId = await readSessionId(request);
+  if (previousId) await prisma.session.deleteMany({ where: { id: previousId } });
+  return createSession(userId, ip);
+}
+
 /** Delete the session row (if any) and return a Set-Cookie value that clears the cookie. */
 export async function destroySession(request: Request): Promise<string> {
   const id = await readSessionId(request);

@@ -2,8 +2,8 @@ import { Form, Link, data, redirect } from "react-router";
 import type { Route } from "./+types/register";
 import { t } from "~/i18n";
 import { RegisterSchema } from "~/schemas/auth";
-import { registerUser } from "~/server/auth/register.server";
-import { createSession } from "~/server/auth/session.server";
+import { register } from "~/server/auth/register.server";
+import { replaceSession } from "~/server/auth/session.server";
 import { getClientIp } from "~/server/auth/client-ip.server";
 
 export async function action({ request }: Route.ActionArgs) {
@@ -11,10 +11,11 @@ export async function action({ request }: Route.ActionArgs) {
   const parsed = RegisterSchema.safeParse(form);
   if (!parsed.success) return data({ error: t("auth.registerFailed") }, { status: 400 });
 
-  const result = await registerUser(parsed.data);
+  const clientIp = getClientIp(request);
+  const result = await register(parsed.data, clientIp);
   if (!result.ok) return data({ error: t("auth.registerFailed") }, { status: 400 });
 
-  const { cookie } = await createSession(result.userId, getClientIp(request));
+  const { cookie } = await replaceSession(request, result.userId, clientIp);
   return redirect("/subjects", { headers: { "Set-Cookie": cookie } });
 }
 

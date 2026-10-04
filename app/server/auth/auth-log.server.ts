@@ -1,5 +1,5 @@
 import { prisma } from "~/server/database.server";
-import type { LoginFailureReason } from "~/schemas/auth";
+import type { LoginFailureReason, RegisterFailureReason } from "~/schemas/auth";
 
 /**
  * Failures that reflect an actual wrong guess. Attempts rejected because a lock or block was
@@ -43,6 +43,36 @@ export function countRecentFailures(filter: {
       createdAt: { gte: new Date(Date.now() - filter.sinceMs) },
       ...(filter.ip ? { ipAddress: filter.ip } : {}),
       ...(filter.username ? { username: filter.username } : {}),
+    },
+  });
+}
+
+export async function recordRegisterAttempt(attempt: {
+  ip: string;
+  username: string;
+  ok: boolean;
+  reason?: RegisterFailureReason;
+}): Promise<void> {
+  await prisma.authLog.create({
+    data: {
+      ipAddress: attempt.ip,
+      username: attempt.username,
+      isSuccessful: attempt.ok,
+      failureReason: attempt.ok ? null : (attempt.reason ?? null),
+      type: "register",
+    },
+  });
+}
+
+/** Registration attempts (successful or not) from one IP within the last `sinceMs`. */
+export function countRecentRegistrations(ip: string, sinceMs: number): Promise<number> {
+  return prisma.authLog.count({
+    where: {
+      type: "register",
+      ipAddress: ip,
+      // Refusals do not extend the window. SQL `!=` drops NULLs, so include successes explicitly.
+      OR: [{ failureReason: null }, { failureReason: { not: "REGISTER_THROTTLED" } }],
+      createdAt: { gte: new Date(Date.now() - sinceMs) },
     },
   });
 }

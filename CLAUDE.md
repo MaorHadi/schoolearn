@@ -45,8 +45,10 @@ changing the schema or the progression rules.
   `LessonAttempt` and `LessonProgress`. `sortOrder` is not unique; sort in queries.
 - **Auth:** argon2id passwords; DB-backed sessions with a signed `__session` cookie; sliding expiry
   re-issues the cookie when extended. `login()` (not `authenticate()`) is the entry point from
-  routes: it logs to `AuthLog`, applies username lockout and per-IP blocks. The `"unknown"` IP
-  sentinel is never blocked. Thresholds are env-backed in `app/server/security.server.ts`; the
+  routes: it logs to `AuthLog`, applies username lockout and per-IP blocks. `register()` (not
+  `registerUser()`) is the entry point for sign-up: it logs with type `register` and applies the
+  per-IP registration throttle. Routes log users in with `replaceSession()`, which deletes any
+  session the request already carries. The `"unknown"` IP sentinel is never blocked or throttled. Thresholds are env-backed in `app/server/security.server.ts`; the
   escalation table is a code constant.
 - **Roles** are global per user: `USER` < `ADMIN` (`/admin`, content) < `SYSTEM_ADMIN`
   (`/system-admin`, users and settings). Use `requireUser()` / `requireRole()` from

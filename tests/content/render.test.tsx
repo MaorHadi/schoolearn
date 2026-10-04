@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-
-afterEach(cleanup);
 import { LessonContent } from "~/components/lesson-content/LessonContent";
 import type { LessonContent as Blocks } from "~/schemas/content-blocks";
+
+afterEach(cleanup);
 
 const blocks: Blocks = [
   { id: "h", type: "heading", level: 2, text: "Title" },

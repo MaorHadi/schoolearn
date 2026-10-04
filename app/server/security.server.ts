@@ -19,6 +19,8 @@ export const security = {
   usernameLockoutMs: env.AUTH_USERNAME_LOCKOUT_MINUTES * MINUTE_MS,
   ipMaxFailures: env.AUTH_IP_MAX_FAILURES,
   authLogRetentionMs: env.AUTH_LOG_RETENTION_DAYS * DAY_MS,
+  registerMaxPerIp: env.AUTH_REGISTER_MAX_PER_IP,
+  registerWindowMs: env.AUTH_REGISTER_WINDOW_MINUTES * MINUTE_MS,
   escalationLookbackMs: IP_BLOCK_ESCALATION_LOOKBACK_DAYS * DAY_MS,
 } as const;
 

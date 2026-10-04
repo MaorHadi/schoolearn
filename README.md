@@ -64,6 +64,8 @@ The app refuses to start on an invalid or missing value.
 | `AUTH_USERNAME_LOCKOUT_MINUTES`                | 15                         | Lockout length                                             |
 | `AUTH_IP_MAX_FAILURES`                         | 20                         | Failures per IP before an IP block (must exceed the above) |
 | `AUTH_LOG_RETENTION_DAYS`                      | 30                         | `npm run cleanup` deletes older `AuthLog` rows             |
+| `AUTH_REGISTER_MAX_PER_IP`                     | 5                          | Registrations allowed per IP within the window             |
+| `AUTH_REGISTER_WINDOW_MINUTES`                 | 60                         | Window for counting registrations                          |
 | `TRUSTED_PROXY_COUNT`                          | 0                          | Trusted `X-Forwarded-For` hops (see below)                 |
 | `DEFAULT_LESSON_PASSING_SCORE`                 | 60                         | Percent, when a lesson has no `passingScore`               |
 | `STORAGE_PROVIDER`                             | `local`                    | Asset storage backend                                      |
@@ -82,6 +84,11 @@ independent limits:
 - **Per IP:** after `AUTH_IP_MAX_FAILURES` failures within the failure window, an `IpBlock` is
   created. The IP threshold is deliberately higher because many students share one school IP.
   Repeat offenders escalate in place: 15 min, 1 h, 6 h, 24 h (`app/server/security.server.ts`).
+
+- **Registration:** every attempt is logged with type `register`. After
+  `AUTH_REGISTER_MAX_PER_IP` registrations from one IP within `AUTH_REGISTER_WINDOW_MINUTES`,
+  further registrations from that IP are refused. This stops a single client from spamming
+  accounts or burning CPU on argon2 hashing. The `unknown` IP is never throttled.
 
 Every failure returns the same message, so the UI never reveals whether a username exists.
 

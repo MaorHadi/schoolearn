@@ -3,7 +3,7 @@ import type { Route } from "./+types/login";
 import { t } from "~/i18n";
 import { LoginSchema } from "~/schemas/auth";
 import { login } from "~/server/auth/login.server";
-import { createSession } from "~/server/auth/session.server";
+import { replaceSession } from "~/server/auth/session.server";
 import { getClientIp } from "~/server/auth/client-ip.server";
 import { safeRedirect } from "~/shared/safe-redirect";
 
@@ -16,7 +16,7 @@ export async function action({ request }: Route.ActionArgs) {
   const result = await login(parsed.data, clientIp);
   if (!result.ok) return data({ error: t("auth.loginFailed") }, { status: 400 });
 
-  const { cookie } = await createSession(result.userId, clientIp);
+  const { cookie } = await replaceSession(request, result.userId, clientIp);
   const target = safeRedirect(new URL(request.url).searchParams.get("redirectTo"), request.url);
   return redirect(target, { headers: { "Set-Cookie": cookie } });
 }

@@ -5,6 +5,7 @@ import {
   createSession,
   destroySession,
   getSessionFromRequest,
+  replaceSession,
   touchSession,
 } from "~/server/auth/session.server";
 import { requestWithCookie, resetDb } from "../helpers/db";
@@ -93,6 +94,29 @@ describe("sessions", () => {
     const afterTouch = await prisma.session.findUniqueOrThrow({ where: { id } });
     expect(afterTouch.expirationDate.getTime()).toBeGreaterThan(firstLoad.expirationDate.getTime());
     expect(afterTouch.lastActivity!.getTime()).toBeGreaterThan(secondLoad.lastActivity!.getTime());
+  });
+
+  it("replaceSession deletes the session named by the request cookie and issues a new one", async () => {
+    const user = await makeUser();
+    const other = await makeUser();
+    const stale = await createSession(user.id, null);
+    const { id, cookie } = await replaceSession(
+      requestWithCookie("http://x/login", stale.cookie),
+      other.id,
+      "9.9.9.9",
+    );
+    expect(id).not.toBe(stale.id);
+    expect(await prisma.session.findUnique({ where: { id: stale.id } })).toBeNull();
+    const loaded = await getSessionFromRequest(requestWithCookie("http://x/", cookie));
+    expect(loaded?.user.id).toBe(other.id);
+    expect(await prisma.session.count()).toBe(1);
+  });
+
+  it("replaceSession works when the request carries no cookie", async () => {
+    const user = await makeUser();
+    const { cookie } = await replaceSession(new Request("http://x/login"), user.id, null);
+    expect(cookie).toMatch(/^__session=/);
+    expect(await prisma.session.count()).toBe(1);
   });
 
   it("destroy deletes the row and returns a clearing cookie", async () => {
