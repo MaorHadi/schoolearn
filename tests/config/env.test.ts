@@ -36,6 +36,12 @@ describe("parseEnv", () => {
     expect(() => parseEnv({ ...base, CONTACT_EMAIL: "not-an-email" })).toThrow(/CONTACT_EMAIL/);
   });
 
+  it("UPLOAD_MAX_BYTES defaults to 5 MiB and must be at least 1 KiB", () => {
+    expect(parseEnv(base).UPLOAD_MAX_BYTES).toBe(5 * 1024 * 1024);
+    expect(parseEnv({ ...base, UPLOAD_MAX_BYTES: "2048" }).UPLOAD_MAX_BYTES).toBe(2048);
+    expect(() => parseEnv({ ...base, UPLOAD_MAX_BYTES: "10" })).toThrow();
+  });
+
   it("SUGGESTIONS_MAX_PER_DAY defaults to 5 and must be at least 1", () => {
     expect(parseEnv(base).SUGGESTIONS_MAX_PER_DAY).toBe(5);
     expect(() => parseEnv({ ...base, SUGGESTIONS_MAX_PER_DAY: "0" })).toThrow();

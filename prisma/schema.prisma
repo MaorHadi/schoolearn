@@ -120,7 +120,9 @@ model Subject {
   description String?       @db.Text
   locale      String // BCP-47, e.g. "he", "en"
   direction   TextDirection // content direction; UI shell stays RTL
-  isActive    Boolean       @default(true)
+  /// Visible to learners. Set by publishing; new subjects start hidden in the editor.
+  isActive    Boolean       @default(false)
+  publishedAt DateTime? // last publish; null = never published
   sortOrder   Int           @default(0)
   /// Per-subject theme, stored as data so no code knows about a specific subject.
   accentColor String        @default("#2563EB") // hex, drives the subject's line/accent color
@@ -137,11 +139,13 @@ model Section {
   id        Int      @id @default(autoincrement())
   subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   subjectId Int
-  title     String
-  sortOrder Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  lessons   Lesson[]
+  title       String
+  sortOrder   Int
+  /// Null until the subject is published; learners never see unpublished sections.
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  lessons     Lesson[]
 
   @@index([subjectId, sortOrder])
 }
@@ -154,7 +158,11 @@ model Lesson {
   title        String
   sortOrder    Int
   passingScore Int? // percent 0-100; null -> env DEFAULT_LESSON_PASSING_SCORE
-  content      Json // ContentBlock[] validated by zod (app/schemas/content-blocks.ts)
+  content      Json // ContentBlock[] validated by zod (app/schemas/content-blocks.ts); what learners read
+  /// Unpublished edit of `content`, written by saveLessonDraft(); published copies it into `content`.
+  draftContent Json?
+  /// Null until the subject is published; learners never see unpublished lessons.
+  publishedAt  DateTime?
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
   questions    Question[]

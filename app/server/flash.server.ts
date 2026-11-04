@@ -1,6 +1,8 @@
+import type { RouterContextProvider } from "react-router";
 import type { Prisma } from "../../prisma/generated/client/client";
 import type { TranslationKey } from "~/i18n";
 import { ToastSchema, type Toast, type ToastKind } from "~/schemas/toast";
+import { sessionContext } from "~/server/auth/context.server";
 import type { SessionWithUser } from "~/server/auth/session.server";
 import { prisma } from "~/server/database.server";
 
@@ -52,4 +54,15 @@ export async function takeFlash(session: SessionWithUser): Promise<Toast | null>
     data: { sessionData: rest as Prisma.InputJsonObject },
   });
   return parsed.success ? (parsed.data as Toast) : null;
+}
+
+/** Convenience for actions: flash on the request's session, if any. */
+export async function flashFromContext(
+  context: Readonly<RouterContextProvider>,
+  kind: ToastKind,
+  key: TranslationKey,
+  values?: Record<string, string>,
+): Promise<void> {
+  const session = context.get(sessionContext);
+  if (session) await setFlash(session.id, kind, key, values);
 }

@@ -20,7 +20,15 @@ export default [
   ]),
 
   // Guarded: ADMIN and above (content management)
-  ...prefix("admin", [layout("routes/admin/layout.tsx", [index("routes/admin/index.tsx")])]),
+  ...prefix("admin", [
+    layout("routes/admin/layout.tsx", [
+      index("routes/admin/index.tsx"),
+      route("subjects/new", "routes/admin/subjects.new.tsx"),
+      route("subjects/:subjectId", "routes/admin/subjects.$subjectId.tsx"),
+      route("lessons/:lessonId", "routes/admin/lessons.$lessonId.tsx"),
+      route("publish", "routes/admin/publish.tsx"),
+    ]),
+  ]),
 
   // Guarded: SYSTEM_ADMIN only (users, system settings)
   ...prefix("system-admin", [

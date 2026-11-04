@@ -23,6 +23,7 @@ export const EnvSchema = z
     DEFAULT_LESSON_PASSING_SCORE: z.coerce.number().int().min(0).max(100).default(60),
     STORAGE_PROVIDER: z.enum(["local"]).default("local"),
     STORAGE_LOCAL_DIR: z.string().default("./storage"),
+    UPLOAD_MAX_BYTES: intFrom(5 * 1024 * 1024, 1024),
     SEED_ADMIN_USERNAME: z.string().optional(),
     SEED_ADMIN_PASSWORD: z.string().optional(),
     SEED_ADMIN_EMAIL: z.string().optional(),

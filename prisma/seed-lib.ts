@@ -48,7 +48,11 @@ async function seedSubject(definition: SeedSubject, assetId: number): Promise<vo
     accentColor: definition.accentColor,
     icon: definition.icon,
   });
+  // Seeded content is live: the seed is the dev/test fixture, not an editor draft.
+  const publishedAt = new Date();
   const subjectData = {
+    isActive: true,
+    publishedAt,
     name: definition.name,
     description: definition.description,
     locale: definition.locale,
@@ -69,13 +73,14 @@ async function seedSubject(definition: SeedSubject, assetId: number): Promise<vo
     const section = existingSection
       ? await prisma.section.update({
           where: { id: existingSection.id },
-          data: { title: sectionDefinition.title },
+          data: { title: sectionDefinition.title, publishedAt },
         })
       : await prisma.section.create({
           data: {
             subjectId: subject.id,
             title: sectionDefinition.title,
             sortOrder: sectionDefinition.sortOrder,
+            publishedAt,
           },
         });
 
@@ -86,6 +91,7 @@ async function seedSubject(definition: SeedSubject, assetId: number): Promise<vo
       const lessonData = {
         title: lessonDefinition.title,
         passingScore: lessonDefinition.passingScore ?? null,
+        publishedAt,
       };
       const lesson = existingLesson
         ? await prisma.lesson.update({ where: { id: existingLesson.id }, data: lessonData })

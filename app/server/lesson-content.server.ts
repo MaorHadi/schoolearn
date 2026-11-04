@@ -25,6 +25,13 @@ export function serializeLessonContent(blocks: LessonContent): LessonContent {
   return LessonContentSchema.parse(blocks);
 }
 
+/** True when every id is an existing Asset. */
+export async function assetsExist(assetIds: number[]): Promise<boolean> {
+  if (assetIds.length === 0) return true;
+  const found = await prisma.asset.count({ where: { id: { in: assetIds } } });
+  return found === assetIds.length;
+}
+
 /**
  * The only way to write Lesson.content. Validates the blocks, verifies every referenced
  * asset exists, stores the JSON, and syncs LessonAsset so usage is queryable and a used
@@ -34,11 +41,8 @@ export async function saveLessonContent(lessonId: number, blocks: LessonContent)
   const content = serializeLessonContent(blocks);
   const assetIds = extractAssetIds(content);
 
-  if (assetIds.length > 0) {
-    const found = await prisma.asset.count({ where: { id: { in: assetIds } } });
-    if (found !== assetIds.length) {
-      throw new Error(`Lesson content references an unknown asset (lesson ${lessonId})`);
-    }
+  if (!(await assetsExist(assetIds))) {
+    throw new Error(`Lesson content references an unknown asset (lesson ${lessonId})`);
   }
 
   await prisma.$transaction([

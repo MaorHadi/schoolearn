@@ -1,16 +1,20 @@
 import { prisma } from "~/server/database.server";
 import { computeTree, type SectionState } from "~/shared/unlock";
 
-/** Sections and lessons of a subject with the user's unlock/completion state applied. */
+/**
+ * Published sections and lessons of a subject with the user's unlock/completion state applied.
+ * Unpublished rows (editor drafts) are invisible here, so they never affect unlock order.
+ */
 export async function getSubjectTree(userId: number, subjectId: number): Promise<SectionState[]> {
   const [sections, progress] = await Promise.all([
     prisma.section.findMany({
-      where: { subjectId },
+      where: { subjectId, publishedAt: { not: null } },
       select: {
         id: true,
         title: true,
         sortOrder: true,
         lessons: {
+          where: { publishedAt: { not: null } },
           select: {
             id: true,
             title: true,

@@ -30,7 +30,10 @@ export async function listActiveSubjectsForUser(userId: number): Promise<Subject
       accentColor: true,
       icon: true,
       users: { where: { id: userId }, select: { id: true } },
-      sections: { select: { _count: { select: { lessons: true } } } },
+      sections: {
+        where: { publishedAt: { not: null } },
+        select: { _count: { select: { lessons: { where: { publishedAt: { not: null } } } } } },
+      },
     },
   });
 

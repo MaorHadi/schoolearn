@@ -17,7 +17,11 @@ export async function getLessonForUser(userId: number, slug: string, lessonId: n
   if (!subject) throw data(t("error.notFound"), { status: 404 });
 
   const lesson = await prisma.lesson.findFirst({
-    where: { id: lessonId, section: { subjectId: subject.id } },
+    where: {
+      id: lessonId,
+      publishedAt: { not: null },
+      section: { subjectId: subject.id, publishedAt: { not: null } },
+    },
     include: { section: true, _count: { select: { questions: true } } },
   });
   if (!lesson) throw data(t("error.notFound"), { status: 404 });
