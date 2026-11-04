@@ -4424,3 +4424,22 @@ rail on each side.
   paginate the system-admin list.
 - **Contact.** Currently a `mailto:` link. If an in-app contact form is wanted later, add a
   `ContactRequest` table and (optionally) an SMTP sender; `CONTACT_EMAIL` stays the destination.
+
+## Stage 9 — Admin content editor with draft/publish (2026-11-04)
+
+Design: `docs/superpowers/specs/2026-11-04-content-editor-design.md`.
+
+- Schema: `publishedAt` on Subject/Section/Lesson, `Lesson.draftContent`, `Subject.isActive`
+  defaults to false. Migration `content_publishing` backfills existing rows as published.
+- Server: `app/server/content/admin.server.ts` (structure + drafts), `publish.server.ts`
+  (`publishSubjects`), `app/server/storage/upload.server.ts` (sniffed image uploads,
+  `UPLOAD_MAX_BYTES`). Learner queries filter unpublished rows.
+- Routes under `/admin`: subject list, new subject, subject edit (metadata + section/lesson tree),
+  lesson block editor with live preview and uploads, publish page (multi-select).
+- Shared: `app/schemas/admin-content.ts`, `app/shared/inline-markup.ts`.
+
+### Future work
+
+- Stage metadata edits (titles, order, theme) and deletes as drafts too, if live editing proves risky.
+- Question editor (`TODO(quiz)`), materials editor, asset library (reuse an uploaded image across
+  lessons), and image dimension detection on upload.

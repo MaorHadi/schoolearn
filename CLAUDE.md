@@ -36,7 +36,12 @@ changing the schema or the progression rules.
   `npm run db:migrate` (which regenerates) and keep the migration file.
 - **Lesson content** is a JSON block array. Read via `parseLessonContent()`, write via
   `saveLessonContent()` (validates, checks assets exist, syncs `LessonAsset`). Never write
-  `Lesson.content` directly. Renderers live in `app/components/lesson-content/blocks/` and are
+  `Lesson.content` directly. The editor writes `Lesson.draftContent` only, via `saveLessonDraft()`.
+- **Draft/publish** (spec: `docs/superpowers/specs/2026-11-04-content-editor-design.md`):
+  `Subject.isActive` + `publishedAt` on Subject/Section/Lesson. Learner queries must filter
+  `publishedAt != null`. `publishSubjects()` in `app/server/content/publish.server.ts` is the only
+  thing that publishes (copies drafts into `content`, stamps `publishedAt`, activates the subject).
+  `app/server/content/admin.server.ts` is the only writer of Subject/Section/Lesson structure. Renderers live in `app/components/lesson-content/blocks/` and are
   registered in `LessonContent.tsx`; the registry is exhaustive over the block union.
 - **Direction:** UI shell is Hebrew RTL (`<html dir="rtl">`); content direction comes from
   `Subject.direction` with optional per-block `dir`. All UI strings go through `t()` in `app/i18n`.
@@ -55,6 +60,7 @@ changing the schema or the progression rules.
   `app/server/auth/context.server.ts` in loaders and actions. Each admin prefix has its own layout
   that enforces the role.
 - **Storage** goes through `StorageProvider` (`app/server/storage/`); only `local` exists.
+  Editor uploads go through `storeUploadedImage()` (magic-byte sniffing, `UPLOAD_MAX_BYTES`).
 - **Toasts:** actions call `setFlash(sessionId, kind, key, values)` from
   `app/server/flash.server.ts`; the root loader takes it with `takeFlash()` and `Toaster` renders
   it. Lessons without questions are completed by the "complete" intent on the lesson route,
@@ -97,7 +103,7 @@ type (Heebo), flat saturated subject accents, strong ink, generous space.
   `study_test` database (forced in `tests/setup.ts`; `npm run db:test:migrate` after migrations).
   Never point tests at the seeded dev database.
   Component tests opt into jsdom with `// @vitest-environment jsdom`. TDD: failing test first.
-- Future hooks are marked `TODO(<feature>)`: `quiz`, `content-editor`, `user-management`,
+- Future hooks are marked `TODO(<feature>)`: `quiz`, `user-management`,
   `system-settings`, `cloud-storage`, `streaks`, `2fa`, `subjects`, `forum`, `suggestions-triage`.
 - The empty `.rail__ad` slots on `/subjects` are reserved for future advertising; keep them empty.
 - Run `npm run lint && npm run typecheck && npm test` before claiming work is done.
