@@ -15,6 +15,8 @@ export default [
     route("subjects", "routes/app/subjects.tsx"),
     route("subjects/:slug", "routes/app/subjects.$slug.tsx"),
     route("subjects/:slug/lessons/:lessonId", "routes/app/subjects.$slug.lessons.$lessonId.tsx"),
+    route("forum", "routes/app/forum.tsx"),
+    route("suggestions", "routes/app/suggestions.tsx"),
   ]),
 
   // Guarded: ADMIN and above (content management)
@@ -25,6 +27,7 @@ export default [
     layout("routes/system-admin/layout.tsx", [
       index("routes/system-admin/index.tsx"),
       route("users", "routes/system-admin/users.tsx"),
+      route("suggestions", "routes/system-admin/suggestions.tsx"),
     ]),
   ]),
 ] satisfies RouteConfig;

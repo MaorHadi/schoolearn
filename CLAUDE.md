@@ -55,6 +55,14 @@ changing the schema or the progression rules.
   `app/server/auth/context.server.ts` in loaders and actions. Each admin prefix has its own layout
   that enforces the role.
 - **Storage** goes through `StorageProvider` (`app/server/storage/`); only `local` exists.
+- **Toasts:** actions call `setFlash(sessionId, kind, key, values)` from
+  `app/server/flash.server.ts`; the root loader takes it with `takeFlash()` and `Toaster` renders
+  it. Lessons without questions are completed by the "complete" intent on the lesson route,
+  which records a score of 100 through `recordAttempt()`.
+- **Feedback:** `createSuggestion()` and `updateSuggestionStatus()` in
+  `app/server/feedback/suggestions.server.ts` are the only writers of `Suggestion` (per-user daily
+  throttle from `SUGGESTIONS_MAX_PER_DAY`). The teacher
+  contact callout on `/subjects` is a `mailto:` to `CONTACT_EMAIL` and is hidden when unset.
 
 ## UI
 
@@ -90,5 +98,6 @@ type (Heebo), flat saturated subject accents, strong ink, generous space.
   Never point tests at the seeded dev database.
   Component tests opt into jsdom with `// @vitest-environment jsdom`. TDD: failing test first.
 - Future hooks are marked `TODO(<feature>)`: `quiz`, `content-editor`, `user-management`,
-  `system-settings`, `cloud-storage`, `streaks`, `2fa`, `subjects`.
+  `system-settings`, `cloud-storage`, `streaks`, `2fa`, `subjects`, `forum`, `suggestions-triage`.
+- The empty `.rail__ad` slots on `/subjects` are reserved for future advertising; keep them empty.
 - Run `npm run lint && npm run typecheck && npm test` before claiming work is done.

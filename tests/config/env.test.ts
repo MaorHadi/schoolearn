@@ -28,6 +28,19 @@ describe("parseEnv", () => {
     expect(parseEnv({ ...base, SESSION_EXPIRY_HOURS: "24" }).SESSION_EXPIRY_HOURS).toBe(24);
   });
 
+  it("CONTACT_EMAIL is optional but must be an email when set", () => {
+    expect(parseEnv(base).CONTACT_EMAIL).toBeUndefined();
+    expect(parseEnv({ ...base, CONTACT_EMAIL: "teachers@example.org" }).CONTACT_EMAIL).toBe(
+      "teachers@example.org",
+    );
+    expect(() => parseEnv({ ...base, CONTACT_EMAIL: "not-an-email" })).toThrow(/CONTACT_EMAIL/);
+  });
+
+  it("SUGGESTIONS_MAX_PER_DAY defaults to 5 and must be at least 1", () => {
+    expect(parseEnv(base).SUGGESTIONS_MAX_PER_DAY).toBe(5);
+    expect(() => parseEnv({ ...base, SUGGESTIONS_MAX_PER_DAY: "0" })).toThrow();
+  });
+
   it("treats empty strings as unset so defaults apply", () => {
     expect(
       parseEnv({ ...base, SEED_ADMIN_EMAIL: "", TRUSTED_PROXY_COUNT: "" }).TRUSTED_PROXY_COUNT,

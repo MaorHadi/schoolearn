@@ -36,6 +36,12 @@ enum MaterialKind {
   TEXT
 }
 
+enum SuggestionStatus {
+  NEW
+  REVIEWED
+  DONE
+}
+
 enum QuestionType {
   MULTIPLE_CHOICE
   // Future: TRUE_FALSE, FILL_IN, ORDERING, ...
@@ -60,6 +66,7 @@ model User {
   attempts     LessonAttempt[]
   progress     LessonProgress[]
   assets       Asset[]
+  suggestions  Suggestion[]
 }
 
 model Session {
@@ -253,4 +260,23 @@ model LessonProgress {
   updatedAt   DateTime  @updatedAt
 
   @@unique([userId, lessonId])
+}
+
+// ---------------------------------------------------------------------------
+// Feedback
+// ---------------------------------------------------------------------------
+
+/// Free-text improvement suggestions from signed-in users. Only written by
+/// createSuggestion() in app/server/feedback/suggestions.server.ts.
+/// userId is nullable so feedback survives account deletion. TODO(suggestions-triage): status UI.
+model Suggestion {
+  id        Int              @id @default(autoincrement())
+  userId    Int?
+  user      User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  body      String           @db.Text
+  status    SuggestionStatus @default(NEW)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
 }

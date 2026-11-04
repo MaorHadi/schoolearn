@@ -18,7 +18,7 @@ export async function getLessonForUser(userId: number, slug: string, lessonId: n
 
   const lesson = await prisma.lesson.findFirst({
     where: { id: lessonId, section: { subjectId: subject.id } },
-    include: { section: true },
+    include: { section: true, _count: { select: { questions: true } } },
   });
   if (!lesson) throw data(t("error.notFound"), { status: 404 });
 
@@ -39,5 +39,5 @@ export async function getLessonForUser(userId: number, slug: string, lessonId: n
   const assetIds = blocks.flatMap((block) => (block.type === "image" ? [block.assetId] : []));
   const assetUrls = await assetUrlMap(assetIds);
 
-  return { subject, lesson, blocks, assetUrls, tree };
+  return { subject, lesson, blocks, assetUrls, tree, questionCount: lesson._count.questions };
 }

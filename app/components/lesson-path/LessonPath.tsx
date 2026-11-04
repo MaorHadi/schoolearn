@@ -110,7 +110,9 @@ function Station({
         </span>
         <span className="station__meta">
           {label}
-          {lesson.bestScore != null ? ` · ${t("subject.bestScore")} ${lesson.bestScore}` : ""}
+          {lesson.hasQuestions && lesson.bestScore != null
+            ? ` · ${t("subject.bestScore")} ${lesson.bestScore}`
+            : ""}
         </span>
       </span>
     </>

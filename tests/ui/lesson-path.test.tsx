@@ -17,6 +17,7 @@ const lesson = (
   title: `Lesson ${id}`,
   sortOrder,
   passingScore: null,
+  hasQuestions: true,
   unlocked: false,
   completed: false,
   bestScore: null,
@@ -46,9 +47,9 @@ const tree: SectionState[] = [
   },
 ];
 
-function renderPath() {
+function renderPath(data: SectionState[] = tree) {
   const Stub = createRoutesStub([
-    { path: "/", Component: () => <LessonPath slug="demo" direction="ltr" tree={tree} /> },
+    { path: "/", Component: () => <LessonPath slug="demo" direction="ltr" tree={data} /> },
   ]);
   return render(<Stub initialEntries={["/"]} />);
 }
@@ -88,6 +89,23 @@ describe("LessonPath", () => {
     expect(sections).toHaveLength(2);
     expect(sections[0]?.querySelector(".path-section__count")?.textContent).toBe("1/3");
     expect(sections[1]?.getAttribute("data-locked")).toBe("true");
+  });
+
+  it("shows the best score only for lessons that have questions", () => {
+    const first = tree[0];
+    if (!first) throw new Error("fixture");
+    const { container } = renderPath([
+      {
+        ...first,
+        lessons: [
+          lesson(11, 1, { unlocked: true, completed: true, bestScore: 90 }),
+          lesson(12, 2, { unlocked: true, completed: true, bestScore: 100, hasQuestions: false }),
+        ],
+      },
+    ]);
+    const metas = [...container.querySelectorAll(".station__meta")].map((node) => node.textContent);
+    expect(metas[0]).toContain("90");
+    expect(metas[1]).not.toContain("100");
   });
 
   it("exposes state to assistive tech", () => {

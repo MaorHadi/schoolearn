@@ -26,6 +26,8 @@ export const EnvSchema = z
     SEED_ADMIN_USERNAME: z.string().optional(),
     SEED_ADMIN_PASSWORD: z.string().optional(),
     SEED_ADMIN_EMAIL: z.string().optional(),
+    CONTACT_EMAIL: z.email().optional(),
+    SUGGESTIONS_MAX_PER_DAY: intFrom(5, 1),
   })
   .refine((values) => values.AUTH_IP_MAX_FAILURES > values.AUTH_USERNAME_MAX_FAILURES, {
     message:

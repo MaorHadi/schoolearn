@@ -1,4 +1,4 @@
-import { LogOut, Settings, ShieldCheck, LibraryBig } from "lucide-react";
+import { LogOut, MessagesSquare, Settings, ShieldCheck, LibraryBig } from "lucide-react";
 import { Form, NavLink } from "react-router";
 import { t } from "~/i18n";
 import { ThemeToggle } from "./ThemeToggle";
@@ -30,6 +30,10 @@ export function AppHeader({
               <NavLink to="/subjects">
                 <LibraryBig size={20} aria-hidden="true" />
                 <span className="label">{t("nav.subjects")}</span>
+              </NavLink>
+              <NavLink to="/forum">
+                <MessagesSquare size={20} aria-hidden="true" />
+                <span className="label">{t("nav.forum")}</span>
               </NavLink>
               {showAdmin ? (
                 <NavLink to="/admin">

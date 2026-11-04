@@ -12,6 +12,8 @@ export interface LessonNode {
   title: string;
   sortOrder: number;
   passingScore: number | null;
+  /** False for reading-only lessons: completed by moving on, and no score is shown. */
+  hasQuestions: boolean;
 }
 
 export interface SectionNode {
@@ -71,6 +73,27 @@ export function computeTree(sections: SectionNode[], progress: ProgressRow[]): S
       lessons,
     };
   });
+}
+
+/** The lesson's state anywhere in the tree, or null. */
+export function findLesson(tree: SectionState[], lessonId: number): LessonState | null {
+  for (const section of tree) {
+    for (const lessonState of section.lessons) {
+      if (lessonState.id === lessonId) return lessonState;
+    }
+  }
+  return null;
+}
+
+/**
+ * The lesson that follows `lessonId` in path order: the next one in its section, else the first
+ * lesson of the next non-empty section. Null when it is the last lesson of the subject.
+ */
+export function findNextLesson(tree: SectionState[], lessonId: number): LessonState | null {
+  const flat = tree.flatMap((section) => section.lessons);
+  const index = flat.findIndex((lessonState) => lessonState.id === lessonId);
+  if (index === -1) return null;
+  return flat[index + 1] ?? null;
 }
 
 export function isLessonUnlocked(tree: SectionState[], lessonId: number): boolean {

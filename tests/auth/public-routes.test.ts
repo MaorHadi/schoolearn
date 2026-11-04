@@ -31,6 +31,9 @@ describe("isPublicPath", () => {
       "/admin",
       "/system-admin",
       "/system-admin/users",
+      "/system-admin/suggestions",
+      "/forum",
+      "/suggestions",
       "/loginx",
       "/login/extra",
     ]) {

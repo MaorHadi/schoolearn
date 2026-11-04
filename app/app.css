@@ -368,34 +368,6 @@ input {
   width: min(100% - 2 * var(--gutter), var(--content-max));
   margin-inline: auto;
   padding-block: var(--space-6) var(--space-8);
-  display: grid;
-  grid-template-columns: var(--station) 1fr;
-  column-gap: var(--space-4);
-}
-
-.auth__line {
-  position: relative;
-  display: flex;
-  justify-content: center;
-}
-
-.auth__line::before {
-  content: "";
-  position: absolute;
-  inset-block: 0;
-  inline-size: var(--line-w);
-  border-radius: var(--radius-pill);
-  background: linear-gradient(to bottom, var(--accent) 0 60%, var(--line) 60% 100%);
-}
-
-.auth__station {
-  position: relative;
-  margin-block-start: 0.35rem;
-  inline-size: var(--station);
-  block-size: var(--station);
-  border-radius: 50%;
-  background: var(--bg);
-  border: var(--station-ring) solid var(--accent);
 }
 
 .auth__panel {
@@ -426,7 +398,6 @@ input {
 @media (min-width: 48rem) {
   .auth {
     padding-block-start: var(--space-8);
-    column-gap: var(--space-6);
   }
   .auth__title {
     font-size: 3rem;
@@ -554,6 +525,200 @@ mark {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-5);
   }
+}
+
+/* --- Subjects shell: grid in the middle, rails on both sides --- */
+.subjects-shell {
+  --page-max: 80rem;
+  display: grid;
+  grid-template-areas:
+    "main"
+    "start"
+    "end";
+  gap: var(--space-6);
+}
+
+.subjects-main {
+  grid-area: main;
+  min-inline-size: 0;
+}
+
+.rail {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+}
+
+.rail--start {
+  grid-area: start;
+}
+
+.rail--end {
+  grid-area: end;
+}
+
+.rail__card {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.rail__card--link {
+  border: 2px solid transparent;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+
+.rail__card--link:hover {
+  border-color: var(--accent);
+}
+
+.rail__icon {
+  color: var(--accent);
+}
+
+.rail__title {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  line-height: 1.2;
+  margin: 0;
+}
+
+.rail__lead {
+  color: var(--ink-2);
+  margin: 0;
+}
+
+.rail__card .btn {
+  margin-block-start: var(--space-2);
+}
+
+/* Reserved for future advertising (see docs/superpowers/plans). Empty on purpose. */
+.rail__ad {
+  display: none;
+}
+
+@media (min-width: 64rem) {
+  .subjects-shell {
+    grid-template-areas: "start main end";
+    grid-template-columns: 16rem minmax(0, 1fr) 16rem;
+    column-gap: var(--space-6);
+    /* Fill the viewport so the rails' bottom cards sit at the bottom even with few subjects. */
+    min-block-size: calc(100dvh - var(--header-h) - 2 * var(--space-6));
+  }
+
+  .rail__ad {
+    display: block;
+    min-block-size: 14rem;
+  }
+
+  /* Rails stretch to the grid's height; the ad slot absorbs the slack so the last card
+     (suggestions / ad) sits at the bottom of the column. */
+  .rail {
+    align-content: stretch;
+  }
+
+  .rail--start {
+    grid-template-rows: auto 1fr auto;
+  }
+
+  .rail--end {
+    grid-template-rows: auto 1fr;
+  }
+}
+
+/* --- Narrow single-column pages (forms) --- */
+.page--narrow {
+  max-inline-size: var(--content-max);
+}
+
+.page__back {
+  margin-block-start: var(--space-6);
+}
+
+.link-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-block-start: var(--space-5);
+}
+
+.field__input--multiline {
+  min-block-size: 8rem;
+  resize: vertical;
+  font: inherit;
+}
+
+/* --- Suggestions list (system admin) --- */
+.suggestion-list {
+  display: grid;
+  gap: var(--space-4);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.suggestion__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: baseline;
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+  margin-block-end: var(--space-2);
+}
+
+.suggestion__author {
+  color: var(--ink);
+  font-weight: var(--weight-bold);
+}
+
+.suggestion__status {
+  padding-inline: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+}
+
+.suggestion__status--DONE {
+  background: color-mix(in oklab, var(--ok) 18%, var(--bg));
+}
+
+.suggestion__body {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.suggestion__form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  margin-inline-start: auto;
+}
+
+.suggestion__select {
+  min-block-size: 2.25rem;
+  padding-inline: var(--space-2);
+  border-radius: var(--radius-md);
+  border: 2px solid var(--line);
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+}
+
+.suggestion__select:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.btn--small {
+  min-block-size: 2.25rem;
+  padding-inline: var(--space-3);
+  font-size: var(--text-sm);
 }
 
 .subject-card {
@@ -1006,6 +1171,104 @@ a.station__inner:hover {
 .next-station .btn {
   justify-self: start;
   margin-block-start: var(--space-2);
+}
+
+.next-station__hint {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+/* --- Toasts --- */
+.toaster {
+  position: fixed;
+  inset-block-end: var(--space-4);
+  inset-inline-start: var(--space-4); /* right side in the RTL shell */
+  z-index: 50;
+  display: grid;
+  gap: var(--space-2);
+  max-inline-size: min(24rem, calc(100% - 2 * var(--space-4)));
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-block-size: 4.5rem;
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  border-inline-start: 4px solid var(--toast-accent, var(--accent));
+  background: color-mix(in oklab, var(--surface) 88%, transparent);
+  backdrop-filter: blur(6px);
+  color: var(--ink);
+  box-shadow: var(--shadow-1);
+  pointer-events: auto;
+  animation: toast-in var(--dur-base) var(--ease-out);
+}
+
+.toast--success {
+  --toast-accent: var(--ok);
+}
+
+.toast--info {
+  --toast-accent: var(--accent);
+}
+
+.toast--error {
+  --toast-accent: var(--danger);
+}
+
+.toast__icon {
+  flex: none;
+  color: var(--toast-accent);
+}
+
+.toast__text {
+  margin: 0;
+  flex: 1;
+}
+
+.toast__close {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.toast__close:hover {
+  background: var(--surface-2);
+}
+
+.toast__close:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    translate: 0 0.5rem;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
 }
 
 /* --- Richer empty state for stub pages --- */

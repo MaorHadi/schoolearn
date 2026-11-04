@@ -36,8 +36,8 @@ describe("subjects", () => {
     let listed = await listActiveSubjectsForUser(userId);
     expect(listed.map((entry) => [entry.slug, entry.enrolled])).toEqual([[subject.slug, false]]);
 
-    expect(await enrollUser(userId, subject.id)).toBe(true);
-    expect(await enrollUser(userId, subject.id)).toBe(true);
+    expect(await enrollUser(userId, subject.id)).toEqual({ name: subject.name });
+    expect(await enrollUser(userId, subject.id)).toEqual({ name: subject.name });
     listed = await listActiveSubjectsForUser(userId);
     expect(listed[0]?.enrolled).toBe(true);
   });
@@ -46,8 +46,8 @@ describe("subjects", () => {
     const inactive = await prisma.subject.create({
       data: { slug: "inactive", name: "Off", locale: "en", direction: "ltr", isActive: false },
     });
-    expect(await enrollUser(userId, inactive.id)).toBe(false);
-    expect(await enrollUser(userId, 999_999)).toBe(false);
+    expect(await enrollUser(userId, inactive.id)).toBeNull();
+    expect(await enrollUser(userId, 999_999)).toBeNull();
     const enrolled = await prisma.user.findUniqueOrThrow({
       where: { id: userId },
       include: { subjects: true },

@@ -1,11 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { computeTree, isLessonUnlocked, type SectionNode } from "~/shared/unlock";
+import {
+  computeTree,
+  findLesson,
+  findNextLesson,
+  isLessonUnlocked,
+  type SectionNode,
+} from "~/shared/unlock";
 
 const lesson = (id: number, sortOrder: number) => ({
   id,
   title: `L${id}`,
   sortOrder,
   passingScore: null,
+  hasQuestions: true,
 });
 
 const sections: SectionNode[] = [
@@ -81,5 +88,28 @@ describe("isLessonUnlocked", () => {
     expect(isLessonUnlocked(tree, 12)).toBe(true);
     expect(isLessonUnlocked(tree, 21)).toBe(false);
     expect(isLessonUnlocked(tree, 999)).toBe(false);
+  });
+});
+
+describe("findNextLesson", () => {
+  const tree = computeTree(sections, []);
+
+  it("returns the next lesson in the same section", () => {
+    expect(findNextLesson(tree, 11)?.id).toBe(12);
+  });
+
+  it("crosses into the next section, skipping empty sections", () => {
+    expect(findNextLesson(tree, 12)?.id).toBe(21);
+    expect(findNextLesson(tree, 22)?.id).toBe(41); // S3 is empty
+  });
+
+  it("returns null after the last lesson or for an unknown lesson", () => {
+    expect(findNextLesson(tree, 41)).toBeNull();
+    expect(findNextLesson(tree, 999)).toBeNull();
+  });
+
+  it("findLesson returns state or null", () => {
+    expect(findLesson(tree, 11)?.unlocked).toBe(true);
+    expect(findLesson(tree, 999)).toBeNull();
   });
 });

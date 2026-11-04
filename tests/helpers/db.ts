@@ -4,6 +4,7 @@ import { prisma } from "~/server/database.server";
 export async function resetDb() {
   await prisma.$transaction([
     prisma.ipBlock.deleteMany(),
+    prisma.suggestion.deleteMany(),
     prisma.authLog.deleteMany(),
     prisma.session.deleteMany(),
     prisma.lessonAttempt.deleteMany(),

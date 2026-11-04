@@ -8,9 +8,12 @@ import {
 } from "react-router";
 import type { Route } from "./+types/root";
 import { useRouteLoaderData } from "react-router";
+import { Toaster } from "~/components/Toaster";
 import { t } from "~/i18n";
+import { sessionContext } from "~/server/auth/context.server";
 import { authMiddleware } from "~/server/auth/middleware.server";
 import { getTheme } from "~/server/theme.server";
+import { takeFlash } from "~/server/flash.server";
 import "@fontsource-variable/heebo";
 import "@fontsource-variable/noto-serif-hebrew";
 import "./app.css";
@@ -18,14 +21,23 @@ import "./app.css";
 /** Single route guard for the whole app. See app/config/public-routes.ts for the allowlist. */
 export const middleware: Route.MiddlewareFunction[] = [authMiddleware];
 
-/** Runs on every navigation (which also forces the middleware to run); supplies the theme. */
-export async function loader({ request }: Route.LoaderArgs) {
-  return { theme: await getTheme(request) };
+/**
+ * Runs on every navigation (which also forces the middleware to run); supplies the theme and
+ * the pending toast (taken from the session so it survives redirects).
+ */
+export async function loader({ request, context }: Route.LoaderArgs) {
+  const session = context.get(sessionContext);
+  const [theme, toast] = await Promise.all([
+    getTheme(request),
+    session ? takeFlash(session) : Promise.resolve(null),
+  ]);
+  return { theme, toast };
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const rootData = useRouteLoaderData<typeof loader>("root");
   const theme = rootData?.theme ?? undefined;
+  const toast = rootData?.toast ?? null;
   return (
     <html lang="he" dir="rtl" data-theme={theme}>
       <head>
@@ -37,6 +49,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
+        <Toaster toast={toast} />
         <ScrollRestoration />
         <Scripts />
       </body>

@@ -10,7 +10,15 @@ export async function getSubjectTree(userId: number, subjectId: number): Promise
         id: true,
         title: true,
         sortOrder: true,
-        lessons: { select: { id: true, title: true, sortOrder: true, passingScore: true } },
+        lessons: {
+          select: {
+            id: true,
+            title: true,
+            sortOrder: true,
+            passingScore: true,
+            _count: { select: { questions: true } },
+          },
+        },
       },
     }),
     prisma.lessonProgress.findMany({
@@ -18,5 +26,12 @@ export async function getSubjectTree(userId: number, subjectId: number): Promise
       select: { lessonId: true, bestScore: true, completedAt: true },
     }),
   ]);
-  return computeTree(sections, progress);
+  const nodes = sections.map((section) => ({
+    ...section,
+    lessons: section.lessons.map(({ _count, ...lesson }) => ({
+      ...lesson,
+      hasQuestions: _count.questions > 0,
+    })),
+  }));
+  return computeTree(nodes, progress);
 }

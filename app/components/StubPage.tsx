@@ -1,5 +1,5 @@
 import type { LucideProps } from "lucide-react";
-import type { ComponentType } from "react";
+import type { ComponentType, ReactNode } from "react";
 
 /**
  * Placeholder for admin areas that are not built yet. Same page scaffolding as real pages so
@@ -10,11 +10,14 @@ export function StubPage({
   lead,
   message,
   icon: Icon,
+  children,
 }: {
   title: string;
   lead?: string;
   message: string;
   icon: ComponentType<LucideProps>;
+  /** Optional links to the areas that already exist under this section. */
+  children?: ReactNode;
 }) {
   return (
     <main className="container page">
@@ -26,6 +29,7 @@ export function StubPage({
         <Icon size={28} aria-hidden="true" />
         <p>{message}</p>
       </div>
+      {children}
     </main>
   );
 }

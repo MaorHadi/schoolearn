@@ -4383,3 +4383,44 @@ User can verify:
 - Spec coverage: §3 → Stage 1; §5 → Stage 2; §9 → Stage 3 + Task 4.3; §10 → Tasks 4.1–4.2; §7 → Stage 5; §6 → Tasks 6.1–6.2; §8 → Task 6.3; §11–12 → Stage 7; §13 → README + CLAUDE.md; §14 → tests in each task. `Material` has schema only (spec says optional attachments, no UI required).
 - Known deviation (accepted by the user): `react-router-serve` does not expose the socket IP, so with `TRUSTED_PROXY_COUNT=0` the IP is `"unknown"` and IP blocking is off. The `"unknown"` IP is never blocked; attempts are still logged; username lockout applies. Production with `TRUSTED_PROXY_COUNT=0` logs a startup warning.
 - Review Focus items 1–5 are pinned in Tasks 4.1, 7.2/5.2, 6.1, 4.3, 5.1 respectively.
+
+---
+
+## Stage 8 — Subjects page shell (2026-11-04)
+
+Built from the user's layout draft: the subject grid stays in the middle of `/subjects`, with a
+rail on each side.
+
+- **Inline-start rail** (right side in the RTL shell): Forum link, reserved ad slot, Suggestions link.
+- **Inline-end rail**: "Teachers? Want to build a course?" callout with a `mailto:` button to
+  `CONTACT_EMAIL` (hidden when the variable is unset), then a reserved ad slot.
+- Below 64rem the rails stack under the grid and the ad slots collapse.
+- `/forum` is a `StubPage` (`TODO(forum)`).
+- `/suggestions` is a signed-in form that writes to the new `Suggestion` table through
+  `createSuggestion()` (per-user daily throttle, `SUGGESTIONS_MAX_PER_DAY`).
+  `/system-admin/suggestions` lists them newest first.
+- Components: `app/components/SubjectsRails.tsx`. Server: `app/server/feedback/suggestions.server.ts`.
+  Schema: `Suggestion`, `SuggestionStatus`; migration `20261104102958_suggestions`.
+
+### Stage 8b — Next-lesson button and toasts (2026-11-04)
+
+- Lesson page ends with `LessonNext`: for a lesson without questions (or one already completed)
+  a "next lesson" button posts `intent=complete`, which records a full-score attempt through
+  `recordAttempt()` when needed and redirects to the next lesson (path order, across sections) or
+  back to the subject when it was the last. Lessons with questions stay locked until the quiz
+  (`TODO(quiz)`) is passed. Helpers: `findLesson()` / `findNextLesson()` in `app/shared/unlock.ts`.
+- Toasts: `app/server/flash.server.ts` stores one toast in `Session.sessionData.flash`; the root
+  loader takes it and `Toaster` shows it (bottom corner, auto-dismiss, `aria-live`). Emitted on
+  login, enrollment, lesson completion, suggestion sent, suggestion status updated.
+
+### Future work (from the same draft)
+
+- **Advertising slots.** The two empty `.rail__ad` elements on `/subjects` are reserved for
+  advertisements. They render nothing today; when an ad provider or house promotions are chosen,
+  fill these slots and keep the reserved height so the layout does not jump.
+- **Forum.** `TODO(forum)`: threads, replies, moderation. Large enough to need its own spec before
+  any schema work.
+- **Suggestion triage.** `TODO(suggestions-triage)`: change `Suggestion.status`, filter by status,
+  paginate the system-admin list.
+- **Contact.** Currently a `mailto:` link. If an in-app contact form is wanted later, add a
+  `ContactRequest` table and (optionally) an SMTP sender; `CONTACT_EMAIL` stays the destination.
