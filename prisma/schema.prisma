@@ -186,7 +186,7 @@ model LessonAsset {
   @@index([assetId])
 }
 
-/// Schema only in the foundation phase; no UI and no seed data yet (TODO(quiz)).
+/// Schema only; no UI and no seed data yet (TODO(quiz)).
 model Question {
   id        Int              @id @default(autoincrement())
   lesson    Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)

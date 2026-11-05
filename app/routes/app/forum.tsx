@@ -2,7 +2,7 @@ import { MessagesSquare } from "lucide-react";
 import { StubPage } from "~/components/StubPage";
 import { t } from "~/i18n";
 
-// TODO(forum): discussion forum (threads, replies, moderation). Needs its own spec.
+// TODO(forum): discussion forum (threads, replies, moderation).
 export default function Forum() {
   return (
     <StubPage

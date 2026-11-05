@@ -44,7 +44,7 @@ export function SuggestionsLink() {
   );
 }
 
-/** Reserved space for future advertising. Intentionally empty; see the project plan. */
+/** Reserved space for future advertising. Intentionally empty. */
 export function AdSlot() {
   return <aside className="rail__ad" aria-hidden="true" />;
 }

@@ -1,6 +1,6 @@
 // Shared (client-safe). The single source of truth for progression rules.
 //
-// Rules (spec section 6):
+// Rules:
 //  - Lesson 1 of Section 1 is always unlocked.
 //  - A lesson is unlocked when the previous lesson in its section (by sortOrder) is completed.
 //  - A section is unlocked when the previous section (by sortOrder) is completed,
