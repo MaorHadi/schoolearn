@@ -58,11 +58,62 @@ describe("BlockEditor", () => {
     expect(within(preview).getByText("bold").tagName).toBe("STRONG");
   });
 
-  it("moves and removes blocks", () => {
+  it("keeps half-typed markup in the field while updating the block", () => {
+    const { hidden } = renderEditor([]);
+    fireEvent.click(screen.getByRole("button", { name: t("admin.blocks.paragraph") }));
+    const textarea = screen.getByLabelText(t("admin.editor.paragraph.text"), {
+      exact: false,
+    });
+    for (const typed of ["hello *", "hello *b", "hello *b*"]) {
+      fireEvent.change(textarea, { target: { value: typed } });
+      expect(textarea).toHaveValue(typed);
+    }
+    expect(hidden()[0]).toMatchObject({
+      content: [
+        { text: "hello ", marks: [] },
+        { text: "b", marks: ["italic"] },
+      ],
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: t("admin.blocks.list") }));
+    const items = screen.getByLabelText(t("admin.editor.list.items"), { exact: false });
+    fireEvent.change(items, { target: { value: "a\n" } });
+    expect(items).toHaveValue("a\n");
+    expect(hidden()[1]).toMatchObject({ items: [[{ text: "a", marks: [] }]] });
+    fireEvent.change(items, { target: { value: "a\nb" } });
+    expect(hidden()[1]).toMatchObject({
+      items: [[{ text: "a", marks: [] }], [{ text: "b", marks: [] }]],
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: t("admin.blocks.quote") }));
+    const quote = screen.getByLabelText(t("admin.editor.quote.text"), { exact: false });
+    fireEvent.change(quote, { target: { value: "a ==" } });
+    expect(quote).toHaveValue("a ==");
+    expect(hidden()[2]).toMatchObject({ text: "a ", highlights: [] });
+    fireEvent.change(quote, { target: { value: "a ==b==" } });
+    expect(hidden()[2]).toMatchObject({ text: "a b", highlights: [{ start: 2, end: 3 }] });
+  });
+
+  it("reorders blocks with the keyboard on the handle, by drag and drop, and removes them", () => {
     const { hidden } = renderEditor();
-    const [moveDown] = screen.getAllByRole("button", { name: t("admin.editor.moveDown") });
-    if (!moveDown) throw new Error("button missing");
-    fireEvent.click(moveDown);
+    const handles = () => screen.getAllByRole("button", { name: t("admin.editor.drag") });
+    const [firstHandle] = handles();
+    if (!firstHandle) throw new Error("handle missing");
+    fireEvent.keyDown(firstHandle, { key: "ArrowDown" });
+    expect(hidden().map((block) => block.id)).toEqual(["p1", "h1"]);
+
+    // Drag the (now) second card onto the first one: it takes the first position.
+    const [targetHandle, draggedHandle] = handles();
+    if (!targetHandle || !draggedHandle) throw new Error("handle missing");
+    const targetCard = targetHandle.closest("li");
+    if (!targetCard) throw new Error("card missing");
+    fireEvent.dragStart(draggedHandle);
+    fireEvent.dragEnter(targetCard);
+    expect(targetCard).toHaveAttribute("data-drag", "target");
+    fireEvent.drop(targetCard);
+    expect(hidden().map((block) => block.id)).toEqual(["h1", "p1"]);
+    expect(targetCard).not.toHaveAttribute("data-drag");
+    fireEvent.keyDown(firstHandle, { key: "ArrowDown" });
     expect(hidden().map((block) => block.id)).toEqual(["p1", "h1"]);
 
     const [removeFirst] = screen.getAllByRole("button", { name: t("admin.editor.remove") });
@@ -77,6 +128,7 @@ describe("BlockEditor", () => {
     expect(screen.getByRole("button", { name: t("admin.editor.saveDraft") })).toBeDisabled();
     expect(screen.getByRole("alert")).toHaveTextContent(t("admin.editor.incompleteImage"));
     expect(blocksAreComplete([{ id: "i", type: "image", assetId: 0, alt: "" }])).toBe(false);
+    expect(blocksAreComplete([{ id: "i", type: "image", assetId: 3, alt: " " }])).toBe(false);
     expect(blocksAreComplete([{ id: "i", type: "image", assetId: 3, alt: "x" }])).toBe(true);
   });
 });

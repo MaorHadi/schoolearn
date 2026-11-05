@@ -1,5 +1,5 @@
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
-import { PrismaClient } from "../../prisma/generated/client/client";
+import { Prisma, PrismaClient } from "../../prisma/generated/client/client";
 import { env } from "~/server/env.server";
 
 function createClient() {
@@ -30,3 +30,13 @@ declare global {
 /** Single PrismaClient for the process. Only import from *.server.ts files or route modules. */
 export const prisma: PrismaClient = globalThis.__prisma ?? createClient();
 if (env.NODE_ENV !== "production") globalThis.__prisma = prisma;
+
+/** A unique constraint was violated (Prisma P2002). */
+export function isUniqueViolation(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
+}
+
+/** The row to update or delete does not exist (Prisma P2025). */
+export function isMissingRow(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025";
+}

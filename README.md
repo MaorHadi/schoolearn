@@ -142,18 +142,10 @@ Full design: `docs/superpowers/specs/2026-10-01-study-platform-foundation-design
 
 ## Adding a new subject
 
-Data only. No code changes.
-
-1. Insert a `Subject` (slug, name, description, locale, direction, sortOrder).
-2. Insert `Section` rows with `sortOrder`.
-3. Insert `Lesson` rows per section with `sortOrder`, optional `passingScore`, and content written
-   through `saveLessonContent()` so it is validated and asset usage is tracked.
-4. Upload any images via `createAssetFromBuffer()` and reference them by `assetId`.
-5. Optionally attach `Material` rows and `Question`/`QuestionOption` rows.
-6. Set `isActive = true`. Users enroll from `/subjects`.
-
-See `prisma/seed-data/` for two complete examples. If a subject ever seems to need its own route
-or component, that is a platform gap to fix generically.
+No code changes. Sign in as an ADMIN and use `/admin`: create the subject, add sections and
+lessons, edit each lesson's blocks (drafts), then publish from `/admin/publish`. Learners see a
+subject only after it is published. Seeded examples live in `prisma/seed-data/`. If a subject
+ever seems to need its own route or component, that is a platform gap to fix generically.
 
 ## Adding a new content block type
 

@@ -2,108 +2,103 @@
 
 Project conventions for Claude Code sessions.
 
-## Git rules
+## Git
 
-- **Never run git commands that change history, branches, or the remote.** This
-  includes `git commit`, `git push`, `git reset`, `git rebase`, `git merge`,
-  `git checkout`/`git switch` to other branches, `git branch`, `git stash`,
-  `git tag`, and `git cherry-pick`. The user handles all commits themselves.
-- Read-only git commands are fine: `git status`, `git diff`, `git log`, `git show`,
-  `git blame`.
-- `git add` is also off limits unless the user explicitly asks for it.
+- Never run git commands that change history, branches, or the remote: no `commit`, `push`,
+  `reset`, `rebase`, `merge`, `checkout`/`switch` to other branches, `branch`, `stash`, `tag`,
+  `cherry-pick`. `git add` only when explicitly asked. The user commits.
+- Read-only git (`status`, `diff`, `log`, `show`, `blame`) is fine.
 
-## Architecture
+## Docs
 
-Spec: `docs/superpowers/specs/2026-10-01-study-platform-foundation-design.md`.
-Plan: `docs/superpowers/plans/2026-10-01-study-platform-foundation.md`. Read the spec before
-changing the schema or the progression rules.
+- Foundation design: `docs/superpowers/specs/2026-10-01-study-platform-foundation-design.md`.
+  Read it before changing the schema or the progression rules.
+- Content editor design: `docs/superpowers/specs/2026-11-04-content-editor-design.md`.
+- Build log and open work: `docs/superpowers/plans/2026-10-01-study-platform-foundation.md`.
 
-- **React Router v8 framework mode** (SSR, middleware on by default). The single route guard is
-  `app/server/auth/middleware.server.ts`, registered on `app/root.tsx`. Public paths are the
-  explicit allowlist in `app/config/public-routes.ts`; everything else requires a session.
-- **Folder roles** under `app/`:
-  - `schemas/` zod schemas and inferred types, client-safe (`content-blocks.ts`, `auth.ts`).
-  - `shared/` pure helpers used on both sides (`roles.ts`, `direction.ts`, `unlock.ts`).
-  - `server/` server-only modules; subfolders by domain (`auth/`, `content/`, `progress/`,
-    `storage/`). `database.server.ts` is the Prisma singleton; `env.server.ts` parses
-    `process.env` through `/env.schema.ts` once.
-  - `components/` React components. `config/` static config. `i18n/` UI strings. `routes/`.
-- **`.server.ts` suffix** marks code that must never reach the client bundle. ESLint forbids
-  importing it (and Prisma) from non-server files; route modules are exempt because React Router
-  strips loaders/actions/middleware from the client.
-- **Prisma 7** with `@prisma/adapter-mariadb`. `DATABASE_URL` is read in `prisma.config.ts`, not
-  the schema. Generated client: `prisma/generated/client/client`. After schema changes run
-  `npm run db:migrate` (which regenerates) and keep the migration file.
-- **Lesson content** is a JSON block array. Read via `parseLessonContent()`, write via
-  `saveLessonContent()` (validates, checks assets exist, syncs `LessonAsset`). Never write
-  `Lesson.content` directly. The editor writes `Lesson.draftContent` only, via `saveLessonDraft()`.
-- **Draft/publish** (spec: `docs/superpowers/specs/2026-11-04-content-editor-design.md`):
-  `Subject.isActive` + `publishedAt` on Subject/Section/Lesson. Learner queries must filter
-  `publishedAt != null`. `publishSubjects()` in `app/server/content/publish.server.ts` is the only
-  thing that publishes (copies drafts into `content`, stamps `publishedAt`, activates the subject).
-  `app/server/content/admin.server.ts` is the only writer of Subject/Section/Lesson structure. Renderers live in `app/components/lesson-content/blocks/` and are
-  registered in `LessonContent.tsx`; the registry is exhaustive over the block union.
-- **Direction:** UI shell is Hebrew RTL (`<html dir="rtl">`); content direction comes from
-  `Subject.direction` with optional per-block `dir`. All UI strings go through `t()` in `app/i18n`.
-- **Progression:** `computeTree()` in `app/shared/unlock.ts` is the only place unlock rules live.
-  `recordAttempt()` in `app/server/progress/attempts.server.ts` is the only writer of
-  `LessonAttempt` and `LessonProgress`. `sortOrder` is not unique; sort in queries.
-- **Auth:** argon2id passwords; DB-backed sessions with a signed `__session` cookie; sliding expiry
-  re-issues the cookie when extended. `login()` (not `authenticate()`) is the entry point from
-  routes: it logs to `AuthLog`, applies username lockout and per-IP blocks. `register()` (not
-  `registerUser()`) is the entry point for sign-up: it logs with type `register` and applies the
-  per-IP registration throttle. Routes log users in with `replaceSession()`, which deletes any
-  session the request already carries. The `"unknown"` IP sentinel is never blocked or throttled. Thresholds are env-backed in `app/server/security.server.ts`; the
-  escalation table is a code constant.
-- **Roles** are global per user: `USER` < `ADMIN` (`/admin`, content) < `SYSTEM_ADMIN`
-  (`/system-admin`, users and settings). Use `requireUser()` / `requireRole()` from
-  `app/server/auth/context.server.ts` in loaders and actions. Each admin prefix has its own layout
-  that enforces the role.
-- **Storage** goes through `StorageProvider` (`app/server/storage/`); only `local` exists.
-  Editor uploads go through `storeUploadedImage()` (magic-byte sniffing, `UPLOAD_MAX_BYTES`).
-- **Toasts:** actions call `setFlash(sessionId, kind, key, values)` from
-  `app/server/flash.server.ts`; the root loader takes it with `takeFlash()` and `Toaster` renders
-  it. Lessons without questions are completed by the "complete" intent on the lesson route,
-  which records a score of 100 through `recordAttempt()`.
-- **Feedback:** `createSuggestion()` and `updateSuggestionStatus()` in
-  `app/server/feedback/suggestions.server.ts` are the only writers of `Suggestion` (per-user daily
-  throttle from `SUGGESTIONS_MAX_PER_DAY`). The teacher
-  contact callout on `/subjects` is a `mailto:` to `CONTACT_EMAIL` and is hidden when unset.
+## Layout
+
+- React Router v8 framework mode (SSR, middleware). The single route guard is
+  `app/server/auth/middleware.server.ts` on `app/root.tsx`; public paths are the allowlist in
+  `app/config/public-routes.ts`.
+- `app/schemas/` zod schemas (client-safe). `app/shared/` pure helpers for both sides.
+  `app/server/` server-only, one subfolder per domain (`auth/`, `content/`, `progress/`,
+  `storage/`, `feedback/`). `app/components/`, `app/config/`, `app/i18n/`, `app/routes/`.
+- `.server.ts` never reaches the client bundle; ESLint forbids importing it (or Prisma) from
+  non-server files. Route modules are exempt. Server files under a domain are one per table
+  (for example `content/admin/{subject,section,lesson}.server.ts`).
+- Prisma 7 with `@prisma/adapter-mariadb`; `DATABASE_URL` is read in `prisma.config.ts`. Generated
+  client: `prisma/generated/client/client`. After schema changes run `npm run db:migrate` and keep
+  the migration file. `database.server.ts` holds the singleton and the Prisma error predicates.
+- `env.server.ts` parses `process.env` through `/env.schema.ts` once.
+
+## Single writers (do not bypass)
+
+- `Lesson.content`: `saveLessonContent()` in `app/server/lesson-content.server.ts` (validates,
+  checks assets, syncs `LessonAsset`; accepts a transaction client). Read with
+  `parseLessonContent()`.
+- `Lesson.draftContent`: `saveLessonDraft()` (syncs `LessonAsset` to live + draft assets).
+- Subject / Section / Lesson structure: `app/server/content/admin.server.ts` (barrel over
+  `content/admin/`).
+- Publishing: `publishSubjects()` in `app/server/content/publish.server.ts`, one transaction per
+  subject, then `sweepOrphanAssets()` deletes unreferenced uploads older than an hour.
+- `LessonAttempt` / `LessonProgress`: `recordAttempt()` in `app/server/progress/attempts.server.ts`.
+  Unlock rules only in `computeTree()` (`app/shared/unlock.ts`). `sortOrder` is not unique.
+- `Suggestion`: `createSuggestion()` / `updateSuggestionStatus()` in
+  `app/server/feedback/suggestions.server.ts` (daily throttle `SUGGESTIONS_MAX_PER_DAY`).
+- Toasts: `setFlash()` / `flashFromContext()` in `app/server/flash.server.ts`; the root loader
+  takes it with `takeFlash()` and `Toaster` renders it.
+
+## Content rules
+
+- Draft/publish: `Subject.isActive` plus `publishedAt` on Subject/Section/Lesson. Learner queries
+  must filter `publishedAt != null`. Metadata edits and deletes go live immediately.
+- Block renderers live in `app/components/lesson-content/blocks/` and are registered in
+  `LessonContent.tsx`; the registry is exhaustive. New block type: schema → renderer → register.
+- The block editor is `app/components/content-editor/`: `BlockEditor` (state, form, preview),
+  `BlockCard`, one file per block type under `fields/`, `blocks.tsx` for shared constants.
+- Direction: the shell is Hebrew RTL; content direction comes from `Subject.direction` with
+  per-block `dir`. All UI strings go through `t()` in `app/i18n`.
+- Storage goes through `StorageProvider` (`app/server/storage/`); uploads through
+  `storeUploadedImage()` (magic-byte sniffing, `UPLOAD_MAX_BYTES`).
+- Lessons without questions are completed by the "complete" intent on the lesson route (score 100).
+
+## Auth rules
+
+- argon2id passwords; DB sessions with a signed `__session` cookie; sliding expiry re-issues the
+  cookie. `login()` and `register()` are the route entry points (they log to `AuthLog` and apply
+  lockout, IP blocks and the registration throttle). Routes sign in with `replaceSession()`.
+- The `"unknown"` IP sentinel is never blocked or throttled. Thresholds are env-backed in
+  `app/server/security.server.ts`; the escalation table is a code constant.
+- Roles are global: `USER` < `ADMIN` (`/admin`) < `SYSTEM_ADMIN` (`/system-admin`). Use
+  `requireUser()` / `requireRole()` from `app/server/auth/context.server.ts` in every loader and
+  action; each admin prefix also has a layout that enforces the role.
 
 ## UI
 
 Design direction "transit line": the lesson path is a vertical rail with stations; signage-style
 type (Heebo), flat saturated subject accents, strong ink, generous space.
 
-- **Tokens** live only in `app/styles/tokens.css` (color roles, type scale, spacing, radii, motion,
-  rail geometry). Never use raw hex in component CSS; use `var(--ink)`, `var(--accent)`, etc.
-- **Theme**: `<html data-theme="light|dark">` from the `theme` cookie (root loader); no attribute
-  means "follow the system" via `prefers-color-scheme`. `ThemeToggle` is one button, two icons.
-- **Per-subject accent**: set `--accent` (and `--progress` where relevant) as an inline CSS variable
-  on the page or card root from `resolveSubjectTheme(subject)`. Icons come from the allowlist in
-  `app/shared/subject-theme.ts` and render through `SubjectIcon`.
-- **Logical properties only** (`inline-size`, `margin-inline-start`, `inset-inline-start`), so LTR
-  subjects mirror correctly inside the RTL shell. Icons that must mirror get `.rtl-flip`.
-- **Shared pieces**: `AppHeader`, `AuthPage` + `Field`, `SubjectCard`, `lesson-path/LessonPath`,
-  `QuestionsPlaceholder`, `StubPage` for not-yet-built admin areas.
-- Fonts are self-hosted via `@fontsource-variable/*`; UI uses `--font-ui`, quotes use `--font-quote`.
-- Focus is always visible (`:focus-visible` ring in `--focus`); motion respects
-  `prefers-reduced-motion`.
+- Tokens live only in `app/styles/tokens.css`; never raw hex in component CSS.
+- Theme: `<html data-theme="light|dark">` from the `theme` cookie; no attribute follows the system.
+- Per-subject accent: set `--accent` inline from `resolveSubjectTheme(subject)`; icons come from
+  the allowlist in `app/shared/subject-theme.ts` via `SubjectIcon`.
+- Logical properties only (`inline-size`, `margin-inline-start`); mirrored icons get `.rtl-flip`.
+- Shared pieces: `AppHeader`, `AuthPage` + `Field`, `SubjectCard`, `lesson-path/LessonPath`,
+  `QuestionsPlaceholder`, `StubPage`.
+- Self-hosted fonts (`--font-ui`, `--font-quote`); visible `:focus-visible` ring; motion respects
+  `prefers-reduced-motion`. The empty `.rail__ad` slots on `/subjects` stay empty.
 
 ## Conventions
 
-- **No subject-specific names, strings, or logic outside `prisma/seed-data/`.** `npm run lint`
-  runs `scripts/check-no-subject-leakage.ts`, which fails on forbidden tokens in `app/`. Extend its
-  list when seeding a new subject.
-- **Full identifier names.** No one-letter or abbreviated variable or parameter names (`ctx`,
-  `req`, `v`, `i`). Generic type parameters like `T` are the exception.
-- New block type: schema → renderer → register. No migration.
+- No subject-specific names, strings, or logic outside `prisma/seed-data/`; `npm run lint` runs
+  `scripts/check-no-subject-leakage.ts`. Extend its list when seeding a new subject.
+- Full identifier names; no abbreviations (`ctx`, `req`, `v`, `i`). Generic `T` is the exception.
 - New subject: data only. If it seems to need code, generalize the model instead.
-- Tests live in `tests/` mirroring `app/`. DB tests call `resetDb()` and run against the separate
-  `study_test` database (forced in `tests/setup.ts`; `npm run db:test:migrate` after migrations).
-  Never point tests at the seeded dev database.
-  Component tests opt into jsdom with `// @vitest-environment jsdom`. TDD: failing test first.
-- Future hooks are marked `TODO(<feature>)`: `quiz`, `user-management`,
-  `system-settings`, `cloud-storage`, `streaks`, `2fa`, `subjects`, `forum`, `suggestions-triage`.
-- The empty `.rail__ad` slots on `/subjects` are reserved for future advertising; keep them empty.
+- Forms validate with zod on the server and show field errors; no native browser validation.
+- Tests live in `tests/` mirroring `app/`. DB tests call `resetDb()` against `study_test`
+  (forced in `tests/setup.ts`; `npm run db:test:migrate` after migrations). Component tests opt
+  into jsdom with `// @vitest-environment jsdom`. TDD: failing test first.
+- Future hooks are `TODO(<feature>)`: `quiz`, `user-management`, `system-settings`,
+  `cloud-storage`, `streaks`, `2fa`, `forum`, `suggestions-triage`.
 - Run `npm run lint && npm run typecheck && npm test` before claiming work is done.

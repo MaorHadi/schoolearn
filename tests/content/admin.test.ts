@@ -184,6 +184,23 @@ describe("lesson drafts", () => {
     const forAdmin = await getLessonForAdmin(lessonId);
     expect(forAdmin?.blocks).toEqual(draft);
     expect(forAdmin?.hasDraft).toBe(true);
+    expect(forAdmin?.draftInvalid).toBe(false);
+  });
+
+  it("falls back to the live content when the stored draft is invalid", async () => {
+    const { lessonIds } = await makeSubjectWithLessons([1]);
+    const lessonId = lessonIds[0]?.[0];
+    if (!lessonId) throw new Error("fixture");
+    const live = [{ id: "h", type: "heading" as const, level: 1 as const, text: "Live" }];
+    await prisma.lesson.update({
+      where: { id: lessonId },
+      data: { content: live, draftContent: [{ id: "v", type: "video" }] },
+    });
+
+    const forAdmin = await getLessonForAdmin(lessonId);
+    expect(forAdmin?.blocks).toEqual(live);
+    expect(forAdmin?.hasDraft).toBe(true);
+    expect(forAdmin?.draftInvalid).toBe(true);
   });
 
   it("rejects unknown assets and resolves known ones", async () => {
@@ -204,5 +221,9 @@ describe("lesson drafts", () => {
     await saveLessonDraft(lessonId, [{ id: "i", type: "image", assetId: asset.id, alt: "x" }]);
     const forAdmin = await getLessonForAdmin(lessonId);
     expect(forAdmin?.assetUrls[asset.id]).toBe("/media/t/draft.png");
+    // The draft's asset is referenced so the orphan sweep leaves it alone.
+    expect(await prisma.lessonAsset.findMany({ where: { lessonId } })).toMatchObject([
+      { assetId: asset.id },
+    ]);
   });
 });

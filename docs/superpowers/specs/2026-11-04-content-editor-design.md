@@ -1,6 +1,6 @@
 # Admin content editor with draft/publish — design
 
-Date: 2026-11-04. Replaces the manual "Adding a new subject" checklist (§13 of the foundation
+Date: 2026-11-04. Replaces the manual "Adding a new subject" checklist (§9 of the foundation
 spec) with an in-app editor for ADMINs. Questions remain `TODO(quiz)`.
 
 ## Goals
@@ -25,8 +25,14 @@ One set of tables plus "published" markers; no duplicated rows.
   (`listActiveSubjectsForUser`, `getSubjectBySlugForUser`, `getLessonForUser`, `getSubjectTree`).
 - The block editor writes `draftContent` only (`saveLessonDraft()`); `content` is written only by
   `saveLessonContent()`, which publishing calls.
-- `publishSubjects(ids)` per subject: copy each draft into `content` (syncing `LessonAsset`), clear
-  the draft, stamp `publishedAt` on unpublished sections/lessons, set `isActive = true`.
+- `publishSubjects(ids)` per subject, in one transaction each: copy each draft into `content`
+  (syncing `LessonAsset`), clear the draft, stamp `publishedAt` on unpublished sections/lessons, set
+  `isActive = true`. A subject whose draft is invalid or references a missing asset is rolled back
+  and reported in `failed`; the others still publish. Afterwards `sweepOrphanAssets()` deletes
+  uploads older than an hour that no lesson (live or draft) or material references.
+- `saveLessonDraft()` syncs `LessonAsset` to the union of live and draft asset ids, so draft uploads
+  are referenced and survive the sweep. A draft that fails the schema is reported as `draftInvalid`
+  and the editor falls back to the live content.
 - "Pending changes" = inactive subject, or any section/lesson without `publishedAt`, or any lesson
   with a draft. `listSubjectsForAdmin()` computes it; `/admin/publish` lists exactly those subjects.
 - **Deliberate limit:** titles, order, theme, and deletes apply immediately. Staging every field would

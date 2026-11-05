@@ -22,8 +22,21 @@ export async function action({ request, context }: Route.ActionArgs) {
   const parsed = PublishFormSchema.safeParse({ subjectId: form.getAll("subjectId") });
   if (!parsed.success) throw data(t("admin.publish.none"), { status: 400 });
 
-  const count = await publishSubjects(parsed.data.subjectId);
-  await flashFromContext(context, "success", "toast.published", { count: String(count) });
+  const result = await publishSubjects(parsed.data.subjectId);
+  if (result.failed.length > 0) {
+    const subjects = await listSubjectsForAdmin();
+    const names = result.failed
+      .map((failure) => subjects.find((subject) => subject.id === failure.subjectId)?.name)
+      .filter((name): name is string => name !== undefined);
+    await flashFromContext(context, "error", "toast.publishFailed", {
+      subjects: names.join(", "),
+    });
+  }
+  if (result.published > 0) {
+    await flashFromContext(context, "success", "toast.published", {
+      count: String(result.published),
+    });
+  }
   return redirect("/admin");
 }
 

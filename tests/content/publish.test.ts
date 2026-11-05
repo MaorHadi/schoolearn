@@ -17,7 +17,10 @@ describe("publishSubjects", () => {
     const { subject: second } = await makeSubjectWithLessons([1], null, false);
     const { subject: third } = await makeSubjectWithLessons([1], null, false);
 
-    expect(await publishSubjects([first.id, second.id, 999_999])).toBe(2);
+    expect(await publishSubjects([first.id, second.id, 999_999])).toEqual({
+      published: 2,
+      failed: [],
+    });
 
     const rows = await prisma.subject.findMany({ orderBy: { id: "asc" } });
     expect(rows.map((row) => [row.id, row.isActive, row.publishedAt !== null])).toEqual([
@@ -45,7 +48,7 @@ describe("publishSubjects", () => {
     const draft = [{ id: "i", type: "image" as const, assetId: asset.id, alt: "x" }];
     await saveLessonDraft(lessonId, draft);
 
-    expect(await publishSubjects([subject.id])).toBe(1);
+    expect((await publishSubjects([subject.id])).published).toBe(1);
 
     const row = await prisma.lesson.findUniqueOrThrow({
       where: { id: lessonId },
@@ -54,6 +57,46 @@ describe("publishSubjects", () => {
     expect(row.content).toEqual(draft);
     expect(row.draftContent).toBeNull();
     expect(row.assets.map((entry) => entry.assetId)).toEqual([asset.id]);
+  });
+
+  it("rolls back a subject whose draft cannot go live and still publishes the others", async () => {
+    const { subject: broken, lessonIds: brokenIds } = await makeSubjectWithLessons(
+      [2],
+      null,
+      false,
+    );
+    const { subject: fine } = await makeSubjectWithLessons([1], null, false);
+    const [goodLesson, badLesson] = brokenIds[0] ?? [];
+    if (!goodLesson || !badLesson) throw new Error("fixture");
+    const goodDraft = [{ id: "h", type: "heading", level: 1, text: "Good" }];
+    await saveLessonDraft(goodLesson, goodDraft as never);
+    // Bypass the writer to plant a draft that references an asset that does not exist.
+    await prisma.lesson.update({
+      where: { id: badLesson },
+      data: { draftContent: [{ id: "i", type: "image", assetId: 424_242, alt: "x" }] },
+    });
+
+    expect(await publishSubjects([broken.id, fine.id])).toEqual({
+      published: 1,
+      failed: [{ subjectId: broken.id, reason: "UNKNOWN_ASSET" }],
+    });
+
+    const untouched = await prisma.lesson.findUniqueOrThrow({ where: { id: goodLesson } });
+    expect(untouched.content).toEqual([]);
+    expect(untouched.draftContent).toEqual(goodDraft);
+    expect(untouched.publishedAt).toBeNull();
+    const brokenRow = await prisma.subject.findUniqueOrThrow({ where: { id: broken.id } });
+    expect(brokenRow.isActive).toBe(false);
+    const fineRow = await prisma.subject.findUniqueOrThrow({ where: { id: fine.id } });
+    expect(fineRow.isActive).toBe(true);
+
+    await prisma.lesson.update({
+      where: { id: badLesson },
+      data: { draftContent: [{ id: "v", type: "video" }] },
+    });
+    expect((await publishSubjects([broken.id])).failed).toEqual([
+      { subjectId: broken.id, reason: "INVALID_CONTENT" },
+    ]);
   });
 
   it("makes new sections and lessons visible to learners only after publishing", async () => {
