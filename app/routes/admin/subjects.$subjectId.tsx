@@ -3,11 +3,16 @@ import type { MouseEvent } from "react";
 import { Form, Link, data, redirect } from "react-router";
 import type { Route } from "./+types/subjects.$subjectId";
 import { SubjectStatusPill } from "~/components/admin/StatusPill";
-import { StructureTree } from "~/components/admin/StructureTree";
+import {
+  StructureTree,
+  TREE_FIELD_MESSAGES,
+  type TreeActionResult,
+} from "~/components/admin/StructureTree";
 import { SUBJECT_FIELD_MESSAGES, SubjectForm } from "~/components/admin/SubjectForm";
 import type { SubjectFieldErrors } from "~/components/admin/SubjectForm";
 import { t } from "~/i18n";
-import { SubjectPageIntentSchema, type SubjectPageIntent } from "~/schemas/admin-content";
+import type { ZodError } from "zod";
+import { SubjectPageIntentSchema } from "~/schemas/admin-content";
 import { requireRole } from "~/server/auth/context.server";
 import {
   createLesson,
@@ -26,10 +31,31 @@ import {
 import { flashFromContext } from "~/server/flash.server";
 import { fieldErrorsFrom } from "~/shared/field-errors";
 
-interface ActionResult {
-  fieldErrors?: SubjectFieldErrors;
-  /** Which intent the field errors belong to, so each inline form shows only its own. */
-  intent?: SubjectPageIntent["intent"];
+type ActionResult = SubjectActionResult | TreeActionResult;
+
+interface SubjectActionResult {
+  kind: "subject";
+  fieldErrors: SubjectFieldErrors;
+}
+
+/** Field errors for one inline tree form; the ids say which row they belong to. */
+function treeErrorsFrom(
+  form: Record<string, FormDataEntryValue>,
+  error: ZodError,
+): TreeActionResult {
+  const rowId = (name: "sectionId" | "lessonId") => {
+    const raw = form[name];
+    const id = typeof raw === "string" ? Number(raw) : Number.NaN;
+    return Number.isInteger(id) && id > 0 ? id : undefined;
+  };
+  const intent = form.intent;
+  return {
+    kind: "tree",
+    intent: typeof intent === "string" ? intent : "",
+    sectionId: rowId("sectionId"),
+    lessonId: rowId("lessonId"),
+    fieldErrors: fieldErrorsFrom(error, TREE_FIELD_MESSAGES),
+  };
 }
 
 function parseSubjectId(raw: string | undefined): number {
@@ -59,17 +85,20 @@ export async function action({ request, context, params }: Route.ActionArgs) {
   const form = Object.fromEntries(await request.formData());
   const parsed = SubjectPageIntentSchema.safeParse(form);
   if (!parsed.success) {
-    // Only the subject form has per-field messages; inline forms rely on `required`.
     if (form.intent === "update-subject") {
       return data<ActionResult>(
         {
-          intent: "update-subject",
+          kind: "subject",
           fieldErrors: fieldErrorsFrom(parsed.error, SUBJECT_FIELD_MESSAGES),
         },
         { status: 400 },
       );
     }
-    throw data(t("error.generic"), { status: 400 });
+    const errors = treeErrorsFrom(form, parsed.error);
+    if (Object.keys(errors.fieldErrors).length === 0) {
+      throw data(t("error.generic"), { status: 400 });
+    }
+    return data<ActionResult>(errors, { status: 400 });
   }
 
   const input = parsed.data;
@@ -80,7 +109,7 @@ export async function action({ request, context, params }: Route.ActionArgs) {
       const result = await updateSubject(subjectId, values);
       if (!result.ok && result.reason === "SLUG_TAKEN") {
         return data<ActionResult>(
-          { intent: "update-subject", fieldErrors: { slug: "admin.error.slugTaken" } },
+          { kind: "subject", fieldErrors: { slug: "admin.error.slugTaken" } },
           { status: 409 },
         );
       }
@@ -146,8 +175,8 @@ function confirmDelete(event: MouseEvent<HTMLButtonElement>) {
 
 export default function EditSubject({ loaderData, actionData }: Route.ComponentProps) {
   const { subject, hasPendingChanges } = loaderData;
-  const subjectErrors =
-    actionData?.intent === "update-subject" ? actionData.fieldErrors : undefined;
+  const subjectErrors = actionData?.kind === "subject" ? actionData.fieldErrors : undefined;
+  const treeErrors = actionData?.kind === "tree" ? actionData : undefined;
 
   return (
     <main className="container page">
@@ -183,7 +212,11 @@ export default function EditSubject({ loaderData, actionData }: Route.ComponentP
         </section>
 
         <div className="admin-columns__main">
-          <StructureTree sections={subject.sections} direction={subject.direction} />
+          <StructureTree
+            sections={subject.sections}
+            direction={subject.direction}
+            errors={treeErrors}
+          />
         </div>
       </div>
     </main>

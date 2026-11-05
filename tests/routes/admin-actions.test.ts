@@ -113,6 +113,37 @@ describe("admin subject actions", () => {
     const moved = await prisma.lesson.findUniqueOrThrow({ where: { id: second } });
     expect(moved.sortOrder).toBe(1);
 
+    const emptySection = await editSubjectAction({
+      request: formRequest(url, { intent: "create-section", title: "   " }),
+      context,
+      params,
+    } as never);
+    expect(emptySection).toMatchObject({
+      init: { status: 400 },
+      data: { intent: "create-section", fieldErrors: { title: "admin.error.title" } },
+    });
+
+    const firstLesson = lessonIds[0]?.[0];
+    if (!firstLesson) throw new Error("fixture");
+    const badScore = await editSubjectAction({
+      request: formRequest(url, {
+        intent: "update-lesson",
+        lessonId: String(firstLesson),
+        title: "Fine",
+        passingScore: "250",
+      }),
+      context,
+      params,
+    } as never);
+    expect(badScore).toMatchObject({
+      init: { status: 400 },
+      data: {
+        intent: "update-lesson",
+        lessonId: firstLesson,
+        fieldErrors: { passingScore: "admin.error.passingScore" },
+      },
+    });
+
     await expect(
       editSubjectAction({
         request: formRequest(url, { intent: "nonsense" }),

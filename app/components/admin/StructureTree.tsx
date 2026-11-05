@@ -2,8 +2,64 @@ import { ArrowDown, ArrowUp, PencilLine, Plus, Trash2 } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
 import { Form, Link } from "react-router";
 import { RowStatusPill } from "~/components/admin/StatusPill";
-import { t } from "~/i18n";
+import { t, type TranslationKey } from "~/i18n";
 import { TITLE_MAX_LENGTH } from "~/schemas/admin-content";
+
+export type TreeField = "title" | "passingScore";
+
+/** One message key per inline-form field, for `fieldErrorsFrom()` in the subject page action. */
+export const TREE_FIELD_MESSAGES: Record<TreeField, TranslationKey> = {
+  title: "admin.error.title",
+  passingScore: "admin.error.passingScore",
+};
+
+/** Validation result of one inline form; `sectionId`/`lessonId` pin it to a single row. */
+export interface TreeActionResult {
+  kind: "tree";
+  intent: string;
+  sectionId?: number;
+  lessonId?: number;
+  fieldErrors: Partial<Record<TreeField, TranslationKey>>;
+}
+
+type RowErrors = Partial<Record<TreeField, TranslationKey>>;
+
+/** Errors of the form identified by `intent` and (optionally) the row id; empty otherwise. */
+function errorsFor(
+  errors: TreeActionResult | undefined,
+  intent: string,
+  row?: { sectionId?: number; lessonId?: number },
+): RowErrors {
+  if (!errors || errors.intent !== intent) return {};
+  if (row?.sectionId !== undefined && errors.sectionId !== row.sectionId) return {};
+  if (row?.lessonId !== undefined && errors.lessonId !== row.lessonId) return {};
+  return errors.fieldErrors;
+}
+
+/** A compact input with its own hidden label and inline error, for tree rows. */
+function TreeInput({
+  label,
+  error,
+  className,
+  children,
+}: {
+  label: string;
+  error?: TranslationKey;
+  className: string;
+  children: ReactNode;
+}) {
+  return (
+    <label className={className}>
+      <span className="visually-hidden">{label}</span>
+      {children}
+      {error ? (
+        <span className="field__error" role="alert">
+          {t(error)}
+        </span>
+      ) : null}
+    </label>
+  );
+}
 
 export interface TreeLesson {
   id: number;
@@ -65,29 +121,37 @@ function LessonRow({
   isFirst,
   isLast,
   direction,
+  errors,
 }: {
   lesson: TreeLesson;
   isFirst: boolean;
   isLast: boolean;
   direction: "rtl" | "ltr";
+  errors: RowErrors;
 }) {
   return (
     <li className="tree-lesson">
-      <Form method="post" className="tree-lesson__form">
+      <Form method="post" className="tree-lesson__form" noValidate>
         <input type="hidden" name="lessonId" value={lesson.id} />
-        <label className="tree-field tree-field--grow">
-          <span className="visually-hidden">{t("admin.lessons.titleLabel")}</span>
+        <TreeInput
+          label={t("admin.lessons.titleLabel")}
+          error={errors.title}
+          className="tree-field tree-field--grow"
+        >
           <input
             className="field__input field__input--compact"
             name="title"
             dir={direction}
             defaultValue={lesson.title}
             maxLength={TITLE_MAX_LENGTH}
-            required
+            aria-invalid={errors.title ? true : undefined}
           />
-        </label>
-        <label className="tree-field tree-field--score">
-          <span className="visually-hidden">{t("admin.lessons.passingScore")}</span>
+        </TreeInput>
+        <TreeInput
+          label={t("admin.lessons.passingScore")}
+          error={errors.passingScore}
+          className="tree-field tree-field--score"
+        >
           <input
             className="field__input field__input--compact"
             name="passingScore"
@@ -97,8 +161,9 @@ function LessonRow({
             placeholder="%"
             title={t("admin.lessons.passingScore")}
             defaultValue={lesson.passingScore ?? ""}
+            aria-invalid={errors.passingScore ? true : undefined}
           />
-        </label>
+        </TreeInput>
         <RowStatusPill publishedAt={lesson.publishedAt} hasDraft={lesson.hasDraft} />
         <span className="tree-actions">
           <button
@@ -143,27 +208,35 @@ function SectionCard({
   isFirst,
   isLast,
   direction,
+  errors,
 }: {
   section: TreeSection;
   isFirst: boolean;
   isLast: boolean;
   direction: "rtl" | "ltr";
+  errors: TreeActionResult | undefined;
 }) {
+  const row = { sectionId: section.id };
+  const renameErrors = errorsFor(errors, "update-section", row);
+  const addErrors = errorsFor(errors, "create-lesson", row);
   return (
     <li className="card tree-section">
-      <Form method="post" className="tree-section__head">
+      <Form method="post" className="tree-section__head" noValidate>
         <input type="hidden" name="sectionId" value={section.id} />
-        <label className="tree-field tree-field--grow">
-          <span className="visually-hidden">{t("admin.lessons.titleLabel")}</span>
+        <TreeInput
+          label={t("admin.lessons.titleLabel")}
+          error={renameErrors.title}
+          className="tree-field tree-field--grow"
+        >
           <input
             className="field__input field__input--compact tree-section__title"
             name="title"
             dir={direction}
             defaultValue={section.title}
             maxLength={TITLE_MAX_LENGTH}
-            required
+            aria-invalid={renameErrors.title ? true : undefined}
           />
-        </label>
+        </TreeInput>
         <RowStatusPill publishedAt={section.publishedAt} />
         <span className="tree-actions">
           <button
@@ -207,25 +280,29 @@ function SectionCard({
               isFirst={index === 0}
               isLast={index === section.lessons.length - 1}
               direction={direction}
+              errors={errorsFor(errors, "update-lesson", { lessonId: lesson.id })}
             />
           ))}
         </ol>
       )}
 
-      <Form method="post" className="tree-add">
+      <Form method="post" className="tree-add" noValidate>
         <input type="hidden" name="intent" value="create-lesson" />
         <input type="hidden" name="sectionId" value={section.id} />
-        <label className="tree-field tree-field--grow">
-          <span className="visually-hidden">{t("admin.lessons.newTitle")}</span>
+        <TreeInput
+          label={t("admin.lessons.newTitle")}
+          error={addErrors.title}
+          className="tree-field tree-field--grow"
+        >
           <input
             className="field__input field__input--compact"
             name="title"
             dir={direction}
             placeholder={t("admin.lessons.newTitle")}
             maxLength={TITLE_MAX_LENGTH}
-            required
+            aria-invalid={addErrors.title ? true : undefined}
           />
-        </label>
+        </TreeInput>
         <button type="submit" className="btn btn--ghost btn--small">
           <Plus size={16} aria-hidden="true" />
           {t("admin.lessons.add")}
@@ -239,10 +316,14 @@ function SectionCard({
 export function StructureTree({
   sections,
   direction,
+  errors,
 }: {
   sections: TreeSection[];
   direction: "rtl" | "ltr";
+  /** Validation result of the last inline submit, shown only on the form it came from. */
+  errors?: TreeActionResult;
 }) {
+  const addErrors = errorsFor(errors, "create-section");
   return (
     <section className="tree" aria-labelledby="tree-title">
       <h2 id="tree-title" className="section-title">
@@ -261,24 +342,28 @@ export function StructureTree({
               isFirst={index === 0}
               isLast={index === sections.length - 1}
               direction={direction}
+              errors={errors}
             />
           ))}
         </ol>
       )}
 
-      <Form method="post" className="tree-add tree-add--section">
+      <Form method="post" className="tree-add tree-add--section" noValidate>
         <input type="hidden" name="intent" value="create-section" />
-        <label className="tree-field tree-field--grow">
-          <span className="visually-hidden">{t("admin.sections.newTitle")}</span>
+        <TreeInput
+          label={t("admin.sections.newTitle")}
+          error={addErrors.title}
+          className="tree-field tree-field--grow"
+        >
           <input
             className="field__input field__input--compact"
             name="title"
             dir={direction}
             placeholder={t("admin.sections.newTitle")}
             maxLength={TITLE_MAX_LENGTH}
-            required
+            aria-invalid={addErrors.title ? true : undefined}
           />
-        </label>
+        </TreeInput>
         <button type="submit" className="btn btn--primary btn--small">
           <Plus size={16} aria-hidden="true" />
           {t("admin.sections.add")}

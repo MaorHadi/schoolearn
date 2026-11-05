@@ -1400,6 +1400,23 @@ a.station__inner:hover {
   display: grid;
   gap: var(--space-4);
   grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  align-items: start;
+}
+
+/* Inputs default to an intrinsic width; inside admin forms they fill their grid cell. */
+.admin-form .field__input,
+.tree-field .field__input {
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.admin-form .field {
+  min-inline-size: 0;
+}
+
+.tree-field .field__error {
+  display: block;
+  margin-block-start: var(--space-1);
 }
 
 .admin-table {

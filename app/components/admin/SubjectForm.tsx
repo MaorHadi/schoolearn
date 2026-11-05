@@ -74,7 +74,6 @@ export function SubjectForm({
           name="name"
           defaultValue={values.name}
           maxLength={TITLE_MAX_LENGTH}
-          required
           aria-invalid={invalid("name")}
         />
       </Field>
@@ -86,7 +85,6 @@ export function SubjectForm({
           dir="ltr"
           defaultValue={values.slug}
           maxLength={64}
-          required
           aria-invalid={invalid("slug")}
         />
       </Field>
@@ -110,9 +108,9 @@ export function SubjectForm({
             dir="ltr"
             defaultValue={values.locale}
             maxLength={16}
-            required
             aria-invalid={invalid("locale")}
           />
+          <span className="field__hint">{t("admin.subject.form.localeHint")}</span>
         </Field>
 
         <Field label={t("admin.subject.form.direction")} error={errorFor("direction")}>
