@@ -1,5 +1,5 @@
 import { CircleAlert, CircleCheck, Info, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { t } from "~/i18n";
 import type { Toast } from "~/schemas/toast";
 
@@ -30,13 +30,25 @@ export function Toaster({ toast }: { toast: Toast | null }) {
     setQueue((current) => [...current, toast]);
   }
 
+  // One timer per queued toast. Timers are keyed by id and survive re-renders and the root
+  // loader re-running (which sets `toast` back to null), so every card still auto-dismisses.
+  const timers = useRef(new Map<string, number>());
   useEffect(() => {
-    if (!toast) return;
-    const timer = setTimeout(() => {
-      setQueue((current) => current.filter((entry) => entry.id !== toast.id));
-    }, AUTO_DISMISS_MS);
-    return () => clearTimeout(timer);
-  }, [toast]);
+    for (const entry of queue) {
+      if (timers.current.has(entry.id)) continue;
+      const timer = window.setTimeout(() => {
+        timers.current.delete(entry.id);
+        setQueue((current) => current.filter((queued) => queued.id !== entry.id));
+      }, AUTO_DISMISS_MS);
+      timers.current.set(entry.id, timer);
+    }
+  }, [queue]);
+  useEffect(() => {
+    const pending = timers.current;
+    return () => {
+      for (const timer of pending.values()) clearTimeout(timer);
+    };
+  }, []);
 
   const dismiss = (id: string) => setQueue((current) => current.filter((entry) => entry.id !== id));
 

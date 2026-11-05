@@ -56,6 +56,8 @@
   /* --- Layout --- */
   --content-max: 42rem; /* reading width */
   --page-max: 60rem;
+  --subjects-max: 80rem; /* middle column of the subjects page */
+  --rail-min: 14rem; /* narrowest side rail on the subjects page */
   --gutter: var(--space-4);
   --header-h: 3.5rem;
 

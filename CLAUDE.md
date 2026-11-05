@@ -14,6 +14,7 @@ Project conventions for Claude Code sessions.
 - Foundation design: `docs/superpowers/specs/2026-10-01-study-platform-foundation-design.md`.
   Read it before changing the schema or the progression rules.
 - Content editor design: `docs/superpowers/specs/2026-11-04-content-editor-design.md`.
+- User management design: `docs/superpowers/specs/2026-11-05-user-management-design.md`.
 - Build log and open work: `docs/superpowers/plans/2026-10-01-study-platform-foundation.md`.
 
 ## Layout
@@ -46,6 +47,10 @@ Project conventions for Claude Code sessions.
   Unlock rules only in `computeTree()` (`app/shared/unlock.ts`). `sortOrder` is not unique.
 - `Suggestion`: `createSuggestion()` / `updateSuggestionStatus()` in
   `app/server/feedback/suggestions.server.ts` (daily throttle `SUGGESTIONS_MAX_PER_DAY`).
+- `User.role` / `isDisabled` / `lockoutClearedAt`: `app/server/users/user.server.ts` (guards:
+  never your own account, never the last active SYSTEM_ADMIN; disabling ends sessions). The
+  lockout rule is `lockoutStateFor()` in `app/server/auth/auth-log.server.ts`; failures before
+  `lockoutClearedAt` do not count.
 - Toasts: `setFlash()` / `flashFromContext()` in `app/server/flash.server.ts`; the root loader
   takes it with `takeFlash()` and `Toaster` renders it.
 
@@ -107,6 +112,6 @@ type (Heebo), flat saturated subject accents, strong ink, generous space.
 - Tests live in `tests/` mirroring `app/`. DB tests call `resetDb()` against `study_test`
   (forced in `tests/setup.ts`; `npm run db:test:migrate` after migrations). Component tests opt
   into jsdom with `// @vitest-environment jsdom`. TDD: failing test first.
-- Future hooks are `TODO(<feature>)`: `quiz`, `user-management`, `system-settings`,
+- Future hooks are `TODO(<feature>)`: `quiz`, `system-settings`,
   `cloud-storage`, `streaks`, `2fa`, `forum`, `suggestions-triage`.
 - Run `npm run lint && npm run typecheck && npm test` before claiming work is done.

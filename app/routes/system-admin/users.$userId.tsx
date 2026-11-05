@@ -1,8 +1,8 @@
 import { Ban, CircleCheck, LockOpen, ShieldOff } from "lucide-react";
-import type { MouseEvent } from "react";
 import { Form, Link, data } from "react-router";
 import type { Route } from "./+types/users.$userId";
 import { UserStatusPill } from "~/components/admin/UserStatusPill";
+import { ConfirmSubmit } from "~/components/forms/ConfirmSubmit";
 import { t, type TranslationKey } from "~/i18n";
 import { DateRangeFields } from "~/components/forms/DateRangeFields";
 import { DateRangeQuerySchema } from "~/schemas/date-range";
@@ -111,12 +111,6 @@ const FAILURE_REASON_KEYS: Record<string, TranslationKey | undefined> = {
   REGISTER_THROTTLED: "systemAdmin.user.log.reason.REGISTER_THROTTLED",
 };
 
-function confirmWith(message: string) {
-  return (event: MouseEvent<HTMLButtonElement>) => {
-    if (!window.confirm(message)) event.preventDefault();
-  };
-}
-
 export default function SystemAdminUser({ loaderData, actionData }: Route.ComponentProps) {
   const { user, isSelf, range } = loaderData;
   const lockout = user.lockout;
@@ -182,26 +176,32 @@ export default function SystemAdminUser({ loaderData, actionData }: Route.Compon
             </button>
           </Form>
 
-          <Form method="post" className="danger-zone">
-            <input type="hidden" name="intent" value="set-disabled" />
-            <input type="hidden" name="disabled" value={user.isDisabled ? "false" : "true"} />
+          <div className="danger-zone">
             {user.isDisabled ? (
-              <button type="submit" className="btn btn--ghost" disabled={isSelf}>
-                <CircleCheck size={16} aria-hidden="true" />
-                {t("systemAdmin.user.enable")}
-              </button>
+              <Form method="post">
+                <input type="hidden" name="intent" value="set-disabled" />
+                <input type="hidden" name="disabled" value="false" />
+                <button type="submit" className="btn btn--ghost" disabled={isSelf}>
+                  <CircleCheck size={16} aria-hidden="true" />
+                  {t("systemAdmin.user.enable")}
+                </button>
+              </Form>
             ) : (
-              <button
-                type="submit"
-                className="btn btn--danger"
-                disabled={isSelf}
-                onClick={confirmWith(t("systemAdmin.user.disableConfirm"))}
-              >
-                <Ban size={16} aria-hidden="true" />
-                {t("systemAdmin.user.disable")}
-              </button>
+              <ConfirmSubmit
+                trigger={
+                  <button type="button" className="btn btn--danger" disabled={isSelf}>
+                    <Ban size={16} aria-hidden="true" />
+                    {t("systemAdmin.user.disable")}
+                  </button>
+                }
+                title={t("systemAdmin.user.disable")}
+                description={t("systemAdmin.user.disableConfirm")}
+                confirmLabel={t("systemAdmin.user.disable")}
+                fields={{ intent: "set-disabled", disabled: "true" }}
+                variant="destructive"
+              />
             )}
-          </Form>
+          </div>
         </section>
 
         <div className="admin-columns__main">

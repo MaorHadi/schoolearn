@@ -36,6 +36,19 @@ export default function Subjects({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="container page subjects-shell">
+      {/* The header spans the whole shell, so the rails start level with the subject cards. */}
+      <header className="page__head subjects-head">
+        {welcome ? (
+          <p className="banner" role="status">
+            {t("subjects.welcome")}
+          </p>
+        ) : null}
+        <h1 className="page__title">{t("subjects.title")}</h1>
+        <p className="page__lead">
+          {enrolledCount === 0 ? t("subjects.leadNew") : t("subjects.leadReturning")}
+        </p>
+      </header>
+
       <aside className="rail rail--start">
         <ForumLink />
         <AdSlot />
@@ -43,19 +56,6 @@ export default function Subjects({ loaderData }: Route.ComponentProps) {
       </aside>
 
       <main className="subjects-main">
-        {welcome ? (
-          <p className="banner" role="status">
-            {t("subjects.welcome")}
-          </p>
-        ) : null}
-
-        <header className="page__head">
-          <h1 className="page__title">{t("subjects.title")}</h1>
-          <p className="page__lead">
-            {enrolledCount === 0 ? t("subjects.leadNew") : t("subjects.leadReturning")}
-          </p>
-        </header>
-
         {subjects.length === 0 ? (
           <p className="empty">{t("subjects.empty")}</p>
         ) : (

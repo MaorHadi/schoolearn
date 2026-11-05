@@ -44,7 +44,7 @@ function DatePicker({
           <Button
             type="button"
             variant="outline"
-            className="justify-start font-normal"
+            className="min-h-11 justify-start border-2 border-input bg-secondary font-normal text-foreground shadow-none hover:bg-accent"
             aria-label={label}
           >
             <CalendarIcon aria-hidden="true" />

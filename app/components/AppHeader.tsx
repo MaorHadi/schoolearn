@@ -9,6 +9,8 @@ export interface AppHeaderProps {
   showSystemAdmin?: boolean;
   /** When false (auth pages) the header shows only the brand and theme toggle. */
   signedIn?: boolean;
+  /** Match the subjects page's middle column instead of the standard page width. */
+  alignWithSubjects?: boolean;
 }
 
 export function AppHeader({
@@ -16,10 +18,13 @@ export function AppHeader({
   showAdmin,
   showSystemAdmin,
   signedIn = true,
+  alignWithSubjects = false,
 }: AppHeaderProps) {
   return (
     <header className="app-header">
-      <div className="app-header__inner">
+      <div
+        className={`app-header__inner${alignWithSubjects ? " app-header__inner--subjects" : ""}`}
+      >
         <NavLink to={signedIn ? "/subjects" : "/login"} className="brand">
           <span className="brand__mark" aria-hidden="true" />
           {t("app.name")}

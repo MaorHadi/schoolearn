@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { act } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { Toaster } from "~/components/Toaster";
 import { t } from "~/i18n";
 import type { Toast } from "~/schemas/toast";
@@ -35,5 +36,21 @@ describe("Toaster", () => {
     expect(screen.getAllByRole("button", { name: t("toast.dismiss") })).toHaveLength(1);
     fireEvent.click(screen.getByRole("button", { name: t("toast.dismiss") }));
     expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  it("auto-dismisses even when the toast prop is cleared by a navigation in the meantime", () => {
+    vi.useFakeTimers();
+    try {
+      const { rerender } = render(<Toaster toast={toast} />);
+      // The root loader re-runs on the next navigation and hands over no toast.
+      rerender(<Toaster toast={null} />);
+      expect(screen.getByRole("button", { name: t("toast.dismiss") })).toBeTruthy();
+      act(() => {
+        vi.advanceTimersByTime(6000);
+      });
+      expect(screen.queryByRole("button")).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

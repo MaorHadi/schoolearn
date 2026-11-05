@@ -134,6 +134,6 @@ sliding expiry, seed idempotence, `recordAttempt` invariants. No end-to-end test
 
 ## 11. Reserved hooks
 
-`TODO(quiz)`, `TODO(user-management)`, `TODO(system-settings)`, `TODO(cloud-storage)`,
+`TODO(quiz)`, `TODO(system-settings)`, `TODO(cloud-storage)`,
 `TODO(streaks)`, `TODO(2fa)`, `TODO(forum)`, `TODO(suggestions-triage)`. Email verification,
 password reset and an explicit Enrollment table are not planned yet.

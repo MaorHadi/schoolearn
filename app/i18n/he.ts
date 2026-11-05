@@ -274,6 +274,7 @@ export const he = {
   "systemAdmin.user.log.reason.DUPLICATE": "הרשמה נדחתה: שם המשתמש או האימייל תפוסים",
   "systemAdmin.user.log.reason.REGISTER_THROTTLED": "הרשמה נדחתה: יותר מדי הרשמות מהכתובת",
   "systemAdmin.user.applyRange": "הצגה",
+  "dialog.cancel": "ביטול",
   "dateRange.from": "מתאריך",
   "dateRange.to": "עד תאריך",
   "dateRange.pick": "בחירת תאריך",

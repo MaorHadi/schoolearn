@@ -74,12 +74,27 @@ Spec: `docs/superpowers/specs/2026-11-04-content-editor-design.md`.
   multi-subject publish page.
 - Shared: `app/schemas/admin-content.ts`, `app/shared/inline-markup.ts`, `app/shared/ordering.ts`.
 
+## Stage 10 — User management and the Tailwind/shadcn adoption (2026-11-05, done)
+
+Spec: `docs/superpowers/specs/2026-11-05-user-management-design.md`.
+
+- Schema: `User.lockoutClearedAt`, index on `User.createdAt`; migration `user_management`.
+- Server: `app/server/users/user.server.ts` (list/search/paging, role, disable with session
+  purge, lockout clear), `lockoutStateFor()` in `auth-log.server.ts`, `clearIpBlock()`.
+  Security fix: the system-admin suggestions loader/action now call `requireRole` themselves.
+- Routes: `/system-admin/users` (search, pager, pills) and `/system-admin/users/:id` (account,
+  security, login log for a date range).
+- UI stack: Tailwind v4 + shadcn adopted incrementally (see CLAUDE.md "UI"); first shared piece
+  `app/components/forms/DateRangeFields.tsx` with `DateRangeQuerySchema` / `resolveDateRange()`.
+
 ## Open work
 
 - `TODO(quiz)`: question editor, quiz UI, answer submission through `recordAttempt()`.
 - `TODO(forum)`: threads, replies, moderation. Needs its own spec.
 - `TODO(suggestions-triage)`: status changes, filters, pagination on the system-admin list.
-- `TODO(user-management)`, `TODO(system-settings)`: `/system-admin` pages.
+- `TODO(system-settings)`: `/system-admin` settings page, after the forum defines its keys.
+- User management follow-ups: forced password reset on next login, create/delete accounts,
+  migrate the user pages fully to shadcn components.
 - `TODO(streaks)`: attempt timestamps and `User.timezone` are ready.
 - `TODO(2fa)`, `TODO(cloud-storage)`: reserved hooks.
 - Editor follow-ups: stage metadata edits and deletes as drafts, materials editor, asset library,
