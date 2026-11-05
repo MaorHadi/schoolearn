@@ -3,6 +3,7 @@ import { security } from "~/server/security.server";
 import { UNKNOWN_IP } from "~/server/auth/client-ip.server";
 import { login } from "~/server/auth/login.server";
 import { registerUser } from "~/server/auth/register.server";
+import { clearUserLockout } from "~/server/users/user.server";
 import { prisma } from "~/server/database.server";
 import { resetDb } from "../helpers/db";
 
@@ -68,6 +69,20 @@ describe("login with brute-force protection", () => {
       data: { createdAt: new Date(Date.now() - security.usernameLockoutMs - 60_000) },
     });
     expect((await login({ username: "alice", password: "password1" }, "10.0.0.1")).ok).toBe(true);
+  });
+
+  it("an admin clear lifts the lockout without deleting the audit rows", async () => {
+    for (let attempt = 0; attempt < security.usernameMaxFailures; attempt++) {
+      await login({ username: "alice", password: "bad" }, "10.0.0.1");
+    }
+    expect((await login({ username: "alice", password: "password1" }, "10.0.0.1")).ok).toBe(false);
+
+    const user = await prisma.user.findUniqueOrThrow({ where: { username: "alice" } });
+    expect(await clearUserLockout(user.id)).toBe(true);
+    expect((await login({ username: "alice", password: "password1" }, "10.0.0.1")).ok).toBe(true);
+    expect(await prisma.authLog.count({ where: { failureReason: "BAD_PASSWORD" } })).toBe(
+      security.usernameMaxFailures,
+    );
   });
 
   it("M is strictly greater than N (shared school IP)", () => {

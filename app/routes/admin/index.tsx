@@ -60,8 +60,8 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
                     {subject.name}
                   </Link>
                 </td>
-                <td dir="ltr" className="admin-table__mono">
-                  {subject.slug}
+                <td className="admin-table__mono">
+                  <span className="ltr-value">{subject.slug}</span>
                 </td>
                 <td>{subject.sortOrder}</td>
                 <td>

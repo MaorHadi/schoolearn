@@ -2,18 +2,19 @@ import { MessageSquarePlus } from "lucide-react";
 import { Form, data } from "react-router";
 import type { Route } from "./+types/suggestions";
 import { t } from "~/i18n";
-import { sessionContext } from "~/server/auth/context.server";
+import { requireRole, sessionContext } from "~/server/auth/context.server";
 import { setFlash } from "~/server/flash.server";
 import { SUGGESTION_STATUSES, SuggestionStatusUpdateSchema } from "~/schemas/feedback";
 import { listSuggestions, updateSuggestionStatus } from "~/server/feedback/suggestions.server";
 
-// Role is enforced by the system-admin layout loader.
 // TODO(suggestions-triage): filter by status, paginate.
-export async function loader() {
+export async function loader({ context }: Route.LoaderArgs) {
+  requireRole(context, "SYSTEM_ADMIN");
   return { suggestions: await listSuggestions() };
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
+  requireRole(context, "SYSTEM_ADMIN");
   const form = Object.fromEntries(await request.formData());
   const parsed = SuggestionStatusUpdateSchema.safeParse(form);
   if (!parsed.success) throw data(t("error.generic"), { status: 400 });

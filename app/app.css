@@ -1,5 +1,45 @@
 @import "./styles/tokens.css";
 
+/*
+  Tailwind utilities and the shadcn theme bridge. Preflight is deliberately not imported so the
+  hand-written styles below keep their look; new UI uses Tailwind classes and app/components/ui.
+  Every shadcn color is an alias of a token from tokens.css, so light/dark and the per-subject
+  --accent carry over without a second palette.
+*/
+@import "tailwindcss/theme" layer(theme);
+@import "tailwindcss/utilities" layer(utilities);
+@import "tw-animate-css";
+
+@custom-variant dark (&:is([data-theme="dark"] *, .theme-system-dark *));
+
+@theme inline {
+  --font-sans: var(--font-ui);
+  --font-serif: var(--font-quote);
+  --color-background: var(--bg);
+  --color-foreground: var(--ink);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--ink);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--ink);
+  --color-primary: var(--accent);
+  --color-primary-foreground: var(--accent-ink);
+  --color-secondary: var(--surface-2);
+  --color-secondary-foreground: var(--ink);
+  --color-muted: var(--surface-2);
+  --color-muted-foreground: var(--ink-2);
+  --color-accent: var(--accent-soft);
+  --color-accent-foreground: var(--ink);
+  --color-destructive: var(--danger);
+  --color-destructive-foreground: var(--accent-ink);
+  --color-border: var(--line);
+  --color-input: var(--line);
+  --color-ring: var(--focus);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-lg);
+}
+
 /* --- Reset-ish --- */
 *,
 *::before,
@@ -1379,6 +1419,59 @@ a.station__inner:hover {
   color: var(--ink);
 }
 
+.status-pill--danger {
+  background: color-mix(in oklab, var(--danger) 16%, var(--bg));
+  color: var(--ink);
+}
+
+.status-pill--role-admin,
+.status-pill--role-system_admin {
+  background: color-mix(in oklab, var(--accent) 18%, var(--bg));
+  color: var(--ink);
+}
+
+/* --- User management --- */
+.search-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-2);
+  margin-block-start: var(--space-4);
+}
+
+.search-form__field {
+  flex: 1 1 16rem;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-block-start: var(--space-4);
+}
+
+.ip-block-list {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ip-block {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.admin-columns__main {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+}
+
 .select {
   appearance: auto;
   cursor: pointer;
@@ -1431,6 +1524,12 @@ a.station__inner:hover {
   border-block-end: 1px solid var(--line);
   text-align: start;
   vertical-align: middle;
+}
+
+/* LTR values (usernames, emails, IPs) inside RTL cells: keep the cell's alignment. */
+.ltr-value {
+  direction: ltr;
+  unicode-bidi: isolate;
 }
 
 .admin-table th {

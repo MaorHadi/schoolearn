@@ -3,6 +3,12 @@ import { prisma } from "~/server/database.server";
 import type { IpBlock } from "../../../prisma/generated/client/client";
 import { UNKNOWN_IP } from "./client-ip.server";
 
+/** Admin unblock: removes the row, which also resets its escalation history. */
+export async function clearIpBlock(ip: string): Promise<boolean> {
+  const { count } = await prisma.ipBlock.deleteMany({ where: { ipAddress: ip } });
+  return count === 1;
+}
+
 export function findActiveIpBlock(ip: string): Promise<IpBlock | null> {
   return prisma.ipBlock.findFirst({ where: { ipAddress: ip, expiresAt: { gt: new Date() } } });
 }

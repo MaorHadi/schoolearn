@@ -1,4 +1,5 @@
 import { prisma } from "~/server/database.server";
+import { security } from "~/server/security.server";
 import type { LoginFailureReason, RegisterFailureReason } from "~/schemas/auth";
 
 /**
@@ -29,22 +30,60 @@ export async function recordAuthAttempt(attempt: {
   });
 }
 
-/** Count credential failures within the last `sinceMs`, filtered by IP and/or username. */
+/**
+ * Count credential failures within the last `sinceMs`, filtered by IP and/or username.
+ * `notBefore` (a user's `lockoutClearedAt`) excludes failures an admin has already forgiven.
+ */
 export function countRecentFailures(filter: {
   ip?: string;
   username?: string;
   sinceMs: number;
+  notBefore?: Date | null;
 }): Promise<number> {
+  const windowStart = new Date(Date.now() - filter.sinceMs);
+  const floor = filter.notBefore && filter.notBefore > windowStart ? filter.notBefore : windowStart;
   return prisma.authLog.count({
     where: {
       isSuccessful: false,
       type: "login",
       failureReason: { in: CREDENTIAL_FAILURES },
-      createdAt: { gte: new Date(Date.now() - filter.sinceMs) },
+      createdAt: { gte: floor },
       ...(filter.ip ? { ipAddress: filter.ip } : {}),
       ...(filter.username ? { username: filter.username } : {}),
     },
   });
+}
+
+export interface LockoutState {
+  locked: boolean;
+  /** Credential failures counted inside the window (after any admin clear). */
+  failures: number;
+  /** When the lock lifts on its own, or null when not locked. */
+  until: Date | null;
+}
+
+/**
+ * A username is locked when it has reached N credential failures inside the failure window
+ * and the lockout period since the last of those failures has not elapsed. Attempts made while
+ * locked are logged as USERNAME_LOCKED and never counted, so the lock cannot self-extend.
+ * Failures before `lockoutClearedAt` are ignored.
+ */
+export async function lockoutStateFor(
+  username: string,
+  lockoutClearedAt: Date | null = null,
+): Promise<LockoutState> {
+  const failures = await countRecentFailures({
+    username,
+    sinceMs: security.failureWindowMs,
+    notBefore: lockoutClearedAt,
+  });
+  if (failures < security.usernameMaxFailures) return { locked: false, failures, until: null };
+  const lastFailure = await lastCredentialFailureAt(username);
+  if (!lastFailure) return { locked: false, failures, until: null };
+  const until = new Date(lastFailure.getTime() + security.usernameLockoutMs);
+  return until.getTime() > Date.now()
+    ? { locked: true, failures, until }
+    : { locked: false, failures, until: null };
 }
 
 export async function recordRegisterAttempt(attempt: {

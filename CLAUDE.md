@@ -79,7 +79,15 @@ Project conventions for Claude Code sessions.
 Design direction "transit line": the lesson path is a vertical rail with stations; signage-style
 type (Heebo), flat saturated subject accents, strong ink, generous space.
 
-- Tokens live only in `app/styles/tokens.css`; never raw hex in component CSS.
+- Styling is moving to **Tailwind v4 + shadcn** incrementally: new UI uses Tailwind classes and the
+  components in `app/components/ui/` (added with `npx shadcn@latest add <name>`); existing pages keep
+  their hand-written CSS in `app.css` until they are touched. Tailwind preflight is not imported.
+  shadcn's theme variables are aliases of the tokens (the `@theme inline` block in `app.css`).
+- Tokens live only in `app/styles/tokens.css`; never raw hex in component CSS or Tailwind classes.
+- Forms stay React Router `<Form>` + server-side zod; shadcn primitives are used inside them, not
+  react-hook-form. Shared form pieces live in `app/components/forms/` (`DateRangeFields` posts
+  `from`/`to`; parse with `DateRangeQuerySchema`, resolve with `resolveDateRange()`).
+- Tailwind: logical utilities only (`ps-`, `pe-`, `ms-`, `me-`, `start-`, `end-`), never `pl-`/`ml-`/`left-`.
 - Theme: `<html data-theme="light|dark">` from the `theme` cookie; no attribute follows the system.
 - Per-subject accent: set `--accent` inline from `resolveSubjectTheme(subject)`; icons come from
   the allowlist in `app/shared/subject-theme.ts` via `SubjectIcon`.

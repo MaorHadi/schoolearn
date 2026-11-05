@@ -52,21 +52,25 @@ enum QuestionType {
 // ---------------------------------------------------------------------------
 
 model User {
-  id           Int              @id @default(autoincrement())
-  username     String           @unique
-  email        String?          @unique
-  passwordHash String
-  role         Role             @default(USER)
-  isDisabled   Boolean          @default(false)
-  timezone     String           @default("Asia/Jerusalem") // for future streak calculation (TODO(streaks))
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  subjects     Subject[] // implicit m:n = enrollment
-  sessions     Session[]
-  attempts     LessonAttempt[]
-  progress     LessonProgress[]
-  assets       Asset[]
-  suggestions  Suggestion[]
+  id               Int              @id @default(autoincrement())
+  username         String           @unique
+  email            String?          @unique
+  passwordHash     String
+  role             Role             @default(USER)
+  isDisabled       Boolean          @default(false)
+  timezone         String           @default("Asia/Jerusalem") // for future streak calculation (TODO(streaks))
+  /// Set by a SYSTEM_ADMIN to lift a username lockout; failures before it no longer count.
+  lockoutClearedAt DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  subjects         Subject[] // implicit m:n = enrollment
+  sessions         Session[]
+  attempts         LessonAttempt[]
+  progress         LessonProgress[]
+  assets           Asset[]
+  suggestions      Suggestion[]
+
+  @@index([createdAt])
 }
 
 model Session {
@@ -136,9 +140,9 @@ model Subject {
 /// A difficulty bracket. Lowest sortOrder is easiest and defines unlock order.
 /// sortOrder is intentionally not unique so reordering is a plain update.
 model Section {
-  id        Int      @id @default(autoincrement())
-  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  subjectId Int
+  id          Int       @id @default(autoincrement())
+  subject     Subject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  subjectId   Int
   title       String
   sortOrder   Int
   /// Null until the subject is published; learners never see unpublished sections.

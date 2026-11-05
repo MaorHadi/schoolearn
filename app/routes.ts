@@ -35,6 +35,7 @@ export default [
     layout("routes/system-admin/layout.tsx", [
       index("routes/system-admin/index.tsx"),
       route("users", "routes/system-admin/users.tsx"),
+      route("users/:userId", "routes/system-admin/users.$userId.tsx"),
       route("suggestions", "routes/system-admin/suggestions.tsx"),
     ]),
   ]),

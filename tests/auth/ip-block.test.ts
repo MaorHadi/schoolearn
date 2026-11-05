@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { escalationDurationMs } from "~/server/security.server";
-import { applyIpBlock, findActiveIpBlock } from "~/server/auth/ip-block.server";
+import { applyIpBlock, clearIpBlock, findActiveIpBlock } from "~/server/auth/ip-block.server";
 import { cleanupSecurityTables } from "~/server/auth/cleanup.server";
 import { UNKNOWN_IP } from "~/server/auth/client-ip.server";
 import { prisma } from "~/server/database.server";
@@ -43,6 +43,14 @@ describe("applyIpBlock", () => {
     });
     const secondBlock = await applyIpBlock("1.2.3.4", "test");
     expect(secondBlock.strikeCount).toBe(1);
+  });
+
+  it("clearIpBlock removes the row and its escalation history", async () => {
+    await applyIpBlock("1.2.3.4", "test");
+    expect(await clearIpBlock("1.2.3.4")).toBe(true);
+    expect(await clearIpBlock("1.2.3.4")).toBe(false);
+    expect(await findActiveIpBlock("1.2.3.4")).toBeNull();
+    expect((await applyIpBlock("1.2.3.4", "test")).strikeCount).toBe(1);
   });
 
   it("refuses to block the unknown-IP sentinel", async () => {
