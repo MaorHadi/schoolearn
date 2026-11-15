@@ -33,7 +33,6 @@ const subjectFields = {
   description: "",
   locale: "he",
   direction: "rtl",
-  sortOrder: "1",
   accentColor: "#112233",
   icon: "globe",
 };
@@ -112,6 +111,20 @@ describe("admin subject actions", () => {
     } as never);
     const moved = await prisma.lesson.findUniqueOrThrow({ where: { id: second } });
     expect(moved.sortOrder).toBe(1);
+
+    const first = lessonIds[0]?.[0];
+    if (!first) throw new Error("fixture");
+    await editSubjectAction({
+      request: formRequest(url, {
+        intent: "reorder-lesson",
+        lessonId: String(first),
+        targetLessonId: String(second),
+      }),
+      context,
+      params,
+    } as never);
+    const dropped = await prisma.lesson.findUniqueOrThrow({ where: { id: first } });
+    expect(dropped.sortOrder).toBe(1);
 
     const emptySection = await editSubjectAction({
       request: formRequest(url, { intent: "create-section", title: "   " }),

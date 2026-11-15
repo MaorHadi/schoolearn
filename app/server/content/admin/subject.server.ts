@@ -9,7 +9,6 @@ export interface SubjectInput extends SubjectTheme {
   description: string | null;
   locale: string;
   direction: "rtl" | "ltr";
-  sortOrder: number;
 }
 
 export type CreateResult =
@@ -20,21 +19,20 @@ export interface AdminSubjectListItem {
   id: number;
   slug: string;
   name: string;
-  sortOrder: number;
   isActive: boolean;
   publishedAt: Date | null;
   /** Something would change for learners if the subject were published now. */
   hasPendingChanges: boolean;
 }
 
+/** Subjects are listed alphabetically by name, here and for learners. */
 export async function listSubjectsForAdmin(): Promise<AdminSubjectListItem[]> {
   const subjects = await prisma.subject.findMany({
-    orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+    orderBy: [{ name: "asc" }, { id: "asc" }],
     select: {
       id: true,
       slug: true,
       name: true,
-      sortOrder: true,
       isActive: true,
       publishedAt: true,
       sections: {

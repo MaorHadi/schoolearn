@@ -1,4 +1,4 @@
-// Shared (client-safe). Reordering helper for sortOrder lists.
+// Shared (client-safe). Reordering helpers for sortOrder lists.
 
 export type MoveDirection = "up" | "down";
 
@@ -20,5 +20,24 @@ export function swapWithNeighbour<Row extends { id: number }>(
   if (!current || !neighbour) return null;
   reordered[index] = neighbour;
   reordered[target] = current;
+  return reordered;
+}
+
+/**
+ * Move the row to the position the target row holds, shifting the rows in between (a drag and
+ * drop). Returns the new order, or null when either row is missing or they are the same row.
+ */
+export function moveToPositionOf<Id, Row extends { id: Id }>(
+  rows: Row[],
+  id: Id,
+  targetId: Id,
+): Row[] | null {
+  const from = rows.findIndex((row) => row.id === id);
+  const to = rows.findIndex((row) => row.id === targetId);
+  if (from === -1 || to === -1 || from === to) return null;
+  const reordered = [...rows];
+  const [moving] = reordered.splice(from, 1);
+  if (!moving) return null;
+  reordered.splice(to, 0, moving);
   return reordered;
 }

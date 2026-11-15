@@ -58,7 +58,6 @@ export const genesis: SeedSubject = {
   description: "פרקי ספר בראשית לבחינה.",
   locale: "he",
   direction: "rtl",
-  sortOrder: 1,
   accentColor: "#7C3AED",
   icon: "scroll",
   sections: [

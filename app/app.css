@@ -1882,20 +1882,25 @@ a.station__inner:hover {
   accent-color: var(--accent);
 }
 
-.block-card__handle {
+/* Drag-and-drop ordering: block cards, and sections and lessons in the structure tree. */
+.drag-handle {
   cursor: grab;
   touch-action: none;
 }
 
-.block-card__handle:active {
+.drag-handle:active {
   cursor: grabbing;
 }
 
-.block-card[data-drag="dragging"] {
+.block-card[data-drag="dragging"],
+.tree-section[data-drag="dragging"],
+.tree-lesson[data-drag="dragging"] {
   opacity: 0.5;
 }
 
-.block-card[data-drag="target"] {
+.block-card[data-drag="target"],
+.tree-section[data-drag="target"],
+.tree-lesson[data-drag="target"] {
   outline: 3px dashed var(--accent);
   outline-offset: 4px;
 }

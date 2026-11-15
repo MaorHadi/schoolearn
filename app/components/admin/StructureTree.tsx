@@ -1,9 +1,11 @@
-import { ArrowDown, ArrowUp, PencilLine, Plus, Trash2 } from "lucide-react";
-import type { MouseEvent, ReactNode } from "react";
-import { Form, Link } from "react-router";
+import { GripVertical, PencilLine, Plus, Trash2 } from "lucide-react";
+import type { ComponentProps, KeyboardEvent, MouseEvent, ReactNode } from "react";
+import { Form, Link, useFetcher } from "react-router";
 import { RowStatusPill } from "~/components/admin/StatusPill";
+import { useDragOrder } from "~/components/content-editor/useDragOrder";
 import { t, type TranslationKey } from "~/i18n";
 import { TITLE_MAX_LENGTH } from "~/schemas/admin-content";
+import { moveToPositionOf, swapWithNeighbour, type MoveDirection } from "~/shared/ordering";
 
 export type TreeField = "title" | "passingScore";
 
@@ -116,23 +118,106 @@ function IconButton({
   );
 }
 
+type RowKind = "section" | "lesson";
+
+/**
+ * The order a list will have once the move being saved lands, so a dropped row does not snap
+ * back while the request is in flight.
+ */
+function withPendingMove<Row extends { id: number }>(
+  rows: Row[],
+  kind: RowKind,
+  formData: FormData | undefined,
+): Row[] {
+  if (!formData) return rows;
+  const intent = formData.get("intent");
+  const id = Number(formData.get(`${kind}Id`));
+  if (intent === `reorder-${kind}`) {
+    const targetId = Number(
+      formData.get(kind === "section" ? "targetSectionId" : "targetLessonId"),
+    );
+    return moveToPositionOf(rows, id, targetId) ?? rows;
+  }
+  if (intent === `move-${kind}-up`) return swapWithNeighbour(rows, id, "up") ?? rows;
+  if (intent === `move-${kind}-down`) return swapWithNeighbour(rows, id, "down") ?? rows;
+  return rows;
+}
+
+/**
+ * Drag-and-drop and keyboard ordering for one list of the tree. Each move is posted on its own
+ * fetcher to the page action: "reorder-<kind>" for a drop, "move-<kind>-up|down" for the arrows.
+ */
+function useRowOrder<Row extends { id: number }>(rows: Row[], kind: RowKind) {
+  const fetcher = useFetcher();
+  const drag = useDragOrder<number>((sourceId, targetId) => {
+    void fetcher.submit(
+      kind === "section"
+        ? { intent: "reorder-section", sectionId: sourceId, targetSectionId: targetId }
+        : { intent: "reorder-lesson", lessonId: sourceId, targetLessonId: targetId },
+      { method: "post" },
+    );
+  });
+  const move = (id: number, direction: MoveDirection) => {
+    void fetcher.submit(
+      { intent: `move-${kind}-${direction}`, [`${kind}Id`]: id },
+      { method: "post" },
+    );
+  };
+  return { rows: withPendingMove(rows, kind, fetcher.formData), drag, move };
+}
+
+type RowDragProps = ReturnType<ReturnType<typeof useDragOrder<number>>["targetProps"]>;
+
+/** Grip that drags its row; the arrow keys move the row one step for keyboard users. */
+function DragHandle({
+  label,
+  onMove,
+  ...dragProps
+}: {
+  label: string;
+  onMove: (direction: MoveDirection) => void;
+} & ComponentProps<"button">) {
+  const handleKeys = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      onMove("up");
+    } else if (event.key === "ArrowDown") {
+      event.preventDefault();
+      onMove("down");
+    }
+  };
+  return (
+    <button
+      type="button"
+      className="icon-btn drag-handle"
+      aria-label={label}
+      title={label}
+      onKeyDown={handleKeys}
+      {...dragProps}
+    >
+      <GripVertical size={16} aria-hidden="true" />
+    </button>
+  );
+}
+
 function LessonRow({
   lesson,
-  isFirst,
-  isLast,
   direction,
   errors,
+  rowProps,
+  handle,
 }: {
   lesson: TreeLesson;
-  isFirst: boolean;
-  isLast: boolean;
   direction: "rtl" | "ltr";
   errors: RowErrors;
+  rowProps: RowDragProps;
+  handle: ReactNode;
 }) {
   return (
-    <li className="tree-lesson">
+    <li className="tree-lesson" {...rowProps}>
       <Form method="post" className="tree-lesson__form" noValidate>
         <input type="hidden" name="lessonId" value={lesson.id} />
+        {handle}
         <TreeInput
           label={t("admin.lessons.titleLabel")}
           error={errors.title}
@@ -179,18 +264,6 @@ function LessonRow({
             {t("admin.lessons.edit")}
           </Link>
           <IconButton
-            intent="move-lesson-up"
-            label={t("admin.lessons.moveUp")}
-            icon={<ArrowUp size={16} aria-hidden="true" />}
-            disabled={isFirst}
-          />
-          <IconButton
-            intent="move-lesson-down"
-            label={t("admin.lessons.moveDown")}
-            icon={<ArrowDown size={16} aria-hidden="true" />}
-            disabled={isLast}
-          />
-          <IconButton
             intent="delete-lesson"
             label={t("admin.lessons.delete")}
             icon={<Trash2 size={16} aria-hidden="true" />}
@@ -205,24 +278,26 @@ function LessonRow({
 
 function SectionCard({
   section,
-  isFirst,
-  isLast,
   direction,
   errors,
+  rowProps,
+  handle,
 }: {
   section: TreeSection;
-  isFirst: boolean;
-  isLast: boolean;
   direction: "rtl" | "ltr";
   errors: TreeActionResult | undefined;
+  rowProps: RowDragProps;
+  handle: ReactNode;
 }) {
   const row = { sectionId: section.id };
   const renameErrors = errorsFor(errors, "update-section", row);
   const addErrors = errorsFor(errors, "create-lesson", row);
+  const lessonOrder = useRowOrder(section.lessons, "lesson");
   return (
-    <li className="card tree-section">
+    <li className="card tree-section" {...rowProps}>
       <Form method="post" className="tree-section__head" noValidate>
         <input type="hidden" name="sectionId" value={section.id} />
+        {handle}
         <TreeInput
           label={t("admin.lessons.titleLabel")}
           error={renameErrors.title}
@@ -248,18 +323,6 @@ function SectionCard({
             {t("admin.sections.rename")}
           </button>
           <IconButton
-            intent="move-section-up"
-            label={t("admin.sections.moveUp")}
-            icon={<ArrowUp size={16} aria-hidden="true" />}
-            disabled={isFirst}
-          />
-          <IconButton
-            intent="move-section-down"
-            label={t("admin.sections.moveDown")}
-            icon={<ArrowDown size={16} aria-hidden="true" />}
-            disabled={isLast}
-          />
-          <IconButton
             intent="delete-section"
             label={t("admin.sections.delete")}
             icon={<Trash2 size={16} aria-hidden="true" />}
@@ -273,14 +336,20 @@ function SectionCard({
         <p className="muted tree-empty">{t("admin.lessons.empty")}</p>
       ) : (
         <ol className="tree-lessons">
-          {section.lessons.map((lesson, index) => (
+          {lessonOrder.rows.map((lesson) => (
             <LessonRow
               key={lesson.id}
               lesson={lesson}
-              isFirst={index === 0}
-              isLast={index === section.lessons.length - 1}
               direction={direction}
               errors={errorsFor(errors, "update-lesson", { lessonId: lesson.id })}
+              rowProps={lessonOrder.drag.targetProps(lesson.id)}
+              handle={
+                <DragHandle
+                  label={t("admin.lessons.drag")}
+                  onMove={(moveDirection) => lessonOrder.move(lesson.id, moveDirection)}
+                  {...lessonOrder.drag.handleProps(lesson.id)}
+                />
+              }
             />
           ))}
         </ol>
@@ -312,7 +381,10 @@ function SectionCard({
   );
 }
 
-/** Sections and lessons of one subject with inline rename, reorder, delete, and add forms. */
+/**
+ * Sections and lessons of one subject with inline rename, delete, and add forms. Rows are
+ * reordered by dragging their grip (lessons within their section, sections within the subject).
+ */
 export function StructureTree({
   sections,
   direction,
@@ -324,6 +396,7 @@ export function StructureTree({
   errors?: TreeActionResult;
 }) {
   const addErrors = errorsFor(errors, "create-section");
+  const sectionOrder = useRowOrder(sections, "section");
   return (
     <section className="tree" aria-labelledby="tree-title">
       <h2 id="tree-title" className="section-title">
@@ -335,14 +408,20 @@ export function StructureTree({
         <p className="empty">{t("admin.sections.empty")}</p>
       ) : (
         <ol className="tree-sections">
-          {sections.map((section, index) => (
+          {sectionOrder.rows.map((section) => (
             <SectionCard
               key={section.id}
               section={section}
-              isFirst={index === 0}
-              isLast={index === sections.length - 1}
               direction={direction}
               errors={errors}
+              rowProps={sectionOrder.drag.targetProps(section.id)}
+              handle={
+                <DragHandle
+                  label={t("admin.sections.drag")}
+                  onMove={(moveDirection) => sectionOrder.move(section.id, moveDirection)}
+                  {...sectionOrder.drag.handleProps(section.id)}
+                />
+              }
             />
           ))}
         </ol>

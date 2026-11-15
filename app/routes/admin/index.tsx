@@ -45,7 +45,6 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
             <tr>
               <th scope="col">{t("admin.subject.form.name")}</th>
               <th scope="col">{t("admin.subjects.slug")}</th>
-              <th scope="col">{t("admin.subjects.order")}</th>
               <th scope="col">{t("admin.subjects.state")}</th>
               <th scope="col">
                 <span className="visually-hidden">{t("admin.subjects.edit")}</span>
@@ -63,7 +62,6 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
                 <td className="admin-table__mono">
                   <span className="ltr-value">{subject.slug}</span>
                 </td>
-                <td>{subject.sortOrder}</td>
                 <td>
                   <SubjectStatusPill
                     isActive={subject.isActive}

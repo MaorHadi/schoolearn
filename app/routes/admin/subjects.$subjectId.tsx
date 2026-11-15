@@ -24,6 +24,8 @@ import {
   listSubjectsForAdmin,
   moveLesson,
   moveSection,
+  reorderLesson,
+  reorderSection,
   updateLesson,
   updateSection,
   updateSubject,
@@ -143,6 +145,10 @@ export async function action({ request, context, params }: Route.ActionArgs) {
       await moveSection(input.sectionId, input.intent === "move-section-up" ? "up" : "down");
       return null;
     }
+    case "reorder-section": {
+      await reorderSection(input.sectionId, input.targetSectionId);
+      return null;
+    }
     case "create-lesson": {
       const { intent: _intent, sectionId, ...values } = input;
       const result = await createLesson(sectionId, values);
@@ -164,6 +170,10 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     case "move-lesson-up":
     case "move-lesson-down": {
       await moveLesson(input.lessonId, input.intent === "move-lesson-up" ? "up" : "down");
+      return null;
+    }
+    case "reorder-lesson": {
+      await reorderLesson(input.lessonId, input.targetLessonId);
       return null;
     }
   }

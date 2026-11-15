@@ -57,7 +57,6 @@ async function seedSubject(definition: SeedSubject, assetId: number): Promise<vo
     description: definition.description,
     locale: definition.locale,
     direction: definition.direction,
-    sortOrder: definition.sortOrder,
     ...theme,
   };
   const subject = await prisma.subject.upsert({

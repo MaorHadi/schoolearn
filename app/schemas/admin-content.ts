@@ -2,6 +2,7 @@
 // `Object.fromEntries(formData)` through one of these, so form values are strings here.
 import { z } from "zod";
 import { LessonContent as LessonContentSchema } from "~/schemas/content-blocks";
+import { CONTENT_LOCALES } from "~/shared/content-locales";
 import { SubjectThemeSchema } from "~/shared/subject-theme";
 
 export const SUBJECT_SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -29,9 +30,8 @@ export const SubjectInputSchema = SubjectThemeSchema.extend({
   slug: z.string().trim().toLowerCase().min(1).max(64).regex(SUBJECT_SLUG_RE),
   name: title,
   description: optionalText(DESCRIPTION_MAX_LENGTH),
-  locale: z.string().trim().min(2).max(16),
+  locale: z.enum(CONTENT_LOCALES),
   direction: z.enum(["rtl", "ltr"]),
-  sortOrder: z.coerce.number().int().min(0).max(9999).default(0),
 });
 export type SubjectFormInput = z.infer<typeof SubjectInputSchema>;
 export type SubjectFormField = keyof SubjectFormInput;
@@ -50,11 +50,21 @@ export const SubjectPageIntentSchema = z.discriminatedUnion("intent", [
   z.object({ intent: z.literal("delete-section"), sectionId: positiveId }),
   z.object({ intent: z.literal("move-section-up"), sectionId: positiveId }),
   z.object({ intent: z.literal("move-section-down"), sectionId: positiveId }),
+  z.object({
+    intent: z.literal("reorder-section"),
+    sectionId: positiveId,
+    targetSectionId: positiveId,
+  }),
   LessonInputSchema.extend({ intent: z.literal("create-lesson"), sectionId: positiveId }),
   LessonInputSchema.extend({ intent: z.literal("update-lesson"), lessonId: positiveId }),
   z.object({ intent: z.literal("delete-lesson"), lessonId: positiveId }),
   z.object({ intent: z.literal("move-lesson-up"), lessonId: positiveId }),
   z.object({ intent: z.literal("move-lesson-down"), lessonId: positiveId }),
+  z.object({
+    intent: z.literal("reorder-lesson"),
+    lessonId: positiveId,
+    targetLessonId: positiveId,
+  }),
 ]);
 export type SubjectPageIntent = z.infer<typeof SubjectPageIntentSchema>;
 

@@ -14,13 +14,13 @@ export interface SubjectListItem {
 }
 
 /**
- * Active subjects in display order with the user's enrollment and progress.
+ * Active subjects, alphabetically by name, with the user's enrollment and progress.
  * Two queries: the subjects (with lesson counts), then the user's completed lessons grouped by subject.
  */
 export async function listActiveSubjectsForUser(userId: number): Promise<SubjectListItem[]> {
   const subjects = await prisma.subject.findMany({
     where: { isActive: true },
-    orderBy: { sortOrder: "asc" },
+    orderBy: [{ name: "asc" }, { id: "asc" }],
     select: {
       id: true,
       slug: true,

@@ -59,7 +59,6 @@ export const sampleLtr: SeedSubject = {
   description: "Demo subject proving the platform is subject-agnostic. Remove or replace later.",
   locale: "en",
   direction: "ltr",
-  sortOrder: 99,
   accentColor: "#059669",
   icon: "flask-conical",
   sections: [

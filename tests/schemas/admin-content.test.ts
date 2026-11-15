@@ -13,21 +13,19 @@ const validSubject = {
   description: "",
   locale: "he",
   direction: "rtl",
-  sortOrder: "2",
   accentColor: "#112233",
   icon: "globe",
 };
 
 describe("SubjectInputSchema", () => {
-  it("normalises the slug, blanks description to null, and coerces sortOrder", () => {
-    expect(SubjectInputSchema.parse(validSubject)).toMatchObject({
-      slug: "my-subject",
-      description: null,
-      sortOrder: 2,
-    });
+  it("normalises the slug, blanks description to null, and drops unknown fields", () => {
+    const parsed = SubjectInputSchema.parse({ ...validSubject, sortOrder: "2" });
+    expect(parsed).toMatchObject({ slug: "my-subject", description: null, locale: "he" });
+    expect(parsed).not.toHaveProperty("sortOrder");
   });
 
-  it("rejects bad slugs, colours, and icons", () => {
+  it("rejects bad slugs, colours, icons, and languages outside the list", () => {
+    expect(SubjectInputSchema.safeParse({ ...validSubject, locale: "xx" }).success).toBe(false);
     expect(SubjectInputSchema.safeParse({ ...validSubject, slug: "a b" }).success).toBe(false);
     expect(SubjectInputSchema.safeParse({ ...validSubject, slug: "-a" }).success).toBe(false);
     expect(SubjectInputSchema.safeParse({ ...validSubject, accentColor: "red" }).success).toBe(
@@ -54,6 +52,16 @@ describe("SubjectPageIntentSchema", () => {
       intent: "move-lesson-up",
       lessonId: 4,
     });
+    expect(
+      SubjectPageIntentSchema.parse({
+        intent: "reorder-lesson",
+        lessonId: "4",
+        targetLessonId: "7",
+      }),
+    ).toEqual({ intent: "reorder-lesson", lessonId: 4, targetLessonId: 7 });
+    expect(
+      SubjectPageIntentSchema.safeParse({ intent: "reorder-section", sectionId: "4" }).success,
+    ).toBe(false);
     expect(SubjectPageIntentSchema.safeParse({ intent: "explode" }).success).toBe(false);
   });
 });

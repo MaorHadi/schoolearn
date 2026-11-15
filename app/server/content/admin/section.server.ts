@@ -1,5 +1,5 @@
 import { prisma } from "~/server/database.server";
-import { swapWithNeighbour, type MoveDirection } from "~/shared/ordering";
+import { moveToPositionOf, swapWithNeighbour, type MoveDirection } from "~/shared/ordering";
 import type { CreateResult } from "./subject.server";
 
 /** Admin writers for the Section table. New sections start unpublished (`publishedAt: null`). */
@@ -40,10 +40,33 @@ export async function moveSection(id: number, direction: MoveDirection): Promise
   });
   const reordered = swapWithNeighbour(siblings, id, direction);
   if (!reordered) return false;
+  await writeSectionOrder(reordered);
+  return true;
+}
+
+/**
+ * Drag and drop: put the section where `targetId` is, shifting the sections in between. Both
+ * must be in the same subject; false otherwise.
+ */
+export async function reorderSection(id: number, targetId: number): Promise<boolean> {
+  const section = await prisma.section.findUnique({ where: { id }, select: { subjectId: true } });
+  if (!section) return false;
+  const siblings = await prisma.section.findMany({
+    where: { subjectId: section.subjectId },
+    orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+    select: { id: true },
+  });
+  const reordered = moveToPositionOf(siblings, id, targetId);
+  if (!reordered) return false;
+  await writeSectionOrder(reordered);
+  return true;
+}
+
+/** Rewrite sortOrder as 1..n in the given order, in one transaction. */
+async function writeSectionOrder(ordered: { id: number }[]): Promise<void> {
   await prisma.$transaction(
-    reordered.map((row, index) =>
+    ordered.map((row, index) =>
       prisma.section.update({ where: { id: row.id }, data: { sortOrder: index + 1 } }),
     ),
   );
-  return true;
 }

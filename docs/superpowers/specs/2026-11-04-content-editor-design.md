@@ -44,8 +44,9 @@ One set of tables plus "published" markers; no duplicated rows.
 
 - `app/server/content/admin.server.ts` — only writer of Subject/Section/Lesson structure and of
   `draftContent`: list/create/update/delete subject, create/rename/delete/move section and lesson
-  (move swaps with the neighbour and rewrites `sortOrder` 1..n), `getLessonForAdmin`,
-  `saveLessonDraft`.
+  (move swaps with the neighbour, reorder drops a row at another row's position; both rewrite
+  `sortOrder` 1..n), `getLessonForAdmin`, `saveLessonDraft`. Subjects are listed alphabetically
+  by name; `Subject` has no `sortOrder`.
 - `app/server/content/publish.server.ts` — `publishSubjects(ids): count`.
 - `app/server/storage/upload.server.ts` — `storeUploadedImage(file, userId)`: sniffs PNG/JPEG/GIF/WebP
   magic bytes (client MIME is ignored), enforces `UPLOAD_MAX_BYTES` (default 5 MiB), then
@@ -59,7 +60,7 @@ One set of tables plus "published" markers; no duplicated rows.
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | `/admin`                     | Subject table with status pills and a pending counter; links to new/publish.                                                          |
 | `/admin/subjects/new`        | Metadata form; creates a hidden subject and redirects to its edit page.                                                               |
-| `/admin/subjects/:subjectId` | Metadata form + structure tree (sections/lessons: rename, move, delete, add). One form per row, dispatched by `intent`.               |
+| `/admin/subjects/:subjectId` | Metadata form + structure tree (sections/lessons: rename, drag to reorder, delete, add). One form per row, dispatched by `intent`.    |
 | `/admin/lessons/:lessonId`   | Block editor + live preview. `save-draft` posts the block array as JSON; `upload` is a per-card fetcher returning `{ assetId, url }`. |
 | `/admin/publish`             | Checkbox list of subjects with pending changes (all checked); one submit publishes them all.                                          |
 

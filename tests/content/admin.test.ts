@@ -11,6 +11,8 @@ import {
   listSubjectsForAdmin,
   moveLesson,
   moveSection,
+  reorderLesson,
+  reorderSection,
   saveLessonDraft,
   updateLesson,
   updateSection,
@@ -28,7 +30,6 @@ const subjectInput = {
   description: null,
   locale: "en",
   direction: "ltr" as const,
-  sortOrder: 3,
   accentColor: "#059669",
   icon: "atom" as const,
 };
@@ -58,10 +59,10 @@ describe("admin subjects", () => {
 
     const { subject: published } = await makeSubjectWithLessons([1]);
     const listed = await listSubjectsForAdmin();
-    // Ordered by sortOrder: the fixture subject (0) before the created one (3).
+    // Alphabetical by name: "Renamed" before the fixture's "Test subject".
     expect(listed.map((entry) => [entry.name, entry.hasPendingChanges])).toEqual([
-      [published.name, false],
       ["Renamed", true],
+      [published.name, false],
     ]);
 
     expect(await deleteSubject(id)).toBe(true);
@@ -140,6 +141,35 @@ describe("admin structure", () => {
     )?.lessons;
     expect(lessons?.map((entry) => entry.title)).toEqual(["L1", "L3", "L2"]);
     expect(lessons?.map((entry) => entry.sortOrder)).toEqual([1, 2, 3]);
+  });
+
+  it("drops a section or lesson at the position of another one", async () => {
+    const { subject, lessonIds } = await makeSubjectWithLessons([4, 1, 1]);
+    const titles = async () => {
+      const tree = await getSubjectForAdmin(subject.id);
+      return {
+        sections: tree?.sections.map((entry) => entry.title),
+        lessons: tree?.sections.find((entry) => entry.title === "S1")?.lessons,
+      };
+    };
+    const [firstLesson, , , lastLesson] = lessonIds[0] ?? [];
+    const otherSectionLesson = lessonIds[1]?.[0];
+    if (!firstLesson || !lastLesson || !otherSectionLesson) throw new Error("fixture");
+
+    expect(await reorderLesson(firstLesson, lastLesson)).toBe(true);
+    const moved = (await titles()).lessons;
+    expect(moved?.map((entry) => entry.title)).toEqual(["L2", "L3", "L4", "L1"]);
+    expect(moved?.map((entry) => entry.sortOrder)).toEqual([1, 2, 3, 4]);
+    expect(await reorderLesson(firstLesson, firstLesson)).toBe(false);
+    expect(await reorderLesson(firstLesson, otherSectionLesson)).toBe(false); // another section
+    expect(await reorderLesson(999_999, lastLesson)).toBe(false);
+
+    const tree = await getSubjectForAdmin(subject.id);
+    const [first, , third] = tree?.sections ?? [];
+    if (!first || !third) throw new Error("fixture");
+    expect(await reorderSection(third.id, first.id)).toBe(true);
+    expect((await titles()).sections).toEqual(["S3", "S1", "S2"]);
+    expect(await reorderSection(third.id, 999_999)).toBe(false);
   });
 
   it("renames and deletes sections and lessons", async () => {

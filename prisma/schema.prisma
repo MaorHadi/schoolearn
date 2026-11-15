@@ -127,7 +127,6 @@ model Subject {
   /// Visible to learners. Set by publishing; new subjects start hidden in the editor.
   isActive    Boolean       @default(false)
   publishedAt DateTime? // last publish; null = never published
-  sortOrder   Int           @default(0)
   /// Per-subject theme, stored as data so no code knows about a specific subject.
   accentColor String        @default("#2563EB") // hex, drives the subject's line/accent color
   icon        String        @default("book-open") // lucide icon name (kebab-case)

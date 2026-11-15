@@ -104,7 +104,7 @@ export function BlockCard({
       <div className="block-card__toolbar">
         <button
           type="button"
-          className="icon-btn block-card__handle"
+          className="icon-btn drag-handle"
           draggable
           aria-label={t("admin.editor.drag")}
           title={t("admin.editor.drag")}

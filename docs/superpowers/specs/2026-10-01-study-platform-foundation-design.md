@@ -40,7 +40,8 @@ The authoritative schema is `prisma/schema.prisma`. Decisions behind it:
   `sessionData` Json (holds the flash toast).
 - `AuthLog`: ip, free-text username (so attempts on unknown names are recorded), outcome, type.
 - `IpBlock`: one row per IP, `strikeCount`, `updatedAt` (escalation lookback), `expiresAt`.
-- `Subject`: slug, name, description, locale, direction, `isActive`, `sortOrder`, `publishedAt`.
+- `Subject`: slug, name, description, locale, direction, `isActive`, `publishedAt`. Listed
+  alphabetically by name (no `sortOrder`).
 - `Section` / `Lesson`: `sortOrder` indexed, not unique, so reordering is a plain update.
   `Lesson.content` is the block array; `draftContent` and `publishedAt` came with the editor.
 - `LessonAsset`: which assets a lesson references; `Restrict` on the asset side so a used asset

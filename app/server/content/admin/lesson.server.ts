@@ -6,7 +6,7 @@ import {
 import { prisma } from "~/server/database.server";
 import { assetsExist, parseLessonContent, syncLessonAssets } from "~/server/lesson-content.server";
 import { assetUrlMap } from "~/server/storage/assets.server";
-import { swapWithNeighbour, type MoveDirection } from "~/shared/ordering";
+import { moveToPositionOf, swapWithNeighbour, type MoveDirection } from "~/shared/ordering";
 import type { CreateResult } from "./subject.server";
 
 /**
@@ -57,12 +57,35 @@ export async function moveLesson(id: number, direction: MoveDirection): Promise<
   });
   const reordered = swapWithNeighbour(siblings, id, direction);
   if (!reordered) return false;
+  await writeLessonOrder(reordered);
+  return true;
+}
+
+/**
+ * Drag and drop: put the lesson where `targetId` is, shifting the lessons in between. Both must
+ * be in the same section; false otherwise.
+ */
+export async function reorderLesson(id: number, targetId: number): Promise<boolean> {
+  const lesson = await prisma.lesson.findUnique({ where: { id }, select: { sectionId: true } });
+  if (!lesson) return false;
+  const siblings = await prisma.lesson.findMany({
+    where: { sectionId: lesson.sectionId },
+    orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+    select: { id: true },
+  });
+  const reordered = moveToPositionOf(siblings, id, targetId);
+  if (!reordered) return false;
+  await writeLessonOrder(reordered);
+  return true;
+}
+
+/** Rewrite sortOrder as 1..n in the given order, in one transaction. */
+async function writeLessonOrder(ordered: { id: number }[]): Promise<void> {
   await prisma.$transaction(
-    reordered.map((row, index) =>
+    ordered.map((row, index) =>
       prisma.lesson.update({ where: { id: row.id }, data: { sortOrder: index + 1 } }),
     ),
   );
-  return true;
 }
 
 /**
