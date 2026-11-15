@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { prisma } from "../app/server/database.server";
 import { hashPassword } from "../app/server/auth/password.server";
 import { saveLessonContent } from "../app/server/lesson-content.server";
+import { saveLessonQuestions } from "../app/server/lesson-questions.server";
 import { createAssetFromBuffer } from "../app/server/storage/assets.server";
 import { genesis } from "./seed-data/genesis";
 import { sampleLtr } from "./seed-data/sample-ltr";
@@ -104,6 +105,10 @@ async function seedSubject(definition: SeedSubject, assetId: number): Promise<vo
           });
       // Validates blocks and maintains LessonAsset rows.
       await saveLessonContent(lesson.id, lessonDefinition.content(assetId));
+      // Seeded questions are live too. Lessons the seed gives no quiz keep whatever they have.
+      if (lessonDefinition.questions) {
+        await saveLessonQuestions(lesson.id, lessonDefinition.questions);
+      }
     }
   }
 }

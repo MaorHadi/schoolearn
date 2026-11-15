@@ -46,7 +46,8 @@ The authoritative schema is `prisma/schema.prisma`. Decisions behind it:
   `Lesson.content` is the block array; `draftContent` and `publishedAt` came with the editor.
 - `LessonAsset`: which assets a lesson references; `Restrict` on the asset side so a used asset
   cannot be deleted. Maintained by `saveLessonContent()` and `saveLessonDraft()`.
-- `Question` / `QuestionOption` (`QuestionType` enum, extensible) and `Material`: schema only.
+- `Question` / `QuestionOption` (`QuestionType` enum, extensible): the live quiz of a lesson,
+  see `2026-11-15-quiz-design.md`. `Material`: schema only.
 - `Asset`: unique provider-relative `storageKey`, MIME type, size, dimensions, uploader.
 - `LessonAttempt`: one row per try. `LessonProgress`: unique per user and lesson, `bestScore`,
   `completedAt` set once and never cleared.
@@ -66,7 +67,8 @@ progress.
   Retakes never re-lock anything.
 - `getSubjectTree()` computes `{ unlocked, completed, bestScore }` in memory from two queries.
   A locked lesson's loader returns 403. Lessons without questions are completed by the
-  "complete" intent on the lesson route (score 100).
+  "complete" intent on the lesson route (score 100); lessons with questions by the "answer"
+  intent, which grades the quiz.
 
 ## 5. Lesson content
 
@@ -135,6 +137,6 @@ sliding expiry, seed idempotence, `recordAttempt` invariants. No end-to-end test
 
 ## 11. Reserved hooks
 
-`TODO(quiz)`, `TODO(system-settings)`, `TODO(cloud-storage)`,
+`TODO(system-settings)`, `TODO(cloud-storage)`,
 `TODO(streaks)`, `TODO(2fa)`, `TODO(forum)`, `TODO(suggestions-triage)`. Email verification,
 password reset and an explicit Enrollment table are not planned yet.

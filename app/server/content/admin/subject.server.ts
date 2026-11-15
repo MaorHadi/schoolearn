@@ -38,7 +38,7 @@ export async function listSubjectsForAdmin(): Promise<AdminSubjectListItem[]> {
       sections: {
         select: {
           publishedAt: true,
-          lessons: { select: { publishedAt: true, draftContent: true } },
+          lessons: { select: { publishedAt: true, draftContent: true, draftQuestions: true } },
         },
       },
     },
@@ -51,7 +51,10 @@ export async function listSubjectsForAdmin(): Promise<AdminSubjectListItem[]> {
         (section) =>
           section.publishedAt === null ||
           section.lessons.some(
-            (lesson) => lesson.publishedAt === null || lesson.draftContent !== null,
+            (lesson) =>
+              lesson.publishedAt === null ||
+              lesson.draftContent !== null ||
+              lesson.draftQuestions !== null,
           ),
       ),
   }));
@@ -106,6 +109,7 @@ export async function getSubjectForAdmin(id: number) {
               passingScore: true,
               publishedAt: true,
               draftContent: true,
+              draftQuestions: true,
             },
           },
         },
@@ -117,9 +121,9 @@ export async function getSubjectForAdmin(id: number) {
     ...subject,
     sections: subject.sections.map((section) => ({
       ...section,
-      lessons: section.lessons.map(({ draftContent, ...lesson }) => ({
+      lessons: section.lessons.map(({ draftContent, draftQuestions, ...lesson }) => ({
         ...lesson,
-        hasDraft: draftContent !== null,
+        hasDraft: draftContent !== null || draftQuestions !== null,
       })),
     })),
   };

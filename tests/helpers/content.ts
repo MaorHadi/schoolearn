@@ -1,4 +1,31 @@
+import type { LessonQuestions } from "~/schemas/questions";
 import { prisma } from "~/server/database.server";
+
+/** Two valid questions: one single-answer (correct: "B") and one multiple-answer (correct: "X", "Y"). */
+export function sampleQuestions(): LessonQuestions {
+  return [
+    {
+      id: "q1",
+      type: "MULTIPLE_CHOICE",
+      prompt: "Pick one",
+      options: [
+        { id: "a", text: "A", isCorrect: false },
+        { id: "b", text: "B", isCorrect: true },
+        { id: "c", text: "C", isCorrect: false },
+      ],
+    },
+    {
+      id: "q2",
+      type: "MULTIPLE_ANSWER",
+      prompt: "Pick all",
+      options: [
+        { id: "x", text: "X", isCorrect: true },
+        { id: "y", text: "Y", isCorrect: true },
+        { id: "z", text: "Z", isCorrect: false },
+      ],
+    },
+  ];
+}
 
 /**
  * Create a throwaway subject with the given number of lessons per section.

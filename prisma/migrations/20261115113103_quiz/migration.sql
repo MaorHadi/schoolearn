@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE `Lesson` ADD COLUMN `draftQuestions` JSON NULL;
+
+-- AlterTable
+ALTER TABLE `Question` MODIFY `type` ENUM('MULTIPLE_CHOICE', 'MULTIPLE_ANSWER') NOT NULL DEFAULT 'MULTIPLE_CHOICE';
+

@@ -4,11 +4,14 @@ import { Link, data, redirect } from "react-router";
 import type { Route } from "./+types/subjects.$slug.lessons.$lessonId";
 import { LessonContent } from "~/components/lesson-content/LessonContent";
 import { LessonNext } from "~/components/LessonNext";
+import { QuizRunner } from "~/components/quiz/QuizRunner";
 import { t } from "~/i18n";
+import { SelectedOptionIdsSchema } from "~/schemas/questions";
 import { requireUser, sessionContext } from "~/server/auth/context.server";
-import { getLessonForUser } from "~/server/content/lessons.server";
+import { getLessonAnswerKey, getLessonForUser } from "~/server/content/lessons.server";
 import { setFlash } from "~/server/flash.server";
-import { recordAttempt } from "~/server/progress/attempts.server";
+import { effectivePassingScore, recordAttempt } from "~/server/progress/attempts.server";
+import { gradeQuiz, type QuizOutcome } from "~/shared/quiz";
 import { resolveSubjectTheme } from "~/shared/subject-theme";
 import { findLesson, findNextLesson } from "~/shared/unlock";
 
@@ -22,7 +25,7 @@ export async function loader({ context, params }: Route.LoaderArgs) {
   const user = requireUser(context);
   const lessonId = parseLessonId(params.lessonId);
 
-  const { subject, lesson, blocks, assetUrls, tree, questionCount } = await getLessonForUser(
+  const { subject, lesson, blocks, assetUrls, tree, questions } = await getLessonForUser(
     user.id,
     params.slug,
     lessonId,
@@ -47,17 +50,79 @@ export async function loader({ context, params }: Route.LoaderArgs) {
       title: lesson.title,
       bestScore: state?.bestScore ?? null,
       completed: state?.completed ?? false,
-      hasQuestions: questionCount > 0,
+      hasQuestions: questions.length > 0,
+      passingScore: effectivePassingScore(lesson),
     },
+    questions,
     next: next ? { id: next.id, title: next.title } : null,
     blocks,
     assetUrls,
   };
 }
 
-// TODO(quiz): add an "answer" intent that validates submitted answers against
-// Question/QuestionOption and calls recordAttempt() with the real score.
 /**
+ * Grade the submitted quiz and record the attempt. The form posts one `questionId` per question
+ * shown and the chosen option ids as `question-<id>`. A quiz that changed since the page was
+ * loaded (publishing replaces the questions) is rejected, as is one with unanswered questions.
+ */
+async function answerQuiz(
+  form: FormData,
+  userId: number,
+  lesson: { id: number; title: string; passingScore: number | null },
+  alreadyCompleted: boolean,
+  sessionId: string | undefined,
+) {
+  const answerKey = await getLessonAnswerKey(lesson.id);
+  if (answerKey.length === 0) throw data(t("error.generic"), { status: 400 });
+
+  const shown = SelectedOptionIdsSchema.safeParse(form.getAll("questionId"));
+  const sameQuiz =
+    shown.success &&
+    shown.data.length === answerKey.length &&
+    answerKey.every((question) => shown.data.includes(question.id));
+  if (!sameQuiz) {
+    return data<QuizOutcome>(
+      { kind: "error", error: "lesson.quiz.changed", unanswered: [] },
+      { status: 409 },
+    );
+  }
+
+  const answers = new Map<number, number[]>();
+  for (const question of answerKey) {
+    const selected = SelectedOptionIdsSchema.safeParse(form.getAll(`question-${question.id}`));
+    const valid =
+      selected.success &&
+      selected.data.every((optionId) => question.optionIds.includes(optionId)) &&
+      (question.type === "MULTIPLE_ANSWER" || selected.data.length <= 1);
+    if (!valid) throw data(t("error.generic"), { status: 400 });
+    answers.set(question.id, selected.data);
+  }
+  const unanswered = answerKey
+    .filter((question) => (answers.get(question.id) ?? []).length === 0)
+    .map((question) => question.id);
+  if (unanswered.length > 0) {
+    return data<QuizOutcome>(
+      { kind: "error", error: "lesson.quiz.unanswered", unanswered },
+      { status: 400 },
+    );
+  }
+
+  const grade = gradeQuiz(answerKey, answers);
+  const attempt = await recordAttempt({ userId, lessonId: lesson.id, score: grade.score });
+  if (attempt.passed && !alreadyCompleted && sessionId) {
+    await setFlash(sessionId, "success", "toast.lessonCompleted", { lesson: lesson.title });
+  }
+  return data<QuizOutcome>({
+    kind: "result",
+    score: grade.score,
+    passed: attempt.passed,
+    passingScore: effectivePassingScore(lesson),
+    results: grade.results,
+  });
+}
+
+/**
+ * "answer": grade the lesson's quiz (see answerQuiz).
  * "complete": for a lesson without questions, reading it is the whole lesson, so moving on
  * records a full-score attempt (which unlocks the next lesson) and redirects there.
  */
@@ -65,7 +130,10 @@ export async function action({ request, context, params }: Route.ActionArgs) {
   const user = requireUser(context);
   const lessonId = parseLessonId(params.lessonId);
   const form = await request.formData();
-  if (form.get("intent") !== "complete") throw data(t("error.generic"), { status: 400 });
+  const intent = form.get("intent");
+  if (intent !== "complete" && intent !== "answer") {
+    throw data(t("error.generic"), { status: 400 });
+  }
 
   const { subject, lesson, tree, questionCount } = await getLessonForUser(
     user.id,
@@ -73,6 +141,16 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     lessonId,
   );
   const state = findLesson(tree, lesson.id);
+  if (intent === "answer") {
+    return answerQuiz(
+      form,
+      user.id,
+      lesson,
+      state?.completed ?? false,
+      context.get(sessionContext)?.id,
+    );
+  }
+
   if (questionCount > 0 && !state?.completed) {
     // Lessons with questions are completed by passing the quiz, not by clicking through.
     throw data(t("error.lessonLocked"), { status: 403 });
@@ -91,8 +169,8 @@ export async function action({ request, context, params }: Route.ActionArgs) {
   );
 }
 
-export default function LessonPage({ loaderData }: Route.ComponentProps) {
-  const { subject, section, lesson, next, blocks, assetUrls } = loaderData;
+export default function LessonPage({ loaderData, actionData }: Route.ComponentProps) {
+  const { subject, section, lesson, next, blocks, assetUrls, questions } = loaderData;
   const style = { "--accent": subject.theme.accentColor } as CSSProperties;
   const backTo = `/subjects/${subject.slug}`;
 
@@ -127,6 +205,15 @@ export default function LessonPage({ loaderData }: Route.ComponentProps) {
       <article className="lesson-body">
         <LessonContent blocks={blocks} direction={subject.direction} assetUrls={assetUrls} />
       </article>
+
+      {lesson.hasQuestions ? (
+        <QuizRunner
+          questions={questions}
+          passingScore={lesson.passingScore}
+          direction={subject.direction}
+          outcome={actionData}
+        />
+      ) : null}
 
       <LessonNext
         next={next}

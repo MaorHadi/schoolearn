@@ -6,9 +6,14 @@ import {
   saveLessonContent,
   UnknownAssetError,
 } from "~/server/lesson-content.server";
+import {
+  LessonQuestionsError,
+  parseLessonQuestions,
+  saveLessonQuestions,
+} from "~/server/lesson-questions.server";
 import { sweepOrphanAssets } from "~/server/storage/sweep.server";
 
-export type PublishFailureReason = "INVALID_CONTENT" | "UNKNOWN_ASSET";
+export type PublishFailureReason = "INVALID_CONTENT" | "UNKNOWN_ASSET" | "INVALID_QUESTIONS";
 
 export interface PublishResult {
   /** Subjects that were published. Unknown ids are neither published nor failed. */
@@ -19,9 +24,10 @@ export interface PublishResult {
 
 /**
  * Publish subjects, each in its own transaction: every lesson draft becomes the live content
- * (through saveLessonContent, which syncs LessonAsset), unpublished sections and lessons get
- * their `publishedAt`, and the subject becomes active. A subject whose draft is invalid or
- * references a missing asset is rolled back and reported in `failed`; the other subjects are
+ * (through saveLessonContent, which syncs LessonAsset), every question draft becomes the live
+ * quiz (through saveLessonQuestions), unpublished sections and lessons get their `publishedAt`,
+ * and the subject becomes active. A subject with an invalid draft or one that references a
+ * missing asset is rolled back and reported in `failed`; the other subjects are
  * unaffected. Orphaned uploads are swept afterwards.
  */
 export async function publishSubjects(subjectIds: number[]): Promise<PublishResult> {
@@ -42,6 +48,7 @@ export async function publishSubjects(subjectIds: number[]): Promise<PublishResu
 function failureReasonOf(error: unknown): PublishFailureReason | null {
   if (error instanceof LessonContentError) return "INVALID_CONTENT";
   if (error instanceof UnknownAssetError) return "UNKNOWN_ASSET";
+  if (error instanceof LessonQuestionsError) return "INVALID_QUESTIONS";
   return null;
 }
 
@@ -54,8 +61,13 @@ async function publishSubject(subjectId: number): Promise<boolean> {
         sections: {
           select: {
             lessons: {
-              where: { draftContent: { not: Prisma.DbNull } },
-              select: { id: true, draftContent: true },
+              where: {
+                OR: [
+                  { draftContent: { not: Prisma.DbNull } },
+                  { draftQuestions: { not: Prisma.DbNull } },
+                ],
+              },
+              select: { id: true, draftContent: true, draftQuestions: true },
             },
           },
         },
@@ -65,13 +77,22 @@ async function publishSubject(subjectId: number): Promise<boolean> {
 
     const drafts = subject.sections.flatMap((section) => section.lessons);
     for (const lesson of drafts) {
-      await saveLessonContent(lesson.id, parseLessonContent(lesson.draftContent), transaction);
+      if (lesson.draftContent !== null) {
+        await saveLessonContent(lesson.id, parseLessonContent(lesson.draftContent), transaction);
+      }
+      if (lesson.draftQuestions !== null) {
+        await saveLessonQuestions(
+          lesson.id,
+          parseLessonQuestions(lesson.draftQuestions),
+          transaction,
+        );
+      }
     }
 
     const publishedAt = new Date();
     await transaction.lesson.updateMany({
       where: { id: { in: drafts.map((lesson) => lesson.id) } },
-      data: { draftContent: Prisma.DbNull },
+      data: { draftContent: Prisma.DbNull, draftQuestions: Prisma.DbNull },
     });
     await transaction.lesson.updateMany({
       where: { section: { subjectId }, publishedAt: null },

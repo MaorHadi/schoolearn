@@ -132,6 +132,8 @@ Subject → Section → Lesson → Question → QuestionOption
 - `Lesson.content` is a JSON array of typed blocks (heading, paragraph, quote, image, list),
   validated by zod on every read and write. Image blocks reference an `Asset`; the `LessonAsset`
   table tracks usage so a used asset cannot be deleted.
+- A lesson may end with a **quiz**: questions with one or several correct answers. The score is
+  the percent of fully correct questions. A lesson without questions is completed by reading it.
 - **Progression:** lesson 1 of section 1 is open; passing a lesson (score ≥ its `passingScore`
   or the default) opens the next; completing a section opens the next section. Lessons are
   repeatable; the best score is kept and nothing ever re-locks. See `app/shared/unlock.ts`.
@@ -143,7 +145,7 @@ Full design: `docs/superpowers/specs/2026-10-01-study-platform-foundation-design
 ## Adding a new subject
 
 No code changes. Sign in as an ADMIN and use `/admin`: create the subject, add sections and
-lessons, edit each lesson's blocks (drafts), then publish from `/admin/publish`. Learners see a
+lessons, edit each lesson's blocks and questions (drafts), then publish from `/admin/publish`. Learners see a
 subject only after it is published. Seeded examples live in `prisma/seed-data/`. If a subject
 ever seems to need its own route or component, that is a platform gap to fix generically.
 
@@ -175,6 +177,6 @@ by tests.
 
 ## Not yet built
 
-Quiz UI and answer submission, question content, streaks (attempt timestamps and
-`User.timezone` are in place), gamification, content editor, asset upload UI, 2FA, cloud storage,
+Streaks (attempt timestamps and `User.timezone` are in place), gamification, the forum, 2FA,
+cloud storage,
 email verification, password reset. Each has a `TODO(<feature>)` marker where it plugs in.

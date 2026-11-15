@@ -13,7 +13,7 @@ export interface NextLessonTarget {
  * - No questions (or already completed): a button that marks the lesson done (if needed) and
  *   moves to the next lesson, or back to the path when this was the last one.
  * - Questions exist and the lesson is not completed yet: the next lesson stays locked until the
- *   quiz is passed. TODO(quiz): the quiz runner replaces this locked state.
+ *   quiz above it (QuizRunner) is passed.
  */
 export function LessonNext({
   next,

@@ -15,6 +15,7 @@ Project conventions for Claude Code sessions.
   Read it before changing the schema or the progression rules.
 - Content editor design: `docs/superpowers/specs/2026-11-04-content-editor-design.md`.
 - User management design: `docs/superpowers/specs/2026-11-05-user-management-design.md`.
+- Quiz design: `docs/superpowers/specs/2026-11-15-quiz-design.md`.
 - Build log and open work: `docs/superpowers/plans/2026-10-01-study-platform-foundation.md`.
 
 ## Layout
@@ -30,7 +31,9 @@ Project conventions for Claude Code sessions.
   (for example `content/admin/{subject,section,lesson}.server.ts`).
 - Prisma 7 with `@prisma/adapter-mariadb`; `DATABASE_URL` is read in `prisma.config.ts`. Generated
   client: `prisma/generated/client/client`. After schema changes run `npm run db:migrate` and keep
-  the migration file. `database.server.ts` holds the singleton and the Prisma error predicates.
+  the migration file (in a non-interactive shell it refuses to run: write the SQL from
+  `prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script` into a
+  new migration folder, then `npm run db:deploy` and `npx prisma generate`). `database.server.ts` holds the singleton and the Prisma error predicates.
 - `env.server.ts` parses `process.env` through `/env.schema.ts` once.
 
 ## Single writers (do not bypass)
@@ -39,6 +42,10 @@ Project conventions for Claude Code sessions.
   checks assets, syncs `LessonAsset`; accepts a transaction client). Read with
   `parseLessonContent()`.
 - `Lesson.draftContent`: `saveLessonDraft()` (syncs `LessonAsset` to live + draft assets).
+- `Question` / `QuestionOption` (the live quiz): `saveLessonQuestions()` in
+  `app/server/lesson-questions.server.ts` (replaces the lesson's rows; called by publishing and
+  the seed). `Lesson.draftQuestions`: `saveQuestionsDraft()`. Scores come only from `gradeQuiz()`
+  in `app/shared/quiz.ts`; the answer key (`getLessonAnswerKey()`) never goes to the browser.
 - Subject / Section / Lesson structure: `app/server/content/admin.server.ts` (barrel over
   `content/admin/`).
 - Publishing: `publishSubjects()` in `app/server/content/publish.server.ts`, one transaction per
@@ -66,7 +73,9 @@ Project conventions for Claude Code sessions.
   per-block `dir`. All UI strings go through `t()` in `app/i18n`.
 - Storage goes through `StorageProvider` (`app/server/storage/`); uploads through
   `storeUploadedImage()` (magic-byte sniffing, `UPLOAD_MAX_BYTES`).
-- Lessons without questions are completed by the "complete" intent on the lesson route (score 100).
+- Lessons without questions are completed by the "complete" intent on the lesson route (score 100);
+  lessons with questions by the "answer" intent (`QuizRunner`). Question edits are drafts like
+  content and go live on publish. The question editor is `app/components/question-editor/`.
 
 ## Auth rules
 
@@ -98,7 +107,7 @@ type (Heebo), flat saturated subject accents, strong ink, generous space.
   the allowlist in `app/shared/subject-theme.ts` via `SubjectIcon`.
 - Logical properties only (`inline-size`, `margin-inline-start`); mirrored icons get `.rtl-flip`.
 - Shared pieces: `AppHeader`, `AuthPage` + `Field`, `SubjectCard`, `lesson-path/LessonPath`,
-  `QuestionsPlaceholder`, `StubPage`.
+  `quiz/QuizRunner`, `StubPage`.
 - Self-hosted fonts (`--font-ui`, `--font-quote`); visible `:focus-visible` ring; motion respects
   `prefers-reduced-motion`. The empty `.rail__ad` slots on `/subjects` stay empty.
 
@@ -112,6 +121,6 @@ type (Heebo), flat saturated subject accents, strong ink, generous space.
 - Tests live in `tests/` mirroring `app/`. DB tests call `resetDb()` against `study_test`
   (forced in `tests/setup.ts`; `npm run db:test:migrate` after migrations). Component tests opt
   into jsdom with `// @vitest-environment jsdom`. TDD: failing test first.
-- Future hooks are `TODO(<feature>)`: `quiz`, `system-settings`,
+- Future hooks are `TODO(<feature>)`: `system-settings`,
   `cloud-storage`, `streaks`, `2fa`, `forum`, `suggestions-triage`.
 - Run `npm run lint && npm run typecheck && npm test` before claiming work is done.

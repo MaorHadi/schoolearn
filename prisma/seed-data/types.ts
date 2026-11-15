@@ -1,9 +1,12 @@
 import type { LessonContent } from "../../app/schemas/content-blocks";
+import type { LessonQuestions } from "../../app/schemas/questions";
 
 export interface SeedLesson {
   title: string;
   sortOrder: number;
   passingScore?: number;
+  /** The lesson's quiz. Lessons without one are completed by reading them. */
+  questions?: LessonQuestions;
   /** Receives the placeholder asset id so image blocks can reference it. */
   content: (assetId: number) => LessonContent;
 }

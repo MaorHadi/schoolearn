@@ -22,7 +22,22 @@ export async function getLessonForUser(userId: number, slug: string, lessonId: n
       publishedAt: { not: null },
       section: { subjectId: subject.id, publishedAt: { not: null } },
     },
-    include: { section: true, _count: { select: { questions: true } } },
+    include: {
+      section: true,
+      // No `isCorrect`: this goes to the browser. The answer key is getLessonAnswerKey().
+      questions: {
+        orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+        select: {
+          id: true,
+          type: true,
+          prompt: true,
+          options: {
+            orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+            select: { id: true, text: true },
+          },
+        },
+      },
+    },
   });
   if (!lesson) throw data(t("error.notFound"), { status: 404 });
 
@@ -43,5 +58,37 @@ export async function getLessonForUser(userId: number, slug: string, lessonId: n
   const assetIds = blocks.flatMap((block) => (block.type === "image" ? [block.assetId] : []));
   const assetUrls = await assetUrlMap(assetIds);
 
-  return { subject, lesson, blocks, assetUrls, tree, questionCount: lesson._count.questions };
+  return {
+    subject,
+    lesson,
+    blocks,
+    assetUrls,
+    tree,
+    questions: lesson.questions,
+    questionCount: lesson.questions.length,
+  };
+}
+
+export interface AnswerKeyEntry {
+  id: number;
+  type: "MULTIPLE_CHOICE" | "MULTIPLE_ANSWER";
+  optionIds: number[];
+  correctOptionIds: number[];
+}
+
+/** The live quiz with its correct options, for grading on the server only. */
+export async function getLessonAnswerKey(lessonId: number): Promise<AnswerKeyEntry[]> {
+  const questions = await prisma.question.findMany({
+    where: { lessonId },
+    orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+    select: { id: true, type: true, options: { select: { id: true, isCorrect: true } } },
+  });
+  return questions.map((question) => ({
+    id: question.id,
+    type: question.type,
+    optionIds: question.options.map((option) => option.id),
+    correctOptionIds: question.options
+      .filter((option) => option.isCorrect)
+      .map((option) => option.id),
+  }));
 }

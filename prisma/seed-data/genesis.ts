@@ -1,6 +1,7 @@
 // Subject 1: Genesis (Hebrew, RTL). This is the ONLY place Bible-specific content lives.
-// Placeholder lesson content exercises every block type; real content and questions come later.
+// Placeholder lesson content exercises every block type; real content comes later.
 import type { LessonContent } from "../../app/schemas/content-blocks";
+import type { LessonQuestions } from "../../app/schemas/questions";
 import type { SeedLesson, SeedSubject } from "./types";
 
 function chapterLesson(title: string, sortOrder: number): SeedLesson {
@@ -52,6 +53,30 @@ function chapters(...titles: string[]): SeedLesson[] {
   return titles.map((title, index) => chapterLesson(title, index + 1));
 }
 
+/** The quiz of the first lesson, so a fresh database has something to answer. */
+const chapterTwelveQuiz: LessonQuestions = [
+  {
+    id: "destination",
+    type: "MULTIPLE_CHOICE",
+    prompt: "לאן נצטווה אברם ללכת?",
+    options: [
+      { id: "shown", text: "אל הארץ אשר אראך", isCorrect: true },
+      { id: "egypt", text: "אל ארץ מצרים", isCorrect: false },
+      { id: "ur", text: "אל אור כשדים", isCorrect: false },
+    ],
+  },
+  {
+    id: "companions",
+    type: "MULTIPLE_ANSWER",
+    prompt: "מי יצא עם אברם מחרן?",
+    options: [
+      { id: "sarai", text: "שרי", isCorrect: true },
+      { id: "lot", text: "לוט", isCorrect: true },
+      { id: "terah", text: "תרח", isCorrect: false },
+    ],
+  },
+];
+
 export const genesis: SeedSubject = {
   slug: "genesis",
   name: 'תנ"ך – בראשית',
@@ -64,7 +89,9 @@ export const genesis: SeedSubject = {
     {
       title: "אברהם: הבטחה ומסע",
       sortOrder: 1,
-      lessons: chapters("פרק יב", "פרק יג", "פרק טו", "פרק טז"),
+      lessons: chapters("פרק יב", "פרק יג", "פרק טו", "פרק טז").map((lesson, index) =>
+        index === 0 ? { ...lesson, questions: chapterTwelveQuiz } : lesson,
+      ),
     },
     {
       title: "אברהם: ברית ונסיון",

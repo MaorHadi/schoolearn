@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { Link, data } from "react-router";
 import type { Route } from "./+types/lessons.$lessonId";
+import { LessonTabs } from "~/components/admin/LessonTabs";
 import { RowStatusPill } from "~/components/admin/StatusPill";
 import {
   BlockEditor,
@@ -151,6 +152,7 @@ export default function EditLesson({ loaderData, actionData }: Route.ComponentPr
             {t("admin.lesson.draftInvalid")}
           </p>
         ) : null}
+        <LessonTabs lessonId={lesson.id} />
       </header>
 
       {/* Keyed on the lesson so navigating between lessons resets the editor state. */}

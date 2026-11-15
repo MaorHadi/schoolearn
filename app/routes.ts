@@ -26,6 +26,7 @@ export default [
       route("subjects/new", "routes/admin/subjects.new.tsx"),
       route("subjects/:subjectId", "routes/admin/subjects.$subjectId.tsx"),
       route("lessons/:lessonId", "routes/admin/lessons.$lessonId.tsx"),
+      route("lessons/:lessonId/questions", "routes/admin/lessons.$lessonId.questions.tsx"),
       route("publish", "routes/admin/publish.tsx"),
     ]),
   ]),

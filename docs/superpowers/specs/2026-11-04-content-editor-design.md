@@ -1,7 +1,7 @@
 # Admin content editor with draft/publish — design
 
 Date: 2026-11-04. Replaces the manual "Adding a new subject" checklist (§9 of the foundation
-spec) with an in-app editor for ADMINs. Questions remain `TODO(quiz)`.
+spec) with an in-app editor for ADMINs. Questions came later: `2026-11-15-quiz-design.md`.
 
 ## Goals
 

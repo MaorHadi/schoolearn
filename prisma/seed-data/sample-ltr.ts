@@ -1,13 +1,44 @@
 // Subject 2: a deliberately different demo subject (English, LTR, 2 sections of 3 and 2 lessons).
 // It proves the platform is subject-agnostic. Remove or replace it once real subjects exist.
 import type { LessonContent } from "../../app/schemas/content-blocks";
+import type { LessonQuestions } from "../../app/schemas/questions";
 import type { SeedLesson, SeedSubject } from "./types";
 
-function lesson(title: string, sortOrder: number, passingScore?: number): SeedLesson {
+/** A short quiz about the placeholder content every lesson of this subject shares. */
+const placeholderQuiz: LessonQuestions = [
+  {
+    id: "source",
+    type: "MULTIPLE_CHOICE",
+    prompt: "According to the quoted source, what shall not happen to a free man?",
+    options: [
+      { id: "seized", text: "He shall not be seized or imprisoned", isCorrect: true },
+      { id: "taxed", text: "He shall not be taxed", isCorrect: false },
+      { id: "questioned", text: "He shall not be questioned", isCorrect: false },
+    ],
+  },
+  {
+    id: "list",
+    type: "MULTIPLE_ANSWER",
+    prompt: "Which items appear in the list at the end of the lesson?",
+    options: [
+      { id: "first", text: "First item", isCorrect: true },
+      { id: "second", text: "Second item", isCorrect: true },
+      { id: "third", text: "Third item", isCorrect: false },
+    ],
+  },
+];
+
+function lesson(
+  title: string,
+  sortOrder: number,
+  passingScore?: number,
+  questions?: LessonQuestions,
+): SeedLesson {
   return {
     title,
     sortOrder,
     ...(passingScore !== undefined ? { passingScore } : {}),
+    ...(questions ? { questions } : {}),
     content: (assetId: number): LessonContent => [
       { id: `${sortOrder}-heading`, type: "heading", level: 1, text: title },
       {
@@ -65,7 +96,11 @@ export const sampleLtr: SeedSubject = {
     {
       title: "Basics",
       sortOrder: 1,
-      lessons: [lesson("Intro", 1), lesson("Terms", 2, 70), lesson("Review", 3)],
+      lessons: [
+        lesson("Intro", 1, undefined, placeholderQuiz),
+        lesson("Terms", 2, 70, placeholderQuiz),
+        lesson("Review", 3),
+      ],
     },
     {
       title: "Advanced",

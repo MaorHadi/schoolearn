@@ -46,7 +46,10 @@ describe("seed", () => {
       for (const block of parseLessonContent(entry.content)) types.add(block.type);
     expect([...types].sort()).toEqual(["heading", "image", "list", "paragraph", "quote"]);
 
-    expect(await prisma.question.count()).toBe(0);
+    // Three lessons carry a two-question quiz; re-seeding replaces it instead of duplicating.
+    expect(await prisma.question.count()).toBe(6);
+    expect(await prisma.question.count({ where: { type: "MULTIPLE_ANSWER" } })).toBe(3);
+    expect(await prisma.questionOption.count()).toBe(18);
     expect(await prisma.asset.count()).toBe(1);
     // Every lesson references the placeholder asset exactly once.
     expect(await prisma.lessonAsset.count()).toBe(18);

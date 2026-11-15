@@ -43,7 +43,8 @@ enum SuggestionStatus {
 }
 
 enum QuestionType {
-  MULTIPLE_CHOICE
+  MULTIPLE_CHOICE // exactly one correct option
+  MULTIPLE_ANSWER // one or more correct options; all of them must be picked
   // Future: TRUE_FALSE, FILL_IN, ORDERING, ...
 }
 
@@ -155,24 +156,27 @@ model Section {
 
 /// Content (JSON block array) followed by questions. Completed by reaching passingScore.
 model Lesson {
-  id           Int              @id @default(autoincrement())
-  section      Section          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  sectionId    Int
-  title        String
-  sortOrder    Int
-  passingScore Int? // percent 0-100; null -> env DEFAULT_LESSON_PASSING_SCORE
-  content      Json // ContentBlock[] validated by zod (app/schemas/content-blocks.ts); what learners read
+  id             Int              @id @default(autoincrement())
+  section        Section          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  sectionId      Int
+  title          String
+  sortOrder      Int
+  passingScore   Int? // percent 0-100; null -> env DEFAULT_LESSON_PASSING_SCORE
+  content        Json // ContentBlock[] validated by zod (app/schemas/content-blocks.ts); what learners read
   /// Unpublished edit of `content`, written by saveLessonDraft(); published copies it into `content`.
-  draftContent Json?
+  draftContent   Json?
+  /// Unpublished edit of the question list (QuestionDraft[], app/schemas/questions.ts), written by
+  /// saveQuestionsDraft(); publishing replaces the Question rows with it.
+  draftQuestions Json?
   /// Null until the subject is published; learners never see unpublished lessons.
-  publishedAt  DateTime?
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  questions    Question[]
-  materials    Material[]
-  assets       LessonAsset[]
-  attempts     LessonAttempt[]
-  progress     LessonProgress[]
+  publishedAt    DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  questions      Question[]
+  materials      Material[]
+  assets         LessonAsset[]
+  attempts       LessonAttempt[]
+  progress       LessonProgress[]
 
   @@index([sectionId, sortOrder])
 }
@@ -189,7 +193,7 @@ model LessonAsset {
   @@index([assetId])
 }
 
-/// Schema only; no UI and no seed data yet (TODO(quiz)).
+/// The live quiz of a lesson. Written only by saveLessonQuestions() (publishing and the seed).
 model Question {
   id        Int              @id @default(autoincrement())
   lesson    Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)

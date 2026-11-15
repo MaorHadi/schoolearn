@@ -87,9 +87,28 @@ Spec: `docs/superpowers/specs/2026-11-05-user-management-design.md`.
 - UI stack: Tailwind v4 + shadcn adopted incrementally (see CLAUDE.md "UI"); first shared piece
   `app/components/forms/DateRangeFields.tsx` with `DateRangeQuerySchema` / `resolveDateRange()`.
 
+## Stage 11 — Admin form polish and the quiz (2026-11-15, done)
+
+Spec: `docs/superpowers/specs/2026-11-15-quiz-design.md`.
+
+- Subject form: content language is a dropdown (`app/shared/content-locales.ts`), icons are
+  picked from a grid of the icons themselves, `Subject.sortOrder` is dropped (migration
+  `drop_subject_sort_order`) and subjects are listed alphabetically.
+- Structure tree: sections and lessons reorder by drag and drop (`reorder-section` /
+  `reorder-lesson` intents, `moveToPositionOf()`); the drag hook is shared with the block editor
+  (`app/components/content-editor/useDragOrder.ts`).
+- Quiz: migration `quiz` (`QuestionType.MULTIPLE_ANSWER`, `Lesson.draftQuestions`),
+  `app/schemas/questions.ts`, `app/shared/quiz.ts`, `app/server/lesson-questions.server.ts`,
+  `app/server/content/admin/question.server.ts`, question drafts in `publish.server.ts`, the
+  `answer` intent and `QuizRunner` on the lesson page, the question editor at
+  `/admin/lessons/:lessonId/questions`, seeded quizzes on three lessons.
+- `prisma migrate dev` does not run non-interactively; these migrations were generated with
+  `prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script` and
+  applied with `npm run db:deploy`.
+
 ## Open work
 
-- `TODO(quiz)`: question editor, quiz UI, answer submission through `recordAttempt()`.
+- Quiz follow-ups: more question types, per-question explanations, attempt history for learners.
 - `TODO(forum)`: threads, replies, moderation. Needs its own spec.
 - `TODO(suggestions-triage)`: status changes, filters, pagination on the system-admin list.
 - `TODO(system-settings)`: `/system-admin` settings page, after the forum defines its keys.
