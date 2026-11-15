@@ -13,7 +13,6 @@ afterEach(cleanup);
 const lesson = (id: number, title: string) => ({
   id,
   title,
-  sortOrder: id,
   passingScore: null,
   publishedAt: null,
   hasDraft: false,
@@ -23,11 +22,10 @@ const sections: TreeSection[] = [
   {
     id: 1,
     title: "First",
-    sortOrder: 1,
     publishedAt: null,
     lessons: [lesson(11, "Alpha"), lesson(12, "Beta"), lesson(13, "Gamma")],
   },
-  { id: 2, title: "Second", sortOrder: 2, publishedAt: null, lessons: [lesson(21, "Delta")] },
+  { id: 2, title: "Second", publishedAt: null, lessons: [lesson(21, "Delta")] },
 ];
 
 describe("SubjectForm", () => {

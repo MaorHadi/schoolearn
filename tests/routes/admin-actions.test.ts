@@ -1,31 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { RouterContextProvider } from "react-router";
-import { userContext } from "~/server/auth/context.server";
 import { prisma } from "~/server/database.server";
 import { action as newSubjectAction } from "~/routes/admin/subjects.new";
 import { action as editSubjectAction } from "~/routes/admin/subjects.$subjectId";
 import { action as publishAction } from "~/routes/admin/publish";
 import { resetDb } from "../helpers/db";
 import { makeSubjectWithLessons } from "../helpers/content";
-
-/** A guarded-route context as authMiddleware would build it, minus the session (no flash). */
-async function contextFor(role: "USER" | "ADMIN") {
-  const user = await prisma.user.create({
-    data: { username: role.toLowerCase(), passwordHash: "x", role },
-  });
-  const context = new RouterContextProvider();
-  context.set(userContext, user);
-  return context;
-}
-
-function formRequest(url: string, fields: Record<string, string>) {
-  const body = new URLSearchParams(fields);
-  return new Request(url, {
-    method: "POST",
-    body,
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-  });
-}
+import { contextFor, formRequest } from "../helpers/routes";
 
 const subjectFields = {
   slug: "created",
@@ -41,7 +21,7 @@ describe("admin subject actions", () => {
   beforeEach(resetDb);
 
   it("refuses a plain user", async () => {
-    const context = await contextFor("USER");
+    const { context } = await contextFor("USER");
     const request = formRequest("http://x/admin/subjects/new", subjectFields);
     await expect(newSubjectAction({ request, context, params: {} } as never)).rejects.toMatchObject(
       { init: { status: 403 } },
@@ -50,7 +30,7 @@ describe("admin subject actions", () => {
   });
 
   it("creates a hidden subject and redirects to its edit page", async () => {
-    const context = await contextFor("ADMIN");
+    const { context } = await contextFor("ADMIN");
     const request = formRequest("http://x/admin/subjects/new", subjectFields);
     const response = (await newSubjectAction({
       request,
@@ -64,7 +44,7 @@ describe("admin subject actions", () => {
   });
 
   it("returns field errors for invalid input and a taken slug", async () => {
-    const context = await contextFor("ADMIN");
+    const { context } = await contextFor("ADMIN");
     const invalid = await newSubjectAction({
       request: formRequest("http://x/admin/subjects/new", { ...subjectFields, slug: "Bad Slug!" }),
       context,
@@ -90,7 +70,7 @@ describe("admin subject actions", () => {
   });
 
   it("dispatches structure intents on the edit page", async () => {
-    const context = await contextFor("ADMIN");
+    const { context } = await contextFor("ADMIN");
     const { subject, lessonIds } = await makeSubjectWithLessons([2]);
     const url = `http://x/admin/subjects/${subject.id}`;
     const params = { subjectId: String(subject.id) };
@@ -179,7 +159,7 @@ describe("admin publish action", () => {
   beforeEach(resetDb);
 
   it("publishes every checked subject and redirects to the list", async () => {
-    const context = await contextFor("ADMIN");
+    const { context } = await contextFor("ADMIN");
     const { subject: first } = await makeSubjectWithLessons([1], null, false);
     const { subject: second } = await makeSubjectWithLessons([1], null, false);
     const { subject: third } = await makeSubjectWithLessons([1], null, false);
@@ -206,7 +186,7 @@ describe("admin publish action", () => {
   });
 
   it("rejects an empty selection", async () => {
-    const context = await contextFor("ADMIN");
+    const { context } = await contextFor("ADMIN");
     await expect(
       publishAction({
         request: formRequest("http://x/admin/publish", {}),

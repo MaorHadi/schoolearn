@@ -11,4 +11,3 @@ export * from "./admin/subject.server";
 export * from "./admin/section.server";
 export * from "./admin/lesson.server";
 export * from "./admin/question.server";
-export type { MoveDirection } from "~/shared/ordering";

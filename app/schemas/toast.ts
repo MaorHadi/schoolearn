@@ -2,7 +2,7 @@
 import { z } from "zod";
 import type { TranslationKey } from "~/i18n";
 
-export const TOAST_KINDS = ["success", "info", "error"] as const;
+const TOAST_KINDS = ["success", "info", "error"] as const;
 export type ToastKind = (typeof TOAST_KINDS)[number];
 
 export const ToastSchema = z.object({

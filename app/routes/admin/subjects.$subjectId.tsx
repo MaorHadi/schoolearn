@@ -1,6 +1,7 @@
 import { Trash2 } from "lucide-react";
 import type { MouseEvent } from "react";
-import { Form, Link, data, redirect } from "react-router";
+import { Form, data, redirect } from "react-router";
+import type { ZodError } from "zod";
 import type { Route } from "./+types/subjects.$subjectId";
 import { SubjectStatusPill } from "~/components/admin/StatusPill";
 import {
@@ -8,10 +9,13 @@ import {
   TREE_FIELD_MESSAGES,
   type TreeActionResult,
 } from "~/components/admin/StructureTree";
-import { SUBJECT_FIELD_MESSAGES, SubjectForm } from "~/components/admin/SubjectForm";
-import type { SubjectFieldErrors } from "~/components/admin/SubjectForm";
+import {
+  SUBJECT_FIELD_MESSAGES,
+  SubjectForm,
+  type SubjectFieldErrors,
+} from "~/components/admin/SubjectForm";
+import { PageHeader } from "~/components/PageHeader";
 import { t } from "~/i18n";
-import type { ZodError } from "zod";
 import { SubjectPageIntentSchema } from "~/schemas/admin-content";
 import { requireRole } from "~/server/auth/context.server";
 import {
@@ -31,6 +35,7 @@ import {
   updateSubject,
 } from "~/server/content/admin.server";
 import { flashFromContext } from "~/server/flash.server";
+import { notFound, parseIdParam } from "~/server/route-params.server";
 import { fieldErrorsFrom } from "~/shared/field-errors";
 
 type ActionResult = SubjectActionResult | TreeActionResult;
@@ -60,22 +65,14 @@ function treeErrorsFrom(
   };
 }
 
-function parseSubjectId(raw: string | undefined): number {
-  const subjectId = Number(raw);
-  if (!Number.isInteger(subjectId) || subjectId <= 0) {
-    throw data(t("error.notFound"), { status: 404 });
-  }
-  return subjectId;
-}
-
 export async function loader({ context, params }: Route.LoaderArgs) {
   requireRole(context, "ADMIN");
-  const subjectId = parseSubjectId(params.subjectId);
+  const subjectId = parseIdParam(params.subjectId);
   const [subject, listed] = await Promise.all([
     getSubjectForAdmin(subjectId),
     listSubjectsForAdmin(),
   ]);
-  if (!subject) throw data(t("error.notFound"), { status: 404 });
+  if (!subject) throw notFound();
   const hasPendingChanges =
     listed.find((entry) => entry.id === subjectId)?.hasPendingChanges ?? false;
   return { subject, hasPendingChanges };
@@ -83,7 +80,7 @@ export async function loader({ context, params }: Route.LoaderArgs) {
 
 export async function action({ request, context, params }: Route.ActionArgs) {
   requireRole(context, "ADMIN");
-  const subjectId = parseSubjectId(params.subjectId);
+  const subjectId = parseIdParam(params.subjectId);
   const form = Object.fromEntries(await request.formData());
   const parsed = SubjectPageIntentSchema.safeParse(form);
   if (!parsed.success) {
@@ -104,7 +101,6 @@ export async function action({ request, context, params }: Route.ActionArgs) {
   }
 
   const input = parsed.data;
-  const notFound = () => data(t("error.notFound"), { status: 404 });
   switch (input.intent) {
     case "update-subject": {
       const { intent: _intent, ...values } = input;
@@ -190,16 +186,14 @@ export default function EditSubject({ loaderData, actionData }: Route.ComponentP
 
   return (
     <main className="container page">
-      <p className="page__back page__back--top">
-        <Link to="/admin">{t("admin.subjects.backToList")}</Link>
-      </p>
-      <header className="page__head">
-        <h1 className="page__title" dir={subject.direction}>
-          {subject.name}
-        </h1>
-        <p className="page__lead">{t("admin.subject.editLead")}</p>
+      <PageHeader
+        back={{ to: "/admin", label: t("admin.subjects.backToList") }}
+        title={subject.name}
+        lead={t("admin.subject.editLead")}
+        dir={subject.direction}
+      >
         <SubjectStatusPill isActive={subject.isActive} hasPendingChanges={hasPendingChanges} />
-      </header>
+      </PageHeader>
 
       <div className="admin-columns">
         <section className="admin-columns__side" aria-labelledby="subject-details">

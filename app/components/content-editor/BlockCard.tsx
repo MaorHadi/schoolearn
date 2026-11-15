@@ -1,29 +1,30 @@
-import { GripVertical, Trash2 } from "lucide-react";
-import type { DragEvent, KeyboardEvent, ReactNode } from "react";
+import { Trash2 } from "lucide-react";
+import type { ComponentProps, ReactNode } from "react";
+import { Field } from "~/components/forms/Field";
+import { IconButton } from "~/components/IconButton";
 import { t } from "~/i18n";
 import type { ContentBlock } from "~/schemas/content-blocks";
 import type { TextDirection } from "~/shared/direction";
+import type { MoveDirection } from "~/shared/ordering";
 import { BLOCK_ICONS } from "./blocks";
+import { DragHandle } from "./DragHandle";
 import { HeadingFields } from "./fields/HeadingFields";
 import { ImageFields } from "./fields/ImageFields";
 import { ListFields } from "./fields/ListFields";
 import { ParagraphFields } from "./fields/ParagraphFields";
 import { QuoteFields } from "./fields/QuoteFields";
-import type { DragState } from "./useBlockDragOrder";
 
-export interface BlockCardProps {
+interface BlockCardProps {
   block: ContentBlock;
   direction: TextDirection;
   assetUrls: Record<number, string>;
-  dragState: DragState;
   onChange: (block: ContentBlock) => void;
-  onMove: (offset: -1 | 1) => void;
+  onMove: (direction: MoveDirection) => void;
   onRemove: () => void;
   onUploaded: (assetId: number, url: string) => void;
-  onDragStart: () => void;
-  onDragEnter: () => void;
-  onDrop: () => void;
-  onDragEnd: () => void;
+  /** From useDragOrder: `targetProps` for the card, `handleProps` for its grip. */
+  rowProps: ComponentProps<"li">;
+  handleProps: ComponentProps<"button">;
 }
 
 /** One block: toolbar (drag handle, type, direction override, remove) and the type's fields. */
@@ -31,36 +32,14 @@ export function BlockCard({
   block,
   direction,
   assetUrls,
-  dragState,
   onChange,
   onMove,
   onRemove,
   onUploaded,
-  onDragStart,
-  onDragEnter,
-  onDrop,
-  onDragEnd,
+  rowProps,
+  handleProps,
 }: BlockCardProps) {
   const fieldDirection = block.dir ?? direction;
-  // The handle is the only draggable part so text selection inside the fields keeps working.
-  const startDrag = (event: DragEvent<HTMLButtonElement>) => {
-    event.dataTransfer?.setData("text/plain", block.id);
-    if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
-    onDragStart();
-  };
-  const allowDrop = (event: DragEvent<HTMLLIElement>) => {
-    event.preventDefault();
-    if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
-  };
-  const handleKeys = (event: KeyboardEvent<HTMLButtonElement>) => {
-    if (event.key === "ArrowUp") {
-      event.preventDefault();
-      onMove(-1);
-    } else if (event.key === "ArrowDown") {
-      event.preventDefault();
-      onMove(1);
-    }
-  };
 
   let fields: ReactNode;
   switch (block.type) {
@@ -90,36 +69,14 @@ export function BlockCard({
   }
 
   return (
-    <li
-      className="block-card"
-      data-block-type={block.type}
-      data-drag={dragState ?? undefined}
-      onDragEnter={onDragEnter}
-      onDragOver={allowDrop}
-      onDrop={(event) => {
-        event.preventDefault();
-        onDrop();
-      }}
-    >
+    <li className="block-card" data-block-type={block.type} {...rowProps}>
       <div className="block-card__toolbar">
-        <button
-          type="button"
-          className="icon-btn drag-handle"
-          draggable
-          aria-label={t("admin.editor.drag")}
-          title={t("admin.editor.drag")}
-          onDragStart={startDrag}
-          onDragEnd={onDragEnd}
-          onKeyDown={handleKeys}
-        >
-          <GripVertical size={16} aria-hidden="true" />
-        </button>
+        <DragHandle label={t("admin.editor.drag")} onMove={onMove} {...handleProps} />
         <span className="block-card__type">
           {BLOCK_ICONS[block.type]}
           {t(`admin.blocks.${block.type}`)}
         </span>
-        <label className="block-card__dir">
-          <span className="visually-hidden">{t("admin.editor.dir")}</span>
+        <Field label={t("admin.editor.dir")} hideLabel className="block-card__dir">
           <select
             className="field__input field__input--compact select"
             value={block.dir ?? ""}
@@ -133,17 +90,14 @@ export function BlockCard({
             <option value="rtl">{t("admin.subject.form.direction.rtl")}</option>
             <option value="ltr">{t("admin.subject.form.direction.ltr")}</option>
           </select>
-        </label>
+        </Field>
         <span className="tree-actions">
-          <button
-            type="button"
-            className="icon-btn icon-btn--danger"
-            aria-label={t("admin.editor.remove")}
-            title={t("admin.editor.remove")}
+          <IconButton
+            label={t("admin.editor.remove")}
+            icon={<Trash2 size={16} aria-hidden="true" />}
+            danger
             onClick={onRemove}
-          >
-            <Trash2 size={16} aria-hidden="true" />
-          </button>
+          />
         </span>
       </div>
       {fields}

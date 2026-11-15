@@ -1,16 +1,19 @@
 import { Ban, CircleCheck, LockOpen, ShieldOff } from "lucide-react";
-import { Form, Link, data } from "react-router";
+import { Form, data } from "react-router";
 import type { Route } from "./+types/users.$userId";
 import { UserStatusPill } from "~/components/admin/UserStatusPill";
 import { ConfirmSubmit } from "~/components/forms/ConfirmSubmit";
-import { t, type TranslationKey } from "~/i18n";
 import { DateRangeFields } from "~/components/forms/DateRangeFields";
+import { Field } from "~/components/forms/Field";
+import { PageHeader } from "~/components/PageHeader";
+import { t, type TranslationKey } from "~/i18n";
 import { DateRangeQuerySchema } from "~/schemas/date-range";
 import { UserPageIntentSchema } from "~/schemas/user-admin";
 import { resolveDateRange } from "~/shared/date-range";
 import { requireRole } from "~/server/auth/context.server";
 import { clearIpBlock } from "~/server/auth/ip-block.server";
 import { flashFromContext } from "~/server/flash.server";
+import { notFound, parseIdParam } from "~/server/route-params.server";
 import {
   clearUserLockout,
   getUserForAdmin,
@@ -18,20 +21,12 @@ import {
   setUserRole,
   type UserChangeResult,
 } from "~/server/users/user.server";
+import type { FormError } from "~/shared/field-errors";
+import { formatDateTime } from "~/shared/format-date";
 import { ROLES } from "~/shared/roles";
-
-interface ActionResult {
-  formError: TranslationKey;
-}
 
 /** How far back the login log reaches when no dates are chosen. */
 const DEFAULT_LOG_DAYS = 7;
-
-function parseUserId(raw: string | undefined): number {
-  const userId = Number(raw);
-  if (!Number.isInteger(userId) || userId <= 0) throw data(t("error.notFound"), { status: 404 });
-  return userId;
-}
 
 export async function loader({ context, params, request }: Route.LoaderArgs) {
   const actor = requireRole(context, "SYSTEM_ADMIN");
@@ -39,11 +34,11 @@ export async function loader({ context, params, request }: Route.LoaderArgs) {
     Object.fromEntries(new URL(request.url).searchParams),
   );
   const range = resolveDateRange(rangeParsed.success ? rangeParsed.data : {}, DEFAULT_LOG_DAYS);
-  const user = await getUserForAdmin(parseUserId(params.userId), {
+  const user = await getUserForAdmin(parseIdParam(params.userId), {
     since: range.since,
     until: range.until,
   });
-  if (!user) throw data(t("error.notFound"), { status: 404 });
+  if (!user) throw notFound();
   return { user, isSelf: user.id === actor.id, range: { from: range.from, to: range.to } };
 }
 
@@ -55,14 +50,14 @@ const CHANGE_ERRORS: Record<Exclude<UserChangeResult, { ok: true }>["reason"], T
 
 export async function action({ request, context, params }: Route.ActionArgs) {
   const actor = requireRole(context, "SYSTEM_ADMIN");
-  const userId = parseUserId(params.userId);
+  const userId = parseIdParam(params.userId);
   const parsed = UserPageIntentSchema.safeParse(Object.fromEntries(await request.formData()));
   if (!parsed.success) throw data(t("error.generic"), { status: 400 });
   const input = parsed.data;
 
   const finish = async (result: UserChangeResult, toast: TranslationKey) => {
     if (!result.ok) {
-      return data<ActionResult>({ formError: CHANGE_ERRORS[result.reason] }, { status: 400 });
+      return data<FormError>({ formError: CHANGE_ERRORS[result.reason] }, { status: 400 });
     }
     await flashFromContext(context, "success", toast);
     return null;
@@ -77,7 +72,7 @@ export async function action({ request, context, params }: Route.ActionArgs) {
         input.disabled ? "toast.userDisabled" : "toast.userEnabled",
       );
     case "clear-lockout": {
-      if (!(await clearUserLockout(userId))) throw data(t("error.notFound"), { status: 404 });
+      if (!(await clearUserLockout(userId))) throw notFound();
       await flashFromContext(context, "success", "toast.lockoutCleared");
       return null;
     }
@@ -87,17 +82,6 @@ export async function action({ request, context, params }: Route.ActionArgs) {
       return null;
     }
   }
-}
-
-// Fixed zone so server and client render the same text (no hydration mismatch).
-const dateTimeFormat = new Intl.DateTimeFormat("he-IL", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "Asia/Jerusalem",
-});
-
-function formatDate(value: Date | string): string {
-  return dateTimeFormat.format(new Date(value));
 }
 
 /** Logged failure codes are internal; the page shows them in words. Unknown codes fall back. */
@@ -122,25 +106,22 @@ export default function SystemAdminUser({ loaderData, actionData }: Route.Compon
 
   return (
     <main className="container page">
-      <p className="page__back page__back--top">
-        <Link to="/system-admin/users">{t("systemAdmin.user.backToList")}</Link>
-      </p>
-      <header className="page__head">
-        <h1 className="page__title">
-          <span className="ltr-value">{user.username}</span>
-        </h1>
-        <p className="page__lead">
-          {user.email ? (
+      <PageHeader
+        back={{ to: "/system-admin/users", label: t("systemAdmin.user.backToList") }}
+        title={<span className="ltr-value">{user.username}</span>}
+        lead={
+          user.email ? (
             <span className="ltr-value">{user.email}</span>
           ) : (
             t("systemAdmin.user.noEmail")
-          )}
-        </p>
+          )
+        }
+      >
         <UserStatusPill role={user.role} isDisabled={user.isDisabled} isLocked={lockout.locked} />
         <p className="muted">
-          {t("systemAdmin.user.createdAt").replace("{date}", formatDate(user.createdAt))}
+          {t("systemAdmin.user.createdAt", { date: formatDateTime(user.createdAt) })}
         </p>
-      </header>
+      </PageHeader>
 
       {actionData?.formError ? (
         <p className="alert" role="alert">
@@ -156,8 +137,7 @@ export default function SystemAdminUser({ loaderData, actionData }: Route.Compon
           </h2>
           <Form method="post" className="form admin-form" noValidate>
             <input type="hidden" name="intent" value="set-role" />
-            <label className="field">
-              <span className="field__label">{t("systemAdmin.user.role")}</span>
+            <Field label={t("systemAdmin.user.role")}>
               <select
                 className="field__input select"
                 name="role"
@@ -170,7 +150,7 @@ export default function SystemAdminUser({ loaderData, actionData }: Route.Compon
                   </option>
                 ))}
               </select>
-            </label>
+            </Field>
             <button type="submit" className="btn btn--primary" disabled={isSelf}>
               {t("systemAdmin.user.saveRole")}
             </button>
@@ -211,8 +191,8 @@ export default function SystemAdminUser({ loaderData, actionData }: Route.Compon
             </h2>
             <p>
               {lockout.locked && lockout.until
-                ? t("systemAdmin.user.lockedUntil").replace("{date}", formatDate(lockout.until))
-                : t("systemAdmin.user.notLocked").replace("{count}", String(lockout.failures))}
+                ? t("systemAdmin.user.lockedUntil", { date: formatDateTime(lockout.until) })
+                : t("systemAdmin.user.notLocked", { count: lockout.failures })}
             </p>
             {lockout.locked ? (
               <Form method="post">
@@ -230,10 +210,9 @@ export default function SystemAdminUser({ loaderData, actionData }: Route.Compon
                   <li key={block.ipAddress} className="ip-block">
                     <span className="admin-table__mono ltr-value">{block.ipAddress}</span>
                     <span className="muted">
-                      {t("systemAdmin.user.blockedUntil").replace(
-                        "{date}",
-                        formatDate(block.expiresAt),
-                      )}
+                      {t("systemAdmin.user.blockedUntil", {
+                        date: formatDateTime(block.expiresAt),
+                      })}
                     </span>
                     <Form method="post">
                       <input type="hidden" name="intent" value="clear-ip-block" />
@@ -273,7 +252,7 @@ export default function SystemAdminUser({ loaderData, actionData }: Route.Compon
                 <tbody>
                   {user.authLogs.map((entry) => (
                     <tr key={entry.id}>
-                      <td>{formatDate(entry.createdAt)}</td>
+                      <td>{formatDateTime(entry.createdAt)}</td>
                       <td className="admin-table__mono">
                         <span className="ltr-value">{entry.ipAddress}</span>
                       </td>

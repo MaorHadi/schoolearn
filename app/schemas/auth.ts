@@ -1,7 +1,7 @@
 // Shared between server and client (form validation). No server imports here.
 import { z } from "zod";
 
-export const USERNAME_RE = /^[a-zA-Z0-9_.-]{3,32}$/;
+const USERNAME_RE = /^[a-zA-Z0-9_.-]{3,32}$/;
 
 export const RegisterSchema = z.object({
   username: z.string().regex(USERNAME_RE),

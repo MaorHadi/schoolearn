@@ -2,10 +2,14 @@ import { Search, Users } from "lucide-react";
 import { Form, Link } from "react-router";
 import type { Route } from "./+types/users";
 import { UserStatusPill } from "~/components/admin/UserStatusPill";
+import { EmptyState } from "~/components/EmptyState";
+import { Field } from "~/components/forms/Field";
+import { PageHeader } from "~/components/PageHeader";
 import { t } from "~/i18n";
 import { UserListQuerySchema, USER_SEARCH_MAX_LENGTH } from "~/schemas/user-admin";
 import { requireRole } from "~/server/auth/context.server";
 import { listUsers } from "~/server/users/user.server";
+import { formatDate } from "~/shared/format-date";
 
 export async function loader({ context, request }: Route.LoaderArgs) {
   requireRole(context, "SYSTEM_ADMIN");
@@ -15,12 +19,6 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   const page = await listUsers({ query: query.q, page: query.page });
   return { query: query.q, page };
 }
-
-// Fixed zone so server and client render the same text (no hydration mismatch).
-const dateFormat = new Intl.DateTimeFormat("he-IL", {
-  dateStyle: "medium",
-  timeZone: "Asia/Jerusalem",
-});
 
 function pageHref(query: string, page: number): string {
   const params = new URLSearchParams();
@@ -36,17 +34,14 @@ export default function SystemAdminUsers({ loaderData }: Route.ComponentProps) {
 
   return (
     <main className="container page">
-      <p className="page__back page__back--top">
-        <Link to="/system-admin">{t("systemAdmin.backToIndex")}</Link>
-      </p>
-      <header className="page__head">
-        <h1 className="page__title">{t("systemAdmin.users.title")}</h1>
-        <p className="page__lead">{t("systemAdmin.users.lead")}</p>
-      </header>
+      <PageHeader
+        back={{ to: "/system-admin", label: t("systemAdmin.backToIndex") }}
+        title={t("systemAdmin.users.title")}
+        lead={t("systemAdmin.users.lead")}
+      />
 
       <Form method="get" className="search-form" role="search">
-        <label className="field search-form__field">
-          <span className="visually-hidden">{t("systemAdmin.users.search")}</span>
+        <Field label={t("systemAdmin.users.search")} hideLabel className="field search-form__field">
           <input
             className="field__input"
             type="search"
@@ -56,7 +51,7 @@ export default function SystemAdminUsers({ loaderData }: Route.ComponentProps) {
             maxLength={USER_SEARCH_MAX_LENGTH}
             dir="ltr"
           />
-        </label>
+        </Field>
         <button type="submit" className="btn btn--ghost">
           <Search size={18} aria-hidden="true" />
           {t("systemAdmin.users.search")}
@@ -64,15 +59,12 @@ export default function SystemAdminUsers({ loaderData }: Route.ComponentProps) {
       </Form>
 
       {page.users.length === 0 ? (
-        <div className="empty empty--rich">
-          <Users size={28} aria-hidden="true" />
-          <p>{query === "" ? t("systemAdmin.users.empty") : t("systemAdmin.users.noMatch")}</p>
-        </div>
+        <EmptyState icon={Users}>
+          {query === "" ? t("systemAdmin.users.empty") : t("systemAdmin.users.noMatch")}
+        </EmptyState>
       ) : (
         <>
-          <p className="muted">
-            {t("systemAdmin.users.total").replace("{count}", String(page.total))}
-          </p>
+          <p className="muted">{t("systemAdmin.users.total", { count: page.total })}</p>
           <table className="admin-table">
             <thead>
               <tr>
@@ -99,7 +91,7 @@ export default function SystemAdminUsers({ loaderData }: Route.ComponentProps) {
                       <UserStatusPill role={user.role} isDisabled={user.isDisabled} />
                     </td>
                     <td>
-                      <time dateTime={createdAt.toISOString()}>{dateFormat.format(createdAt)}</time>
+                      <time dateTime={createdAt.toISOString()}>{formatDate(createdAt)}</time>
                     </td>
                   </tr>
                 );
@@ -114,9 +106,7 @@ export default function SystemAdminUsers({ loaderData }: Route.ComponentProps) {
                 </Link>
               ) : null}
               <span className="muted">
-                {t("systemAdmin.users.pageOf")
-                  .replace("{page}", String(page.page))
-                  .replace("{last}", String(lastPage))}
+                {t("systemAdmin.users.pageOf", { page: page.page, last: lastPage })}
               </span>
               {page.page < lastPage ? (
                 <Link to={pageHref(query, page.page + 1)} className="btn btn--ghost btn--small">

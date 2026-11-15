@@ -1,5 +1,7 @@
 import { data } from "react-router";
 import { t } from "~/i18n";
+import { extractAssetIds } from "~/schemas/content-blocks";
+import type { QuestionType } from "~/schemas/questions";
 import { prisma } from "~/server/database.server";
 import { LessonContentError, parseLessonContent } from "~/server/lesson-content.server";
 import { getSubjectBySlugForUser } from "~/server/content/subjects.server";
@@ -55,8 +57,7 @@ export async function getLessonForUser(userId: number, slug: string, lessonId: n
     throw error;
   }
 
-  const assetIds = blocks.flatMap((block) => (block.type === "image" ? [block.assetId] : []));
-  const assetUrls = await assetUrlMap(assetIds);
+  const assetUrls = await assetUrlMap(extractAssetIds(blocks));
 
   return {
     subject,
@@ -69,9 +70,9 @@ export async function getLessonForUser(userId: number, slug: string, lessonId: n
   };
 }
 
-export interface AnswerKeyEntry {
+interface AnswerKeyEntry {
   id: number;
-  type: "MULTIPLE_CHOICE" | "MULTIPLE_ANSWER";
+  type: QuestionType;
   optionIds: number[];
   correctOptionIds: number[];
 }

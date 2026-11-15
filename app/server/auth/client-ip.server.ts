@@ -3,7 +3,7 @@ import { env } from "~/server/env.server";
 /** Sentinel when no trustworthy IP is available. Never block this value. */
 export const UNKNOWN_IP = "unknown";
 
-export interface ClientIpOptions {
+interface ClientIpOptions {
   /** Number of reverse-proxy hops to trust. Defaults to env TRUSTED_PROXY_COUNT. */
   trustedProxyCount?: number;
   /** The TCP peer address, when the server exposes it. react-router-serve does not. */

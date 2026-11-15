@@ -1,6 +1,7 @@
 import { Upload } from "lucide-react";
 import { useEffect } from "react";
 import { useFetcher } from "react-router";
+import { Field } from "~/components/forms/Field";
 import { t } from "~/i18n";
 import { UPLOAD_INTENT, type FieldsProps, type UploadFetcherResult } from "../blocks";
 
@@ -40,8 +41,7 @@ export function ImageFields({
       <fetcher.Form method="post" encType="multipart/form-data" className="block-card__upload">
         <input type="hidden" name="intent" value={UPLOAD_INTENT} />
         <input type="hidden" name="blockId" value={block.id} />
-        <label className="field">
-          <span className="field__label">{t("admin.editor.image.file")}</span>
+        <Field label={t("admin.editor.image.file")}>
           <input
             className="field__input field__input--compact"
             type="file"
@@ -49,7 +49,7 @@ export function ImageFields({
             accept="image/png,image/jpeg,image/webp,image/gif"
             required
           />
-        </label>
+        </Field>
         <button type="submit" className="btn btn--ghost btn--small" disabled={uploading}>
           <Upload size={16} aria-hidden="true" />
           {uploading ? t("admin.editor.image.uploading") : t("admin.editor.image.upload")}
@@ -60,8 +60,7 @@ export function ImageFields({
           </span>
         ) : null}
       </fetcher.Form>
-      <label className="field">
-        <span className="field__label">{t("admin.editor.image.alt")}</span>
+      <Field label={t("admin.editor.image.alt")}>
         <input
           className="field__input field__input--compact"
           dir={direction}
@@ -69,16 +68,15 @@ export function ImageFields({
           onChange={(event) => onChange({ ...block, alt: event.target.value })}
           required
         />
-      </label>
-      <label className="field">
-        <span className="field__label">{t("admin.editor.image.caption")}</span>
+      </Field>
+      <Field label={t("admin.editor.image.caption")}>
         <input
           className="field__input field__input--compact"
           dir={direction}
           value={block.caption ?? ""}
           onChange={(event) => onChange({ ...block, caption: event.target.value || undefined })}
         />
-      </label>
+      </Field>
     </div>
   );
 }

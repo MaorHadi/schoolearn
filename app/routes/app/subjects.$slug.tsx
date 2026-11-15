@@ -1,20 +1,22 @@
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import type { CSSProperties } from "react";
-import { Link, data } from "react-router";
+import { Link } from "react-router";
 import type { Route } from "./+types/subjects.$slug";
 import { LessonPath } from "~/components/lesson-path/LessonPath";
+import { ProgressBar } from "~/components/ProgressBar";
 import { SubjectIcon } from "~/components/SubjectIcon";
 import { t } from "~/i18n";
 import { requireUser } from "~/server/auth/context.server";
 import { getSubjectBySlugForUser } from "~/server/content/subjects.server";
 import { getSubjectTree } from "~/server/progress/unlock.server";
+import { notFound } from "~/server/route-params.server";
 import { countCompleted, findCurrentLesson } from "~/shared/lesson-path";
 import { resolveSubjectTheme } from "~/shared/subject-theme";
 
 export async function loader({ context, params }: Route.LoaderArgs) {
   const user = requireUser(context);
   const subject = await getSubjectBySlugForUser(user.id, params.slug);
-  if (!subject) throw data(t("error.notFound"), { status: 404 });
+  if (!subject) throw notFound();
   const tree = await getSubjectTree(user.id, subject.id);
   return {
     subject: {
@@ -53,19 +55,8 @@ export default function SubjectPage({ loaderData }: Route.ComponentProps) {
         </h1>
 
         <div className="subject-head__overall">
-          <div
-            className="subject-head__bar"
-            role="progressbar"
-            aria-valuemin={0}
-            aria-valuemax={total}
-            aria-valuenow={done}
-            aria-label={t("subjects.progressLabel")}
-          >
-            <span />
-          </div>
-          <p className="subject-head__meta">
-            {t("subject.overall").replace("{done}", String(done)).replace("{total}", String(total))}
-          </p>
+          <ProgressBar done={done} total={total} />
+          <p className="subject-head__meta">{t("subject.overall", { done, total })}</p>
         </div>
 
         {current ? (

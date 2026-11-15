@@ -1,5 +1,5 @@
 import { Form, useNavigation } from "react-router";
-import { Field } from "~/components/AuthPage";
+import { Field } from "~/components/forms/Field";
 import { SubjectIcon } from "~/components/SubjectIcon";
 import { t, type TranslationKey } from "~/i18n";
 import {
@@ -8,6 +8,8 @@ import {
   type SubjectFormField,
 } from "~/schemas/admin-content";
 import { CONTENT_LOCALES } from "~/shared/content-locales";
+import type { TextDirection } from "~/shared/direction";
+import { fieldErrorHelpers } from "~/shared/field-errors";
 import { DEFAULT_SUBJECT_THEME, resolveSubjectTheme, SUBJECT_ICONS } from "~/shared/subject-theme";
 
 /** One message key per field, for `fieldErrorsFrom()` in the subject actions. */
@@ -24,12 +26,12 @@ export const SUBJECT_FIELD_MESSAGES: Record<SubjectFormField, TranslationKey> = 
 
 export type SubjectFieldErrors = Partial<Record<SubjectFormField, TranslationKey>>;
 
-export interface SubjectFormValues {
+interface SubjectFormValues {
   slug: string;
   name: string;
   description: string | null;
   locale: string;
-  direction: "rtl" | "ltr";
+  direction: TextDirection;
   defaultPassingScore: number | null;
   accentColor: string;
   icon: string;
@@ -60,11 +62,7 @@ export function SubjectForm({
 }) {
   const navigation = useNavigation();
   const busy = navigation.state !== "idle" && navigation.formData?.get("intent") === intent;
-  const errorFor = (field: SubjectFormField) => {
-    const key = fieldErrors[field];
-    return key ? t(key) : undefined;
-  };
-  const invalid = (field: SubjectFormField) => (fieldErrors[field] ? true : undefined);
+  const { errorFor, invalid } = fieldErrorHelpers(fieldErrors);
   const selectedIcon = resolveSubjectTheme(values).icon;
 
   return (

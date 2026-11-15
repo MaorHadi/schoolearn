@@ -1,8 +1,9 @@
 import { ArrowLeft, Lock } from "lucide-react";
 import { Form, Link, useNavigation } from "react-router";
 import { t } from "~/i18n";
+import type { TextDirection } from "~/shared/direction";
 
-export interface NextLessonTarget {
+interface NextLessonTarget {
   id: number;
   title: string;
 }
@@ -26,7 +27,7 @@ export function LessonNext({
   completed: boolean;
   hasQuestions: boolean;
   backTo: string;
-  direction: "rtl" | "ltr";
+  direction: TextDirection;
 }) {
   const navigation = useNavigation();
   const busy = navigation.state !== "idle";

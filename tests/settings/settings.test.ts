@@ -5,9 +5,8 @@ import { env } from "~/server/env.server";
 import { createSuggestion } from "~/server/feedback/suggestions.server";
 import { getSystemSettings, updateSystemSettings } from "~/server/settings/settings.server";
 import { storeUploadedImage } from "~/server/storage/upload.server";
+import { PNG_HEADER } from "../helpers/content";
 import { resetDb } from "../helpers/db";
-
-const PNG_HEADER = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 
 async function makeAdmin() {
   return prisma.user.create({

@@ -1,9 +1,8 @@
 // Shared (client-safe). Turns a submitted `from`/`to` pair into query bounds.
 import type { DateRangeQuery } from "~/schemas/date-range";
+import { DAY_MS } from "~/shared/time";
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-export interface ResolvedDateRange {
+interface ResolvedDateRange {
   /** Inclusive start (midnight UTC of `from`, or now minus `defaultDays`). */
   since: Date;
   /** Exclusive end (midnight UTC after `to`, or now). */

@@ -1,7 +1,7 @@
 // Client-safe. A `from`/`to` pair of calendar dates as submitted by DateRangeFields (`yyyy-mm-dd`).
 import { z } from "zod";
 
-export const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Empty means "not set"; otherwise a real calendar date. */
 const optionalIsoDate = z

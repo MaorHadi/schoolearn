@@ -1,26 +1,12 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { RouterContextProvider } from "react-router";
 import { action, loader } from "~/routes/admin/lessons.$lessonId.questions";
-import { userContext } from "~/server/auth/context.server";
 import { prisma } from "~/server/database.server";
 import { resetDb } from "../helpers/db";
 import { makeSubjectWithLessons, sampleQuestions } from "../helpers/content";
-
-async function contextFor(role: "USER" | "ADMIN") {
-  const user = await prisma.user.create({
-    data: { username: role.toLowerCase(), passwordHash: "x", role },
-  });
-  const context = new RouterContextProvider();
-  context.set(userContext, user);
-  return context;
-}
+import { contextFor, formRequest } from "../helpers/routes";
 
 function saveRequest(url: string, questions: unknown, intent = "save-questions") {
-  return new Request(url, {
-    method: "POST",
-    body: new URLSearchParams({ intent, questions: JSON.stringify(questions) }),
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-  });
+  return formRequest(url, { intent, questions: JSON.stringify(questions) });
 }
 
 describe("question editor route", () => {
@@ -39,7 +25,7 @@ describe("question editor route", () => {
 
   it("refuses a plain user", async () => {
     const { url, params, lessonId } = await fixture();
-    const context = await contextFor("USER");
+    const { context } = await contextFor("USER");
     await expect(loader({ context, params } as never)).rejects.toMatchObject({
       init: { status: 403 },
     });
@@ -52,7 +38,7 @@ describe("question editor route", () => {
 
   it("saves the question list as a draft and loads it back", async () => {
     const { url, params, lessonId } = await fixture();
-    const context = await contextFor("ADMIN");
+    const { context } = await contextFor("ADMIN");
     expect(
       await action({ request: saveRequest(url, sampleQuestions()), context, params } as never),
     ).toBeNull();
@@ -67,7 +53,7 @@ describe("question editor route", () => {
 
   it("answers invalid questions with a form error and rejects other intents", async () => {
     const { url, params, lessonId } = await fixture();
-    const context = await contextFor("ADMIN");
+    const { context } = await contextFor("ADMIN");
     const [question] = sampleQuestions();
     if (!question) throw new Error("fixture");
     const noCorrect = {

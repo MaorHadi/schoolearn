@@ -83,7 +83,7 @@ function tokenFor(mark: Mark): string {
   return marker.token;
 }
 
-export interface QuoteText {
+interface QuoteText {
   text: string;
   highlights: { start: number; end: number }[];
 }

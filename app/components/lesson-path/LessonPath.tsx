@@ -5,7 +5,7 @@ import type { TextDirection } from "~/shared/direction";
 import { findCurrentLesson, stationState, type StationState } from "~/shared/lesson-path";
 import type { LessonState, SectionState } from "~/shared/unlock";
 
-export interface LessonPathProps {
+interface LessonPathProps {
   slug: string;
   direction: TextDirection;
   tree: SectionState[];

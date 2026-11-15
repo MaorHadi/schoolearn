@@ -3,7 +3,7 @@ import { Form, NavLink } from "react-router";
 import { t } from "~/i18n";
 import { ThemeToggle } from "./ThemeToggle";
 
-export interface AppHeaderProps {
+interface AppHeaderProps {
   username?: string;
   showAdmin?: boolean;
   showSystemAdmin?: boolean;

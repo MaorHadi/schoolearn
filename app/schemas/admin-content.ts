@@ -1,11 +1,12 @@
 // Client-safe. Validation for the admin content editor's forms. Every admin action parses
 // `Object.fromEntries(formData)` through one of these, so form values are strings here.
 import { z } from "zod";
-import { LessonContent as LessonContentSchema } from "~/schemas/content-blocks";
+import { Direction, LessonContent as LessonContentSchema } from "~/schemas/content-blocks";
+import { jsonField } from "~/schemas/json-field";
 import { CONTENT_LOCALES } from "~/shared/content-locales";
 import { SubjectThemeSchema } from "~/shared/subject-theme";
 
-export const SUBJECT_SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const SUBJECT_SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const TITLE_MAX_LENGTH = 120;
 export const DESCRIPTION_MAX_LENGTH = 1000;
 
@@ -31,11 +32,11 @@ export const SubjectInputSchema = SubjectThemeSchema.extend({
   name: title,
   description: optionalText(DESCRIPTION_MAX_LENGTH),
   locale: z.enum(CONTENT_LOCALES),
-  direction: z.enum(["rtl", "ltr"]),
+  direction: Direction,
   /** Passing score for the subject's lessons that set none; empty means the site default. */
   defaultPassingScore: optionalPercent,
 });
-export type SubjectFormInput = z.infer<typeof SubjectInputSchema>;
+type SubjectFormInput = z.infer<typeof SubjectInputSchema>;
 export type SubjectFormField = keyof SubjectFormInput;
 
 export const LessonInputSchema = z.object({
@@ -68,21 +69,10 @@ export const SubjectPageIntentSchema = z.discriminatedUnion("intent", [
     targetLessonId: positiveId,
   }),
 ]);
-export type SubjectPageIntent = z.infer<typeof SubjectPageIntentSchema>;
 
 /** The block editor posts its state as one JSON string. */
 export const BlocksFormSchema = z.object({
-  blocks: z
-    .string()
-    .transform((raw, context) => {
-      try {
-        return JSON.parse(raw) as unknown;
-      } catch {
-        context.addIssue({ code: "custom", message: "blocks must be JSON" });
-        return z.NEVER;
-      }
-    })
-    .pipe(LessonContentSchema),
+  blocks: jsonField(LessonContentSchema, "blocks must be JSON"),
 });
 
 /** Checkbox list: one `subjectId` entry per checked subject. */

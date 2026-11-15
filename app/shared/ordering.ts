@@ -6,9 +6,9 @@ export type MoveDirection = "up" | "down";
  * Swap the row with its neighbour in the given direction. Returns the new order (the caller
  * rewrites sortOrder as 1..n, which also repairs duplicates), or null when already at the edge.
  */
-export function swapWithNeighbour<Row extends { id: number }>(
+export function swapWithNeighbour<Id, Row extends { id: Id }>(
   rows: Row[],
-  id: number,
+  id: Id,
   direction: MoveDirection,
 ): Row[] | null {
   const index = rows.findIndex((row) => row.id === id);

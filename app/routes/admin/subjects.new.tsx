@@ -1,7 +1,11 @@
 import { Link, data, redirect } from "react-router";
 import type { Route } from "./+types/subjects.new";
-import { SUBJECT_FIELD_MESSAGES, SubjectForm } from "~/components/admin/SubjectForm";
-import type { SubjectFieldErrors } from "~/components/admin/SubjectForm";
+import {
+  SUBJECT_FIELD_MESSAGES,
+  SubjectForm,
+  type SubjectFieldErrors,
+} from "~/components/admin/SubjectForm";
+import { PageHeader } from "~/components/PageHeader";
 import { t } from "~/i18n";
 import { SubjectInputSchema } from "~/schemas/admin-content";
 import { requireRole } from "~/server/auth/context.server";
@@ -42,10 +46,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 export default function NewSubject({ actionData }: Route.ComponentProps) {
   return (
     <main className="container page page--narrow">
-      <header className="page__head">
-        <h1 className="page__title">{t("admin.subject.newTitle")}</h1>
-        <p className="page__lead">{t("admin.subject.newLead")}</p>
-      </header>
+      <PageHeader title={t("admin.subject.newTitle")} lead={t("admin.subject.newLead")} />
 
       <SubjectForm
         intent="create-subject"

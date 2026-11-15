@@ -1,40 +1,29 @@
 import type { CSSProperties } from "react";
-import { Link, data } from "react-router";
+import { data } from "react-router";
 import type { Route } from "./+types/lessons.$lessonId";
-import { LessonTabs } from "~/components/admin/LessonTabs";
-import { RowStatusPill } from "~/components/admin/StatusPill";
+import { LessonEditorHeader } from "~/components/admin/LessonEditorHeader";
+import { BlockEditor } from "~/components/content-editor/BlockEditor";
 import {
-  BlockEditor,
   SAVE_DRAFT_INTENT,
   UPLOAD_INTENT,
   type UploadFetcherResult,
-} from "~/components/content-editor/BlockEditor";
-import { t, type TranslationKey } from "~/i18n";
+} from "~/components/content-editor/blocks";
+import { t } from "~/i18n";
 import { BlocksFormSchema } from "~/schemas/admin-content";
 import { requireRole } from "~/server/auth/context.server";
 import { getLessonForAdmin, saveLessonDraft } from "~/server/content/admin.server";
 import { flashFromContext } from "~/server/flash.server";
+import { notFound, parseIdParam } from "~/server/route-params.server";
 import { getSystemSettings } from "~/server/settings/settings.server";
 import { storeUploadedImage } from "~/server/storage/upload.server";
+import type { FormError } from "~/shared/field-errors";
 import { resolveSubjectTheme } from "~/shared/subject-theme";
 
 /** Room for the multipart boundary and field headers around the largest allowed file. */
 export const MULTIPART_OVERHEAD_BYTES = 64 * 1024;
 
-/** The save-draft action answers with this on validation failure; the editor stays mounted. */
-export interface DraftFormError {
-  formError: TranslationKey;
-}
-
-export type LessonActionResult = UploadFetcherResult | DraftFormError;
-
-function parseLessonId(raw: string | undefined): number {
-  const lessonId = Number(raw);
-  if (!Number.isInteger(lessonId) || lessonId <= 0) {
-    throw data(t("error.notFound"), { status: 404 });
-  }
-  return lessonId;
-}
+/** An upload answers its card's fetcher; a refused save answers with a form error. */
+type LessonActionResult = UploadFetcherResult | FormError;
 
 /** True when a multipart body announces more bytes than any accepted upload could need. */
 async function multipartTooLarge(request: Request): Promise<boolean> {
@@ -48,8 +37,8 @@ async function multipartTooLarge(request: Request): Promise<boolean> {
 
 export async function loader({ context, params }: Route.LoaderArgs) {
   requireRole(context, "ADMIN");
-  const lesson = await getLessonForAdmin(parseLessonId(params.lessonId));
-  if (!lesson) throw data(t("error.notFound"), { status: 404 });
+  const lesson = await getLessonForAdmin(parseIdParam(params.lessonId));
+  if (!lesson) throw notFound();
   return {
     lesson: {
       id: lesson.id,
@@ -60,7 +49,7 @@ export async function loader({ context, params }: Route.LoaderArgs) {
       blocks: lesson.blocks,
       assetUrls: lesson.assetUrls,
     },
-    section: { title: lesson.section.title },
+    sectionTitle: lesson.section.title,
     subject: {
       id: lesson.section.subject.id,
       name: lesson.section.subject.name,
@@ -78,7 +67,7 @@ export async function loader({ context, params }: Route.LoaderArgs) {
  */
 export async function action({ request, context, params }: Route.ActionArgs) {
   const user = requireRole(context, "ADMIN");
-  const lessonId = parseLessonId(params.lessonId);
+  const lessonId = parseIdParam(params.lessonId);
 
   if (await multipartTooLarge(request)) {
     // The block id lives inside the unparsed body; the per-card fetcher still knows its owner.
@@ -120,7 +109,7 @@ export async function action({ request, context, params }: Route.ActionArgs) {
   }
 
   const saved = await saveLessonDraft(lessonId, parsed.data.blocks);
-  if (!saved.ok && saved.reason === "NOT_FOUND") throw data(t("error.notFound"), { status: 404 });
+  if (!saved.ok && saved.reason === "NOT_FOUND") throw notFound();
   if (!saved.ok) {
     return data<LessonActionResult>({ formError: "admin.error.unknownAsset" }, { status: 400 });
   }
@@ -129,33 +118,19 @@ export async function action({ request, context, params }: Route.ActionArgs) {
 }
 
 export default function EditLesson({ loaderData, actionData }: Route.ComponentProps) {
-  const { lesson, section, subject } = loaderData;
+  const { lesson, sectionTitle, subject } = loaderData;
   const style = { "--accent": subject.theme.accentColor } as CSSProperties;
   const formError = actionData && "formError" in actionData ? actionData.formError : undefined;
 
   return (
     <main className="container page" style={style}>
-      <p className="page__back page__back--top">
-        <Link to={`/admin/subjects/${subject.id}`}>
-          {t("admin.lesson.backToSubject").replace("{subject}", subject.name)}
-        </Link>
-      </p>
-      <header className="page__head">
-        <h1 className="page__title" dir={subject.direction}>
-          {lesson.title}
-        </h1>
-        <p className="page__lead" dir={subject.direction}>
-          {section.title}
-        </p>
-        <RowStatusPill publishedAt={lesson.publishedAt} hasDraft={lesson.hasDraft} />
-        <p className="muted">{t("admin.lesson.draftLead")}</p>
-        {lesson.draftInvalid ? (
-          <p className="alert" role="alert">
-            {t("admin.lesson.draftInvalid")}
-          </p>
-        ) : null}
-        <LessonTabs lessonId={lesson.id} />
-      </header>
+      <LessonEditorHeader
+        lesson={lesson}
+        sectionTitle={sectionTitle}
+        subject={subject}
+        lead="admin.lesson.draftLead"
+        draftInvalidMessage="admin.lesson.draftInvalid"
+      />
 
       {/* Keyed on the lesson so navigating between lessons resets the editor state. */}
       <BlockEditor

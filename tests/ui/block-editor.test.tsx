@@ -2,7 +2,8 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { createRoutesStub } from "react-router";
-import { BlockEditor, blocksAreComplete } from "~/components/content-editor/BlockEditor";
+import { BlockEditor } from "~/components/content-editor/BlockEditor";
+import { blocksAreComplete } from "~/components/content-editor/blocks";
 import { t } from "~/i18n";
 import type { ContentBlock } from "~/schemas/content-blocks";
 

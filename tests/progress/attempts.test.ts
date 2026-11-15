@@ -5,13 +5,7 @@ import { getSubjectTree } from "~/server/progress/unlock.server";
 import { registerUser } from "~/server/auth/register.server";
 import { prisma } from "~/server/database.server";
 import { resetDb } from "../helpers/db";
-import { makeSubjectWithLessons } from "../helpers/content";
-
-function firstLesson(lessonIds: number[][], section = 0, lesson = 0): number {
-  const id = lessonIds[section]?.[lesson];
-  if (id === undefined) throw new Error("fixture missing lesson");
-  return id;
-}
+import { lessonAt, makeSubjectWithLessons } from "../helpers/content";
 
 describe("recordAttempt", () => {
   let userId: number;
@@ -36,7 +30,7 @@ describe("recordAttempt", () => {
 
   it("applies the subject default when the lesson sets no passing score", async () => {
     const { subject, lessonIds } = await makeSubjectWithLessons([1]);
-    const lessonId = firstLesson(lessonIds);
+    const lessonId = lessonAt(lessonIds);
     await prisma.subject.update({ where: { id: subject.id }, data: { defaultPassingScore: 90 } });
 
     expect((await recordAttempt({ userId, lessonId, score: 85 })).passed).toBe(false);
@@ -45,7 +39,7 @@ describe("recordAttempt", () => {
 
   it("writes one attempt per try and keeps the best score and first completion", async () => {
     const { lessonIds } = await makeSubjectWithLessons([2]);
-    const lessonId = firstLesson(lessonIds);
+    const lessonId = lessonAt(lessonIds);
 
     const first = await recordAttempt({ userId, lessonId, score: 40 });
     expect(first).toMatchObject({ passed: false, bestScore: 40, completedAt: null });
@@ -66,7 +60,7 @@ describe("recordAttempt", () => {
 
   it("passing unlocks the next lesson and a later failure never re-locks it", async () => {
     const { subject, lessonIds } = await makeSubjectWithLessons([2]);
-    const lessonId = firstLesson(lessonIds);
+    const lessonId = lessonAt(lessonIds);
 
     await recordAttempt({ userId, lessonId, score: 100 });
     let tree = await getSubjectTree(userId, subject.id);
@@ -80,8 +74,8 @@ describe("recordAttempt", () => {
 
   it("completing every lesson in a section unlocks the next section", async () => {
     const { subject, lessonIds } = await makeSubjectWithLessons([2, 1]);
-    await recordAttempt({ userId, lessonId: firstLesson(lessonIds, 0, 0), score: 100 });
-    await recordAttempt({ userId, lessonId: firstLesson(lessonIds, 0, 1), score: 100 });
+    await recordAttempt({ userId, lessonId: lessonAt(lessonIds, 0, 0), score: 100 });
+    await recordAttempt({ userId, lessonId: lessonAt(lessonIds, 0, 1), score: 100 });
     const tree = await getSubjectTree(userId, subject.id);
     expect(tree[1]?.unlocked).toBe(true);
     expect(tree[1]?.lessons[0]?.unlocked).toBe(true);
@@ -89,14 +83,14 @@ describe("recordAttempt", () => {
 
   it("respects a per-lesson passing score", async () => {
     const { lessonIds } = await makeSubjectWithLessons([1], 90);
-    const lessonId = firstLesson(lessonIds);
+    const lessonId = lessonAt(lessonIds);
     expect((await recordAttempt({ userId, lessonId, score: 85 })).passed).toBe(false);
     expect((await recordAttempt({ userId, lessonId, score: 90 })).passed).toBe(true);
   });
 
   it("rejects out-of-range or non-integer scores without writing anything", async () => {
     const { lessonIds } = await makeSubjectWithLessons([1]);
-    const lessonId = firstLesson(lessonIds);
+    const lessonId = lessonAt(lessonIds);
     await expect(recordAttempt({ userId, lessonId, score: 101 })).rejects.toThrow();
     await expect(recordAttempt({ userId, lessonId, score: -1 })).rejects.toThrow();
     await expect(recordAttempt({ userId, lessonId, score: 50.5 })).rejects.toThrow();
@@ -105,7 +99,7 @@ describe("recordAttempt", () => {
 
   it("concurrent attempts never lose the best score or the completion", async () => {
     const { lessonIds } = await makeSubjectWithLessons([1]);
-    const lessonId = firstLesson(lessonIds);
+    const lessonId = lessonAt(lessonIds);
     await Promise.all([
       recordAttempt({ userId, lessonId, score: 90 }),
       recordAttempt({ userId, lessonId, score: 40 }),
@@ -122,7 +116,7 @@ describe("recordAttempt", () => {
   it("attempt timestamps are recorded for future streak calculation", async () => {
     const { lessonIds } = await makeSubjectWithLessons([1]);
     const before = Date.now() - 1000;
-    await recordAttempt({ userId, lessonId: firstLesson(lessonIds), score: 70 });
+    await recordAttempt({ userId, lessonId: lessonAt(lessonIds), score: 70 });
     const attempt = await prisma.lessonAttempt.findFirstOrThrow({ where: { userId } });
     expect(attempt.createdAt.getTime()).toBeGreaterThanOrEqual(before);
   });

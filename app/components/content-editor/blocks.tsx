@@ -8,7 +8,7 @@ import {
   Quote as QuoteIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import type { ContentBlock, ContentBlockType } from "~/schemas/content-blocks";
+import type { BlockOf, ContentBlock, ContentBlockType } from "~/schemas/content-blocks";
 import type { TextDirection } from "~/shared/direction";
 
 export const SAVE_DRAFT_INTENT = "save-draft";
@@ -18,8 +18,6 @@ export const UPLOAD_INTENT = "upload";
 export type UploadFetcherResult =
   | { ok: true; blockId: string; assetId: number; url: string }
   | { ok: false; blockId: string; reason: "TOO_LARGE" | "UNSUPPORTED_TYPE" | "EMPTY" };
-
-export type BlockOf<T extends ContentBlockType> = Extract<ContentBlock, { type: T }>;
 
 /** Props every per-type field component receives. */
 export interface FieldsProps<T extends ContentBlockType> {

@@ -1,11 +1,12 @@
 import { prisma } from "~/server/database.server";
+import type { TextDirection } from "~/shared/direction";
 
-export interface SubjectListItem {
+interface SubjectListItem {
   id: number;
   slug: string;
   name: string;
   description: string | null;
-  direction: "rtl" | "ltr";
+  direction: TextDirection;
   accentColor: string;
   icon: string;
   enrolled: boolean;

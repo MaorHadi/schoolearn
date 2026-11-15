@@ -7,23 +7,18 @@ import { LessonNext } from "~/components/LessonNext";
 import { QuizRunner } from "~/components/quiz/QuizRunner";
 import { t } from "~/i18n";
 import { SelectedOptionIdsSchema } from "~/schemas/questions";
-import { requireUser, sessionContext } from "~/server/auth/context.server";
+import { requireUser } from "~/server/auth/context.server";
 import { getLessonAnswerKey, getLessonForUser } from "~/server/content/lessons.server";
-import { setFlash } from "~/server/flash.server";
+import { flashFromContext } from "~/server/flash.server";
 import { effectivePassingScore, recordAttempt } from "~/server/progress/attempts.server";
+import { parseIdParam } from "~/server/route-params.server";
 import { gradeQuiz, type QuizOutcome } from "~/shared/quiz";
 import { resolveSubjectTheme } from "~/shared/subject-theme";
 import { findLesson, findNextLesson } from "~/shared/unlock";
 
-function parseLessonId(raw: string | undefined): number {
-  const lessonId = Number(raw);
-  if (!Number.isInteger(lessonId)) throw data(t("error.notFound"), { status: 404 });
-  return lessonId;
-}
-
 export async function loader({ context, params }: Route.LoaderArgs) {
   const user = requireUser(context);
-  const lessonId = parseLessonId(params.lessonId);
+  const lessonId = parseIdParam(params.lessonId);
 
   const { subject, lesson, blocks, assetUrls, tree, questions } = await getLessonForUser(
     user.id,
@@ -66,12 +61,12 @@ export async function loader({ context, params }: Route.LoaderArgs) {
  * loaded (publishing replaces the questions) is rejected, as is one with unanswered questions.
  */
 async function answerQuiz(
+  context: Route.ActionArgs["context"],
   form: FormData,
   userId: number,
   lesson: { id: number; title: string; passingScore: number | null },
   subject: { defaultPassingScore: number | null },
   alreadyCompleted: boolean,
-  sessionId: string | undefined,
 ) {
   const answerKey = await getLessonAnswerKey(lesson.id);
   if (answerKey.length === 0) throw data(t("error.generic"), { status: 400 });
@@ -110,8 +105,8 @@ async function answerQuiz(
 
   const grade = gradeQuiz(answerKey, answers);
   const attempt = await recordAttempt({ userId, lessonId: lesson.id, score: grade.score });
-  if (attempt.passed && !alreadyCompleted && sessionId) {
-    await setFlash(sessionId, "success", "toast.lessonCompleted", { lesson: lesson.title });
+  if (attempt.passed && !alreadyCompleted) {
+    await flashFromContext(context, "success", "toast.lessonCompleted", { lesson: lesson.title });
   }
   return data<QuizOutcome>({
     kind: "result",
@@ -129,7 +124,7 @@ async function answerQuiz(
  */
 export async function action({ request, context, params }: Route.ActionArgs) {
   const user = requireUser(context);
-  const lessonId = parseLessonId(params.lessonId);
+  const lessonId = parseIdParam(params.lessonId);
   const form = await request.formData();
   const intent = form.get("intent");
   if (intent !== "complete" && intent !== "answer") {
@@ -143,14 +138,7 @@ export async function action({ request, context, params }: Route.ActionArgs) {
   );
   const state = findLesson(tree, lesson.id);
   if (intent === "answer") {
-    return answerQuiz(
-      form,
-      user.id,
-      lesson,
-      subject,
-      state?.completed ?? false,
-      context.get(sessionContext)?.id,
-    );
+    return answerQuiz(context, form, user.id, lesson, subject, state?.completed ?? false);
   }
 
   if (questionCount > 0 && !state?.completed) {
@@ -160,9 +148,7 @@ export async function action({ request, context, params }: Route.ActionArgs) {
 
   if (!state?.completed) {
     await recordAttempt({ userId: user.id, lessonId: lesson.id, score: 100 });
-    const session = context.get(sessionContext);
-    if (session)
-      await setFlash(session.id, "success", "toast.lessonCompleted", { lesson: lesson.title });
+    await flashFromContext(context, "success", "toast.lessonCompleted", { lesson: lesson.title });
   }
 
   const next = findNextLesson(tree, lesson.id);
@@ -191,9 +177,7 @@ export default function LessonPage({ loaderData, actionData }: Route.ComponentPr
           <p className="lesson-head__section" dir={subject.direction}>
             {section.title}
             <span className="lesson-head__position">
-              {t("lesson.position")
-                .replace("{index}", String(section.index))
-                .replace("{total}", String(section.total))}
+              {t("lesson.position", { index: section.index, total: section.total })}
             </span>
           </p>
         ) : null}

@@ -1,5 +1,8 @@
-import { GripVertical, Plus, Trash2 } from "lucide-react";
-import type { ComponentProps, KeyboardEvent } from "react";
+import { Plus, Trash2 } from "lucide-react";
+import type { ComponentProps } from "react";
+import { DragHandle } from "~/components/content-editor/DragHandle";
+import { Field } from "~/components/forms/Field";
+import { IconButton } from "~/components/IconButton";
 import { t } from "~/i18n";
 import {
   MAX_OPTIONS,
@@ -11,15 +14,16 @@ import {
   type QuestionType,
 } from "~/schemas/questions";
 import type { TextDirection } from "~/shared/direction";
+import type { MoveDirection } from "~/shared/ordering";
 import { emptyOption, withCorrect, withType } from "./questions";
 
-export interface QuestionCardProps {
+interface QuestionCardProps {
   question: QuestionDraft;
   /** 1-based position, for the card's label. */
   number: number;
   direction: TextDirection;
   onChange: (question: QuestionDraft) => void;
-  onMove: (offset: -1 | 1) => void;
+  onMove: (direction: MoveDirection) => void;
   onRemove: () => void;
   /** From useDragOrder: `targetProps` for the card, `handleProps` for its grip. */
   rowProps: ComponentProps<"li">;
@@ -38,15 +42,6 @@ export function QuestionCard({
   handleProps,
 }: QuestionCardProps) {
   const multiple = question.type === "MULTIPLE_ANSWER";
-  const handleKeys = (event: KeyboardEvent<HTMLButtonElement>) => {
-    if (event.key === "ArrowUp") {
-      event.preventDefault();
-      onMove(-1);
-    } else if (event.key === "ArrowDown") {
-      event.preventDefault();
-      onMove(1);
-    }
-  };
   const setOptionText = (optionId: string, text: string) =>
     onChange({
       ...question,
@@ -54,25 +49,13 @@ export function QuestionCard({
         option.id === optionId ? { ...option, text } : option,
       ),
     });
-  const numbered = (key: Parameters<typeof t>[0], position: number) =>
-    t(key).replace("{number}", String(position));
 
   return (
     <li className="block-card" {...rowProps}>
       <div className="block-card__toolbar">
-        <button
-          type="button"
-          className="icon-btn drag-handle"
-          aria-label={t("admin.questions.drag")}
-          title={t("admin.questions.drag")}
-          onKeyDown={handleKeys}
-          {...handleProps}
-        >
-          <GripVertical size={16} aria-hidden="true" />
-        </button>
-        <span className="block-card__type">{numbered("admin.questions.number", number)}</span>
-        <label>
-          <span className="visually-hidden">{t("admin.questions.type")}</span>
+        <DragHandle label={t("admin.questions.drag")} onMove={onMove} {...handleProps} />
+        <span className="block-card__type">{t("admin.questions.number", { number })}</span>
+        <Field label={t("admin.questions.type")} hideLabel className="block-card__dir">
           <select
             className="field__input field__input--compact select"
             value={question.type}
@@ -84,23 +67,19 @@ export function QuestionCard({
               </option>
             ))}
           </select>
-        </label>
+        </Field>
         <span className="tree-actions">
-          <button
-            type="button"
-            className="icon-btn icon-btn--danger"
-            aria-label={t("admin.questions.remove")}
-            title={t("admin.questions.remove")}
+          <IconButton
+            label={t("admin.questions.remove")}
+            icon={<Trash2 size={16} aria-hidden="true" />}
+            danger
             onClick={onRemove}
-          >
-            <Trash2 size={16} aria-hidden="true" />
-          </button>
+          />
         </span>
       </div>
 
       <div className="block-card__fields">
-        <label className="field">
-          <span className="field__label">{t("admin.questions.prompt")}</span>
+        <Field label={t("admin.questions.prompt")}>
           <textarea
             className="field__input"
             rows={2}
@@ -109,48 +88,48 @@ export function QuestionCard({
             maxLength={PROMPT_MAX_LENGTH}
             onChange={(event) => onChange({ ...question, prompt: event.target.value })}
           />
-        </label>
+        </Field>
 
         <fieldset className="m-0 grid min-w-0 gap-2 border-0 p-0">
           <legend className="field__label p-0">{t("admin.questions.options")}</legend>
-          {question.options.map((option, index) => (
-            <div key={option.id} className="flex items-center gap-2">
-              <input
-                type={multiple ? "checkbox" : "radio"}
-                name={`correct-${question.id}`}
-                checked={option.isCorrect}
-                aria-label={numbered("admin.questions.optionCorrect", index + 1)}
-                title={numbered("admin.questions.optionCorrect", index + 1)}
-                onChange={(event) =>
-                  onChange(withCorrect(question, option.id, event.target.checked))
-                }
-              />
-              <input
-                className="field__input field__input--compact min-w-0 flex-1"
-                dir={direction}
-                value={option.text}
-                maxLength={OPTION_MAX_LENGTH}
-                aria-label={numbered("admin.questions.optionText", index + 1)}
-                placeholder={numbered("admin.questions.optionText", index + 1)}
-                onChange={(event) => setOptionText(option.id, event.target.value)}
-              />
-              <button
-                type="button"
-                className="icon-btn icon-btn--danger"
-                aria-label={numbered("admin.questions.removeOption", index + 1)}
-                title={numbered("admin.questions.removeOption", index + 1)}
-                disabled={question.options.length <= MIN_OPTIONS}
-                onClick={() =>
-                  onChange({
-                    ...question,
-                    options: question.options.filter((entry) => entry.id !== option.id),
-                  })
-                }
-              >
-                <Trash2 size={16} aria-hidden="true" />
-              </button>
-            </div>
-          ))}
+          {question.options.map((option, index) => {
+            const position = { number: index + 1 };
+            return (
+              <div key={option.id} className="flex items-center gap-2">
+                <input
+                  type={multiple ? "checkbox" : "radio"}
+                  name={`correct-${question.id}`}
+                  checked={option.isCorrect}
+                  aria-label={t("admin.questions.optionCorrect", position)}
+                  title={t("admin.questions.optionCorrect", position)}
+                  onChange={(event) =>
+                    onChange(withCorrect(question, option.id, event.target.checked))
+                  }
+                />
+                <input
+                  className="field__input field__input--compact min-w-0 flex-1"
+                  dir={direction}
+                  value={option.text}
+                  maxLength={OPTION_MAX_LENGTH}
+                  aria-label={t("admin.questions.optionText", position)}
+                  placeholder={t("admin.questions.optionText", position)}
+                  onChange={(event) => setOptionText(option.id, event.target.value)}
+                />
+                <IconButton
+                  label={t("admin.questions.removeOption", position)}
+                  icon={<Trash2 size={16} aria-hidden="true" />}
+                  danger
+                  disabled={question.options.length <= MIN_OPTIONS}
+                  onClick={() =>
+                    onChange({
+                      ...question,
+                      options: question.options.filter((entry) => entry.id !== option.id),
+                    })
+                  }
+                />
+              </div>
+            );
+          })}
           <div>
             <button
               type="button"

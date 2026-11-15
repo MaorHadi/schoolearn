@@ -1,11 +1,11 @@
-import { data } from "react-router";
 import type { Route } from "./+types/subjects";
 import { SubjectCard } from "~/components/SubjectCard";
 import { AdSlot, SuggestionsLink, TeacherCallout } from "~/components/SubjectsRails";
 import { t } from "~/i18n";
-import { requireUser, sessionContext } from "~/server/auth/context.server";
+import { requireUser } from "~/server/auth/context.server";
 import { enrollUser, listActiveSubjectsForUser } from "~/server/content/subjects.server";
-import { setFlash } from "~/server/flash.server";
+import { flashFromContext } from "~/server/flash.server";
+import { notFound } from "~/server/route-params.server";
 import { getSystemSettings } from "~/server/settings/settings.server";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -24,9 +24,8 @@ export async function action({ request, context }: Route.ActionArgs) {
   const subjectId = Number(form.get("subjectId"));
   const enrolled =
     Number.isInteger(subjectId) && subjectId > 0 ? await enrollUser(user.id, subjectId) : null;
-  if (!enrolled) throw data(t("error.notFound"), { status: 404 });
-  const session = context.get(sessionContext);
-  if (session) await setFlash(session.id, "success", "toast.enrolled", { subject: enrolled.name });
+  if (!enrolled) throw notFound();
+  await flashFromContext(context, "success", "toast.enrolled", { subject: enrolled.name });
   return null;
 }
 

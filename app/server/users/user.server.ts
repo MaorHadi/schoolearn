@@ -1,5 +1,5 @@
 import { prisma } from "~/server/database.server";
-import { lockoutStateFor, type LockoutState } from "~/server/auth/auth-log.server";
+import { lockoutStateFor } from "~/server/auth/auth-log.server";
 import type { Role } from "~/shared/roles";
 
 /**
@@ -8,9 +8,9 @@ import type { Role } from "~/shared/roles";
  */
 
 export const USERS_PAGE_SIZE = 50;
-export const USER_AUTH_LOG_LIMIT = 100;
+const USER_AUTH_LOG_LIMIT = 100;
 
-export interface AdminUserRow {
+interface AdminUserRow {
   id: number;
   username: string;
   email: string | null;
@@ -19,7 +19,7 @@ export interface AdminUserRow {
   createdAt: Date;
 }
 
-export interface UserListPage {
+interface UserListPage {
   users: AdminUserRow[];
   total: number;
   page: number;
@@ -147,5 +147,3 @@ export async function clearUserLockout(userId: number): Promise<boolean> {
   });
   return count === 1;
 }
-
-export type { LockoutState };

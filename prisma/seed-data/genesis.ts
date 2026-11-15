@@ -1,5 +1,5 @@
 // Subject 1: Genesis (Hebrew, RTL). This is the ONLY place Bible-specific content lives.
-// Placeholder lesson content exercises every block type; real content comes later.
+// The lessons hold placeholder content that exercises every block type.
 import type { LessonContent } from "../../app/schemas/content-blocks";
 import type { LessonQuestions } from "../../app/schemas/questions";
 import type { SeedLesson, SeedSubject } from "./types";

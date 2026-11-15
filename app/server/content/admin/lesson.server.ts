@@ -7,19 +7,29 @@ import { prisma } from "~/server/database.server";
 import { assetsExist, parseLessonContent, syncLessonAssets } from "~/server/lesson-content.server";
 import { assetUrlMap } from "~/server/storage/assets.server";
 import { moveToPositionOf, swapWithNeighbour, type MoveDirection } from "~/shared/ordering";
+import { reorderLessonsOf } from "./ordering.server";
 import type { CreateResult } from "./subject.server";
+
+/** What both lesson editors (content and questions) need to know about the lesson's subject. */
+export const EDITOR_SUBJECT_SELECT = {
+  id: true,
+  name: true,
+  direction: true,
+  accentColor: true,
+  icon: true,
+} as const;
 
 /**
  * Admin writers for the Lesson table, including `draftContent`. `Lesson.content` itself is written
  * only by publishing (publish.server.ts -> saveLessonContent). New lessons start unpublished.
  */
 
-export interface LessonInput {
+interface LessonInput {
   title: string;
   passingScore: number | null;
 }
 
-export type DraftResult = { ok: true } | { ok: false; reason: "NOT_FOUND" | "UNKNOWN_ASSET" };
+type DraftResult = { ok: true } | { ok: false; reason: "NOT_FOUND" | "UNKNOWN_ASSET" };
 
 export async function createLesson(sectionId: number, input: LessonInput): Promise<CreateResult> {
   const section = await prisma.section.findUnique({
@@ -46,46 +56,17 @@ export async function deleteLesson(id: number): Promise<boolean> {
   return count === 1;
 }
 
-/** Swap with the neighbour, then rewrite sortOrder 1..n for the whole section in one transaction. */
-export async function moveLesson(id: number, direction: MoveDirection): Promise<boolean> {
-  const lesson = await prisma.lesson.findUnique({ where: { id }, select: { sectionId: true } });
-  if (!lesson) return false;
-  const siblings = await prisma.lesson.findMany({
-    where: { sectionId: lesson.sectionId },
-    orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
-    select: { id: true },
-  });
-  const reordered = swapWithNeighbour(siblings, id, direction);
-  if (!reordered) return false;
-  await writeLessonOrder(reordered);
-  return true;
+/** Swap with the neighbour in the section. False at the edge or when the lesson is gone. */
+export function moveLesson(id: number, direction: MoveDirection): Promise<boolean> {
+  return reorderLessonsOf(id, (siblings) => swapWithNeighbour(siblings, id, direction));
 }
 
 /**
  * Drag and drop: put the lesson where `targetId` is, shifting the lessons in between. Both must
  * be in the same section; false otherwise.
  */
-export async function reorderLesson(id: number, targetId: number): Promise<boolean> {
-  const lesson = await prisma.lesson.findUnique({ where: { id }, select: { sectionId: true } });
-  if (!lesson) return false;
-  const siblings = await prisma.lesson.findMany({
-    where: { sectionId: lesson.sectionId },
-    orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
-    select: { id: true },
-  });
-  const reordered = moveToPositionOf(siblings, id, targetId);
-  if (!reordered) return false;
-  await writeLessonOrder(reordered);
-  return true;
-}
-
-/** Rewrite sortOrder as 1..n in the given order, in one transaction. */
-async function writeLessonOrder(ordered: { id: number }[]): Promise<void> {
-  await prisma.$transaction(
-    ordered.map((row, index) =>
-      prisma.lesson.update({ where: { id: row.id }, data: { sortOrder: index + 1 } }),
-    ),
-  );
+export function reorderLesson(id: number, targetId: number): Promise<boolean> {
+  return reorderLessonsOf(id, (siblings) => moveToPositionOf(siblings, id, targetId));
 }
 
 /**
@@ -101,9 +82,7 @@ export async function getLessonForAdmin(id: number) {
         select: {
           id: true,
           title: true,
-          subject: {
-            select: { id: true, name: true, direction: true, accentColor: true, icon: true },
-          },
+          subject: { select: EDITOR_SUBJECT_SELECT },
         },
       },
     },

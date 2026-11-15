@@ -25,7 +25,7 @@ describe("Toaster", () => {
 
   it("shows the translated text with values filled in and the kind as a class", () => {
     const { container } = render(<Toaster toast={toast} />);
-    expect(screen.getByText(t("toast.enrolled").replace("{subject}", "Demo subject"))).toBeTruthy();
+    expect(screen.getByText(t("toast.enrolled", { subject: "Demo subject" }))).toBeTruthy();
     expect(container.querySelector(".toast--success")).not.toBeNull();
     expect(container.querySelector("svg.lucide-circle-check")).not.toBeNull();
   });

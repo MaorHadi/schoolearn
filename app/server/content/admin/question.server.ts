@@ -1,5 +1,6 @@
 import { LessonQuestionsSchema, type LessonQuestions } from "~/schemas/questions";
 import { prisma } from "~/server/database.server";
+import { EDITOR_SUBJECT_SELECT } from "./lesson.server";
 
 /**
  * Admin reader and draft writer for a lesson's questions. The live Question rows are written
@@ -22,9 +23,7 @@ export async function getQuestionsForAdmin(lessonId: number) {
       section: {
         select: {
           title: true,
-          subject: {
-            select: { id: true, name: true, direction: true, accentColor: true, icon: true },
-          },
+          subject: { select: EDITOR_SUBJECT_SELECT },
         },
       },
       questions: {

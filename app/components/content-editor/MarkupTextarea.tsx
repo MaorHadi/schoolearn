@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Field } from "~/components/forms/Field";
 import type { TextDirection } from "~/shared/direction";
 
 /**
@@ -23,8 +24,7 @@ export function MarkupTextarea({
 }) {
   const [text, setText] = useState(initialText);
   return (
-    <label className="field">
-      <span className="field__label">{label}</span>
+    <Field label={label} hint={hint}>
       <textarea
         className="field__input field__input--multiline"
         dir={direction}
@@ -35,7 +35,6 @@ export function MarkupTextarea({
           onText(event.target.value);
         }}
       />
-      <span className="field__hint">{hint}</span>
-    </label>
+    </Field>
   );
 }

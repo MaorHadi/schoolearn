@@ -1,10 +1,9 @@
 import type { SuggestionStatus } from "~/schemas/feedback";
 import { prisma } from "~/server/database.server";
 import { getSystemSettings } from "~/server/settings/settings.server";
+import { DAY_MS } from "~/shared/time";
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-export type CreateSuggestionResult = { ok: true; id: number } | { ok: false; reason: "THROTTLED" };
+type CreateSuggestionResult = { ok: true; id: number } | { ok: false; reason: "THROTTLED" };
 
 /**
  * Writer of `Suggestion` rows (see also updateSuggestionStatus). Refuses once the user has already
@@ -37,10 +36,10 @@ export async function updateSuggestionStatus(
   return result.count === 1;
 }
 
-export interface SuggestionListItem {
+interface SuggestionListItem {
   id: number;
   body: string;
-  status: "NEW" | "REVIEWED" | "DONE";
+  status: SuggestionStatus;
   createdAt: Date;
   /** null when the author's account was deleted. */
   username: string | null;

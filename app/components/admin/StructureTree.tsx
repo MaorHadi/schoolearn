@@ -1,13 +1,18 @@
-import { GripVertical, PencilLine, Plus, Trash2 } from "lucide-react";
-import type { ComponentProps, KeyboardEvent, MouseEvent, ReactNode } from "react";
+import { PencilLine, Plus, Trash2 } from "lucide-react";
+import type { ComponentProps, ReactNode } from "react";
 import { Form, Link, useFetcher } from "react-router";
 import { RowStatusPill } from "~/components/admin/StatusPill";
+import { DragHandle } from "~/components/content-editor/DragHandle";
 import { useDragOrder } from "~/components/content-editor/useDragOrder";
+import { Field } from "~/components/forms/Field";
+import { IconButton } from "~/components/IconButton";
 import { t, type TranslationKey } from "~/i18n";
 import { TITLE_MAX_LENGTH } from "~/schemas/admin-content";
+import type { TextDirection } from "~/shared/direction";
+import { fieldErrorHelpers } from "~/shared/field-errors";
 import { moveToPositionOf, swapWithNeighbour, type MoveDirection } from "~/shared/ordering";
 
-export type TreeField = "title" | "passingScore";
+type TreeField = "title" | "passingScore";
 
 /** One message key per inline-form field, for `fieldErrorsFrom()` in the subject page action. */
 export const TREE_FIELD_MESSAGES: Record<TreeField, TranslationKey> = {
@@ -38,35 +43,9 @@ function errorsFor(
   return errors.fieldErrors;
 }
 
-/** A compact input with its own hidden label and inline error, for tree rows. */
-function TreeInput({
-  label,
-  error,
-  className,
-  children,
-}: {
-  label: string;
-  error?: TranslationKey;
-  className: string;
-  children: ReactNode;
-}) {
-  return (
-    <label className={className}>
-      <span className="visually-hidden">{label}</span>
-      {children}
-      {error ? (
-        <span className="field__error" role="alert">
-          {t(error)}
-        </span>
-      ) : null}
-    </label>
-  );
-}
-
-export interface TreeLesson {
+interface TreeLesson {
   id: number;
   title: string;
-  sortOrder: number;
   passingScore: number | null;
   publishedAt: Date | string | null;
   hasDraft: boolean;
@@ -75,46 +54,32 @@ export interface TreeLesson {
 export interface TreeSection {
   id: number;
   title: string;
-  sortOrder: number;
   publishedAt: Date | string | null;
   lessons: TreeLesson[];
 }
 
-/** Native confirm keeps delete one click away but never accidental. */
-function confirmOrCancel(message: string) {
-  return (event: MouseEvent<HTMLButtonElement>) => {
-    if (!window.confirm(message)) event.preventDefault();
-  };
-}
-
-function IconButton({
+/** Submits the row's form with a delete intent. Native confirm keeps it from being accidental. */
+function DeleteButton({
   intent,
   label,
-  icon,
-  disabled,
-  danger,
   confirm,
 }: {
   intent: string;
   label: string;
-  icon: ReactNode;
-  disabled?: boolean;
-  danger?: boolean;
-  confirm?: string;
+  confirm: string;
 }) {
   return (
-    <button
+    <IconButton
       type="submit"
       name="intent"
       value={intent}
-      className={`icon-btn${danger ? " icon-btn--danger" : ""}`}
-      aria-label={label}
-      title={label}
-      disabled={disabled}
-      onClick={confirm ? confirmOrCancel(confirm) : undefined}
-    >
-      {icon}
-    </button>
+      label={label}
+      icon={<Trash2 size={16} aria-hidden="true" />}
+      danger
+      onClick={(event) => {
+        if (!window.confirm(confirm)) event.preventDefault();
+      }}
+    />
   );
 }
 
@@ -166,40 +131,6 @@ function useRowOrder<Row extends { id: number }>(rows: Row[], kind: RowKind) {
   return { rows: withPendingMove(rows, kind, fetcher.formData), drag, move };
 }
 
-type RowDragProps = ReturnType<ReturnType<typeof useDragOrder<number>>["targetProps"]>;
-
-/** Grip that drags its row; the arrow keys move the row one step for keyboard users. */
-function DragHandle({
-  label,
-  onMove,
-  ...dragProps
-}: {
-  label: string;
-  onMove: (direction: MoveDirection) => void;
-} & ComponentProps<"button">) {
-  const handleKeys = (event: KeyboardEvent<HTMLButtonElement>) => {
-    if (event.key === "ArrowUp") {
-      event.preventDefault();
-      onMove("up");
-    } else if (event.key === "ArrowDown") {
-      event.preventDefault();
-      onMove("down");
-    }
-  };
-  return (
-    <button
-      type="button"
-      className="icon-btn drag-handle"
-      aria-label={label}
-      title={label}
-      onKeyDown={handleKeys}
-      {...dragProps}
-    >
-      <GripVertical size={16} aria-hidden="true" />
-    </button>
-  );
-}
-
 function LessonRow({
   lesson,
   direction,
@@ -208,19 +139,21 @@ function LessonRow({
   handle,
 }: {
   lesson: TreeLesson;
-  direction: "rtl" | "ltr";
+  direction: TextDirection;
   errors: RowErrors;
-  rowProps: RowDragProps;
+  rowProps: ComponentProps<"li">;
   handle: ReactNode;
 }) {
+  const { errorFor, invalid } = fieldErrorHelpers(errors);
   return (
     <li className="tree-lesson" {...rowProps}>
       <Form method="post" className="tree-lesson__form" noValidate>
         <input type="hidden" name="lessonId" value={lesson.id} />
         {handle}
-        <TreeInput
+        <Field
           label={t("admin.lessons.titleLabel")}
-          error={errors.title}
+          error={errorFor("title")}
+          hideLabel
           className="tree-field tree-field--grow"
         >
           <input
@@ -229,12 +162,13 @@ function LessonRow({
             dir={direction}
             defaultValue={lesson.title}
             maxLength={TITLE_MAX_LENGTH}
-            aria-invalid={errors.title ? true : undefined}
+            aria-invalid={invalid("title")}
           />
-        </TreeInput>
-        <TreeInput
+        </Field>
+        <Field
           label={t("admin.lessons.passingScore")}
-          error={errors.passingScore}
+          error={errorFor("passingScore")}
+          hideLabel
           className="tree-field tree-field--score"
         >
           <input
@@ -246,9 +180,9 @@ function LessonRow({
             placeholder="%"
             title={t("admin.lessons.passingScore")}
             defaultValue={lesson.passingScore ?? ""}
-            aria-invalid={errors.passingScore ? true : undefined}
+            aria-invalid={invalid("passingScore")}
           />
-        </TreeInput>
+        </Field>
         <RowStatusPill publishedAt={lesson.publishedAt} hasDraft={lesson.hasDraft} />
         <span className="tree-actions">
           <button
@@ -263,11 +197,9 @@ function LessonRow({
             <PencilLine size={16} aria-hidden="true" />
             {t("admin.lessons.edit")}
           </Link>
-          <IconButton
+          <DeleteButton
             intent="delete-lesson"
             label={t("admin.lessons.delete")}
-            icon={<Trash2 size={16} aria-hidden="true" />}
-            danger
             confirm={t("admin.lessons.deleteConfirm")}
           />
         </span>
@@ -284,23 +216,24 @@ function SectionCard({
   handle,
 }: {
   section: TreeSection;
-  direction: "rtl" | "ltr";
+  direction: TextDirection;
   errors: TreeActionResult | undefined;
-  rowProps: RowDragProps;
+  rowProps: ComponentProps<"li">;
   handle: ReactNode;
 }) {
   const row = { sectionId: section.id };
-  const renameErrors = errorsFor(errors, "update-section", row);
-  const addErrors = errorsFor(errors, "create-lesson", row);
+  const rename = fieldErrorHelpers(errorsFor(errors, "update-section", row));
+  const add = fieldErrorHelpers(errorsFor(errors, "create-lesson", row));
   const lessonOrder = useRowOrder(section.lessons, "lesson");
   return (
     <li className="card tree-section" {...rowProps}>
       <Form method="post" className="tree-section__head" noValidate>
         <input type="hidden" name="sectionId" value={section.id} />
         {handle}
-        <TreeInput
+        <Field
           label={t("admin.lessons.titleLabel")}
-          error={renameErrors.title}
+          error={rename.errorFor("title")}
+          hideLabel
           className="tree-field tree-field--grow"
         >
           <input
@@ -309,9 +242,9 @@ function SectionCard({
             dir={direction}
             defaultValue={section.title}
             maxLength={TITLE_MAX_LENGTH}
-            aria-invalid={renameErrors.title ? true : undefined}
+            aria-invalid={rename.invalid("title")}
           />
-        </TreeInput>
+        </Field>
         <RowStatusPill publishedAt={section.publishedAt} />
         <span className="tree-actions">
           <button
@@ -322,11 +255,9 @@ function SectionCard({
           >
             {t("admin.sections.rename")}
           </button>
-          <IconButton
+          <DeleteButton
             intent="delete-section"
             label={t("admin.sections.delete")}
-            icon={<Trash2 size={16} aria-hidden="true" />}
-            danger
             confirm={t("admin.sections.deleteConfirm")}
           />
         </span>
@@ -358,9 +289,10 @@ function SectionCard({
       <Form method="post" className="tree-add" noValidate>
         <input type="hidden" name="intent" value="create-lesson" />
         <input type="hidden" name="sectionId" value={section.id} />
-        <TreeInput
+        <Field
           label={t("admin.lessons.newTitle")}
-          error={addErrors.title}
+          error={add.errorFor("title")}
+          hideLabel
           className="tree-field tree-field--grow"
         >
           <input
@@ -369,9 +301,9 @@ function SectionCard({
             dir={direction}
             placeholder={t("admin.lessons.newTitle")}
             maxLength={TITLE_MAX_LENGTH}
-            aria-invalid={addErrors.title ? true : undefined}
+            aria-invalid={add.invalid("title")}
           />
-        </TreeInput>
+        </Field>
         <button type="submit" className="btn btn--ghost btn--small">
           <Plus size={16} aria-hidden="true" />
           {t("admin.lessons.add")}
@@ -391,11 +323,11 @@ export function StructureTree({
   errors,
 }: {
   sections: TreeSection[];
-  direction: "rtl" | "ltr";
+  direction: TextDirection;
   /** Validation result of the last inline submit, shown only on the form it came from. */
   errors?: TreeActionResult;
 }) {
-  const addErrors = errorsFor(errors, "create-section");
+  const add = fieldErrorHelpers(errorsFor(errors, "create-section"));
   const sectionOrder = useRowOrder(sections, "section");
   return (
     <section className="tree" aria-labelledby="tree-title">
@@ -429,9 +361,10 @@ export function StructureTree({
 
       <Form method="post" className="tree-add tree-add--section" noValidate>
         <input type="hidden" name="intent" value="create-section" />
-        <TreeInput
+        <Field
           label={t("admin.sections.newTitle")}
-          error={addErrors.title}
+          error={add.errorFor("title")}
+          hideLabel
           className="tree-field tree-field--grow"
         >
           <input
@@ -440,9 +373,9 @@ export function StructureTree({
             dir={direction}
             placeholder={t("admin.sections.newTitle")}
             maxLength={TITLE_MAX_LENGTH}
-            aria-invalid={addErrors.title ? true : undefined}
+            aria-invalid={add.invalid("title")}
           />
-        </TreeInput>
+        </Field>
         <button type="submit" className="btn btn--primary btn--small">
           <Plus size={16} aria-hidden="true" />
           {t("admin.sections.add")}

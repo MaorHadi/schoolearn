@@ -1,6 +1,7 @@
 // Client-safe. The shape of a lesson's question list as the admin editor edits it and as it is
 // stored in Lesson.draftQuestions. Publishing turns it into Question / QuestionOption rows.
 import { z } from "zod";
+import { jsonField } from "~/schemas/json-field";
 
 export const QUESTION_TYPES = ["MULTIPLE_CHOICE", "MULTIPLE_ANSWER"] as const;
 export type QuestionType = (typeof QUESTION_TYPES)[number];
@@ -14,7 +15,7 @@ export const MAX_QUESTIONS = 50;
 /** Editor-side key (React key, drag and drop); never stored on the Question rows. */
 const draftId = z.string().min(1).max(64);
 
-export const QuestionOptionDraftSchema = z.object({
+const QuestionOptionDraftSchema = z.object({
   id: draftId,
   text: z.string().trim().min(1).max(OPTION_MAX_LENGTH),
   isCorrect: z.boolean(),
@@ -47,17 +48,7 @@ export type LessonQuestions = z.infer<typeof LessonQuestionsSchema>;
 
 /** The question editor posts its state as one JSON string. */
 export const QuestionsFormSchema = z.object({
-  questions: z
-    .string()
-    .transform((raw, context) => {
-      try {
-        return JSON.parse(raw) as unknown;
-      } catch {
-        context.addIssue({ code: "custom", message: "questions must be JSON" });
-        return z.NEVER;
-      }
-    })
-    .pipe(LessonQuestionsSchema),
+  questions: jsonField(LessonQuestionsSchema, "questions must be JSON"),
 });
 
 /** A learner's submitted option ids for one question. */

@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { RouterContextProvider } from "react-router";
-import { userContext } from "~/server/auth/context.server";
+import type { RouterContextProvider } from "react-router";
 import { applyIpBlock, findActiveIpBlock } from "~/server/auth/ip-block.server";
 import { createSession } from "~/server/auth/session.server";
 import { prisma } from "~/server/database.server";
@@ -10,21 +9,7 @@ import { getSystemSettings } from "~/server/settings/settings.server";
 import { loader as usersLoader } from "~/routes/system-admin/users";
 import { action as userAction } from "~/routes/system-admin/users.$userId";
 import { resetDb } from "../helpers/db";
-
-async function contextFor(role: "USER" | "ADMIN" | "SYSTEM_ADMIN", username = role.toLowerCase()) {
-  const user = await prisma.user.create({ data: { username, passwordHash: "x", role } });
-  const context = new RouterContextProvider();
-  context.set(userContext, user);
-  return { context, user };
-}
-
-function formRequest(url: string, fields: Record<string, string>) {
-  return new Request(url, {
-    method: "POST",
-    body: new URLSearchParams(fields),
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-  });
-}
+import { contextFor, formRequest } from "../helpers/routes";
 
 function userArgs(context: RouterContextProvider, userId: number, fields: Record<string, string>) {
   return {

@@ -23,8 +23,6 @@ export const he = {
   "auth.error.username": "שם משתמש: 3–32 תווים באנגלית, ספרות, נקודה, מקף או קו תחתון.",
   "auth.error.email": "כתובת האימייל אינה תקינה.",
   "auth.error.password": "הסיסמה חייבת להכיל לפחות 8 תווים.",
-  "auth.registerRules":
-    "שם משתמש: 3–32 תווים באנגלית, ספרות, נקודה, מקף או קו תחתון. סיסמה: 8 תווים לפחות.",
   "error.title": "שגיאה",
   "error.forbidden": "אין לך הרשאה לצפות בדף זה.",
   "error.ipBlocked": "הגישה מכתובת זו נחסמה זמנית עקב ניסיונות התחברות כושלים רבים.",
@@ -93,7 +91,6 @@ export const he = {
   "suggestions.placeholder": "למשל: הייתי רוצה לראות…",
   "suggestions.submit": "שליחה",
   "suggestions.sending": "שולחים…",
-  "suggestions.sent": "תודה! ההצעה התקבלה.",
   "suggestions.throttled": "שלחתם כבר כמה הצעות היום. אפשר לשלוח עוד מחר.",
   "suggestions.error.body": "ההצעה צריכה להכיל בין 10 ל־2000 תווים.",
   "admin.title": "ניהול תוכן",
@@ -267,7 +264,6 @@ export const he = {
   "systemAdmin.settings.title": "הגדרות מערכת",
   "systemAdmin.settings.lead":
     "ערך שנשמר כאן גובר על הערך שבקובץ ‎.env‏, שנשאר ברירת המחדל עד השמירה הראשונה.",
-  "systemAdmin.settings.back": "חזרה לניהול המערכת",
   "systemAdmin.settings.contactEmail": "אימייל ליצירת קשר עם מורים (ריק = הכרטיס מוסתר)",
   "systemAdmin.settings.suggestionsMaxPerDay": "הצעות לשיפור למשתמש ביממה",
   "systemAdmin.settings.registrationOpen": "ההרשמה פתוחה למשתמשים חדשים",

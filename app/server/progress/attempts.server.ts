@@ -9,7 +9,7 @@ export function effectivePassingScore(
   return lesson.passingScore ?? subject.defaultPassingScore ?? env.DEFAULT_LESSON_PASSING_SCORE;
 }
 
-export interface AttemptResult {
+interface AttemptResult {
   passed: boolean;
   bestScore: number;
   completedAt: Date | null;

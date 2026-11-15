@@ -1,12 +1,17 @@
 import { security } from "~/server/security.server";
 import { prisma } from "~/server/database.server";
-import { countRecentFailures, lockoutStateFor, recordAuthAttempt } from "./auth-log.server";
+import {
+  countRecentFailures,
+  isCredentialFailure,
+  lockoutStateFor,
+  recordAuthAttempt,
+} from "./auth-log.server";
 import { UNKNOWN_IP } from "./client-ip.server";
 import { applyIpBlock, findActiveIpBlock } from "./ip-block.server";
 import { DUMMY_HASH, verifyPassword } from "./password.server";
 import type { LoginFailureReason, LoginInput } from "~/schemas/auth";
 
-export type AuthResult = { ok: true; userId: number } | { ok: false; reason: LoginFailureReason };
+type AuthResult = { ok: true; userId: number } | { ok: false; reason: LoginFailureReason };
 
 /** Pure credential check. No logging, no lockout. Use `login()` from routes. */
 export async function authenticate(input: LoginInput): Promise<AuthResult> {
@@ -36,12 +41,15 @@ async function isUsernameLocked(username: string): Promise<boolean> {
  *  1. active IpBlock → fail
  *  2. username failures in lockout window ≥ N → fail
  *  3. credentials
- *  4. every attempt logged; on failure, IP failures in window ≥ M → upsert IpBlock (never for "unknown")
+ *  4. every attempt logged; on a wrong guess, IP failures in window ≥ M → upsert IpBlock
+ *     (never for "unknown", and never for an attempt refused in step 1 or 2)
  */
 export async function login(input: LoginInput, ip: string): Promise<AuthResult> {
   const fail = async (reason: LoginFailureReason): Promise<AuthResult> => {
     await recordAuthAttempt({ ip, username: input.username, ok: false, reason });
-    if (ip !== UNKNOWN_IP) {
+    // Only a wrong guess can start or escalate an IP block. An attempt refused because a lock
+    // or block was already in place must not, or retrying while blocked would extend the block.
+    if (ip !== UNKNOWN_IP && isCredentialFailure(reason)) {
       const ipFailures = await countRecentFailures({ ip, sinceMs: security.failureWindowMs });
       if (ipFailures >= security.ipMaxFailures) {
         await applyIpBlock(ip, `${ipFailures} failed logins in window`);

@@ -55,7 +55,7 @@ describe("QuizRunner", () => {
     expect(within(single).getAllByRole("radio")).toHaveLength(2);
     expect(within(multiple).getAllByRole("checkbox")).toHaveLength(2);
     expect(multiple.parentElement).toHaveTextContent(t("lesson.quiz.multipleHint"));
-    expect(screen.getByText(t("lesson.quiz.lead").replace("{passing}", "60"))).toBeTruthy();
+    expect(screen.getByText(t("lesson.quiz.lead", { passing: 60 }))).toBeTruthy();
   });
 
   it("posts the shown question ids and the chosen options with the answer intent", async () => {
@@ -96,7 +96,7 @@ describe("QuizRunner", () => {
     });
 
     expect(screen.getByRole("status")).toHaveTextContent(
-      t("lesson.quiz.failed").replace("{score}", "50").replace("{passing}", "60"),
+      t("lesson.quiz.failed", { score: 50, passing: 60 }),
     );
     expect(screen.getByRole("radio", { name: "B" })).toBeChecked();
     expect(screen.getByRole("radio", { name: "B" })).toBeDisabled();

@@ -44,7 +44,7 @@ function renderBlock(
   );
 }
 
-export interface LessonContentProps {
+interface LessonContentProps {
   blocks: Blocks;
   /** The subject's content direction. */
   direction: TextDirection;

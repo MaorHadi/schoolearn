@@ -1,3 +1,4 @@
+import { Field } from "~/components/forms/Field";
 import { t } from "~/i18n";
 import { quoteFromMarkup, quoteToMarkup } from "~/shared/inline-markup";
 import type { FieldsProps } from "../blocks";
@@ -15,17 +16,15 @@ export function QuoteFields({ block, direction, onChange }: FieldsProps<"quote">
         onText={(text) => onChange({ ...block, ...quoteFromMarkup(text) })}
       />
       <div className="admin-form__row">
-        <label className="field">
-          <span className="field__label">{t("admin.editor.quote.reference")}</span>
+        <Field label={t("admin.editor.quote.reference")}>
           <input
             className="field__input field__input--compact"
             dir={direction}
             value={block.reference ?? ""}
             onChange={(event) => onChange({ ...block, reference: event.target.value || undefined })}
           />
-        </label>
-        <label className="field">
-          <span className="field__label">{t("admin.editor.quote.sourceLabel")}</span>
+        </Field>
+        <Field label={t("admin.editor.quote.sourceLabel")}>
           <input
             className="field__input field__input--compact"
             dir={direction}
@@ -34,7 +33,7 @@ export function QuoteFields({ block, direction, onChange }: FieldsProps<"quote">
               onChange({ ...block, sourceLabel: event.target.value || undefined })
             }
           />
-        </label>
+        </Field>
       </div>
     </div>
   );

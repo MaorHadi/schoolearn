@@ -1,6 +1,7 @@
 import { Form, Link, data, redirect, useNavigation } from "react-router";
 import type { Route } from "./+types/login";
-import { AuthPage, Field } from "~/components/AuthPage";
+import { AuthPage } from "~/components/AuthPage";
+import { Field } from "~/components/forms/Field";
 import { t } from "~/i18n";
 import { LoginSchema } from "~/schemas/auth";
 import { getClientIp } from "~/server/auth/client-ip.server";

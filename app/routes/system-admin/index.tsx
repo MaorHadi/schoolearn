@@ -1,6 +1,7 @@
 import { MessageSquarePlus, SlidersHorizontal, Users } from "lucide-react";
 import { Link } from "react-router";
 import type { Route } from "./+types/index";
+import { PageHeader } from "~/components/PageHeader";
 import { t } from "~/i18n";
 import { requireRole } from "~/server/auth/context.server";
 
@@ -13,10 +14,7 @@ export function loader({ context }: Route.LoaderArgs) {
 export default function SystemAdminIndex() {
   return (
     <main className="container page">
-      <header className="page__head">
-        <h1 className="page__title">{t("systemAdmin.title")}</h1>
-        <p className="page__lead">{t("systemAdmin.lead")}</p>
-      </header>
+      <PageHeader title={t("systemAdmin.title")} lead={t("systemAdmin.lead")} />
       <nav className="link-list" aria-label={t("systemAdmin.sections")}>
         <Link to="/system-admin/users" className="btn btn--ghost">
           <Users size={18} aria-hidden="true" />

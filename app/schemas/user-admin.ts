@@ -20,4 +20,3 @@ export const UserPageIntentSchema = z.discriminatedUnion("intent", [
   z.object({ intent: z.literal("clear-lockout") }),
   z.object({ intent: z.literal("clear-ip-block"), ipAddress: z.string().trim().min(1).max(64) }),
 ]);
-export type UserPageIntent = z.infer<typeof UserPageIntentSchema>;

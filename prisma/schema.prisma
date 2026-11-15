@@ -286,7 +286,7 @@ model LessonProgress {
 
 /// Free-text improvement suggestions from signed-in users. Only written by
 /// createSuggestion() in app/server/feedback/suggestions.server.ts.
-/// userId is nullable so feedback survives account deletion. TODO(suggestions-triage): status UI.
+/// userId is nullable so feedback survives account deletion.
 model Suggestion {
   id        Int              @id @default(autoincrement())
   userId    Int?

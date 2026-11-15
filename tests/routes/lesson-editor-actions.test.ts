@@ -1,28 +1,13 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { RouterContextProvider } from "react-router";
-import { userContext } from "~/server/auth/context.server";
 import { prisma } from "~/server/database.server";
 import { env } from "~/server/env.server";
 import { action as lessonAction, MULTIPART_OVERHEAD_BYTES } from "~/routes/admin/lessons.$lessonId";
 import { resetDb } from "../helpers/db";
 import { makeSubjectWithLessons } from "../helpers/content";
-
-async function adminContext() {
-  const user = await prisma.user.create({
-    data: { username: "admin", passwordHash: "x", role: "ADMIN" },
-  });
-  const context = new RouterContextProvider();
-  context.set(userContext, user);
-  return context;
-}
+import { contextFor, formRequest } from "../helpers/routes";
 
 function draftRequest(url: string, blocks: unknown) {
-  const body = new URLSearchParams({ intent: "save-draft", blocks: JSON.stringify(blocks) });
-  return new Request(url, {
-    method: "POST",
-    body,
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-  });
+  return formRequest(url, { intent: "save-draft", blocks: JSON.stringify(blocks) });
 }
 
 describe("lesson editor action", () => {
@@ -36,7 +21,7 @@ describe("lesson editor action", () => {
       lessonId,
       url: `http://x/admin/lessons/${lessonId}`,
       params: { lessonId: String(lessonId) },
-      context: await adminContext(),
+      context: (await contextFor("ADMIN")).context,
     };
   }
 

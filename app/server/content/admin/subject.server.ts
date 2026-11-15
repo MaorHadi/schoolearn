@@ -1,22 +1,23 @@
 import { isMissingRow, isUniqueViolation, prisma } from "~/server/database.server";
 import type { SubjectTheme } from "~/shared/subject-theme";
+import type { TextDirection } from "~/shared/direction";
 
 /** Admin writers and readers for the Subject table. Only this file creates, updates, or deletes one. */
 
-export interface SubjectInput extends SubjectTheme {
+interface SubjectInput extends SubjectTheme {
   slug: string;
   name: string;
   description: string | null;
   locale: string;
-  direction: "rtl" | "ltr";
+  direction: TextDirection;
   defaultPassingScore: number | null;
 }
 
 export type CreateResult =
   { ok: true; id: number } | { ok: false; reason: "SLUG_TAKEN" | "NOT_FOUND" };
-export type UpdateResult = { ok: true } | { ok: false; reason: "SLUG_TAKEN" | "NOT_FOUND" };
+type UpdateResult = { ok: true } | { ok: false; reason: "SLUG_TAKEN" | "NOT_FOUND" };
 
-export interface AdminSubjectListItem {
+interface AdminSubjectListItem {
   id: number;
   slug: string;
   name: string;

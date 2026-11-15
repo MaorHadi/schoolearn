@@ -1,13 +1,16 @@
 import { MessageSquarePlus } from "lucide-react";
 import { Form, data } from "react-router";
 import type { Route } from "./+types/suggestions";
+import { EmptyState } from "~/components/EmptyState";
+import { PageHeader } from "~/components/PageHeader";
 import { t } from "~/i18n";
-import { requireRole, sessionContext } from "~/server/auth/context.server";
-import { setFlash } from "~/server/flash.server";
+import { requireRole } from "~/server/auth/context.server";
+import { flashFromContext } from "~/server/flash.server";
+import { notFound } from "~/server/route-params.server";
 import { SUGGESTION_STATUSES, SuggestionStatusUpdateSchema } from "~/schemas/feedback";
 import { listSuggestions, updateSuggestionStatus } from "~/server/feedback/suggestions.server";
+import { formatDateTime } from "~/shared/format-date";
 
-// TODO(suggestions-triage): filter by status, paginate.
 export async function loader({ context }: Route.LoaderArgs) {
   requireRole(context, "SYSTEM_ADMIN");
   return { suggestions: await listSuggestions() };
@@ -19,33 +22,22 @@ export async function action({ request, context }: Route.ActionArgs) {
   const parsed = SuggestionStatusUpdateSchema.safeParse(form);
   if (!parsed.success) throw data(t("error.generic"), { status: 400 });
   const updated = await updateSuggestionStatus(parsed.data.id, parsed.data.status);
-  if (!updated) throw data(t("error.notFound"), { status: 404 });
-  const session = context.get(sessionContext);
-  if (session) await setFlash(session.id, "success", "toast.statusUpdated");
+  if (!updated) throw notFound();
+  await flashFromContext(context, "success", "toast.statusUpdated");
   return null;
 }
-
-// Fixed zone so server and client render the same text (no hydration mismatch).
-const dateFormat = new Intl.DateTimeFormat("he-IL", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "Asia/Jerusalem",
-});
 
 export default function SystemAdminSuggestions({ loaderData }: Route.ComponentProps) {
   const { suggestions } = loaderData;
   return (
     <main className="container page">
-      <header className="page__head">
-        <h1 className="page__title">{t("systemAdmin.suggestions.title")}</h1>
-        <p className="page__lead">{t("systemAdmin.suggestions.lead")}</p>
-      </header>
+      <PageHeader
+        title={t("systemAdmin.suggestions.title")}
+        lead={t("systemAdmin.suggestions.lead")}
+      />
 
       {suggestions.length === 0 ? (
-        <div className="empty empty--rich">
-          <MessageSquarePlus size={28} aria-hidden="true" />
-          <p>{t("systemAdmin.suggestions.empty")}</p>
-        </div>
+        <EmptyState icon={MessageSquarePlus}>{t("systemAdmin.suggestions.empty")}</EmptyState>
       ) : (
         <ul className="suggestion-list">
           {suggestions.map((suggestion) => {
@@ -57,7 +49,7 @@ export default function SystemAdminSuggestions({ loaderData }: Route.ComponentPr
                   <span className="suggestion__author">
                     {suggestion.username ?? t("systemAdmin.suggestions.deletedUser")}
                   </span>
-                  <time dateTime={createdAt.toISOString()}>{dateFormat.format(createdAt)}</time>
+                  <time dateTime={createdAt.toISOString()}>{formatDateTime(createdAt)}</time>
                   <Form method="post" className="suggestion__form">
                     <input type="hidden" name="id" value={suggestion.id} />
                     <label htmlFor={selectId} className="muted">

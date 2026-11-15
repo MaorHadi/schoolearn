@@ -1,12 +1,12 @@
 import { useState, type DragEvent } from "react";
 import { useAutoScrollWhileDragging } from "./useAutoScrollWhileDragging";
 
-export type DragState = "dragging" | "target" | null;
+type DragState = "dragging" | "target" | null;
 
 /**
  * Drag-and-drop ordering for one list: which row is being dragged, which one is under the
- * pointer, and `onReorder(sourceId, targetId)` on drop. Shared by the block editor and the
- * admin structure tree. `handleProps` go on the drag handle and `targetProps` on the row; rows
+ * pointer, and `onReorder(sourceId, targetId)` on drop. Shared by every reorderable list
+ * (blocks, questions, the structure tree). `handleProps` go on the drag handle and `targetProps` on the row; rows
  * ignore drags that belong to another list, so lists can be nested.
  */
 export function useDragOrder<Id extends string | number>(
@@ -62,13 +62,5 @@ export function useDragOrder<Id extends string | number>(
     },
   });
 
-  return {
-    dropOn,
-    dragStateOf,
-    handleProps,
-    targetProps,
-    startDrag: setDraggingId,
-    enterTarget: setDropTargetId,
-    endDrag: reset,
-  };
+  return { handleProps, targetProps };
 }

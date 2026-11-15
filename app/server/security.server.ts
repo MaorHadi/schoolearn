@@ -1,16 +1,14 @@
+import { DAY_MS, MINUTE_MS } from "~/shared/time";
 import { env } from "./env.server";
-
-const MINUTE_MS = 60_000;
-const DAY_MS = 24 * 60 * MINUTE_MS;
 
 /**
  * Escalating IpBlock durations by strike number (1st, 2nd, 3rd, 4th and later).
  * Kept in code rather than env by design: these are policy, not deployment tuning.
  */
-export const IP_BLOCK_ESCALATION_MINUTES = [15, 60, 360, 1440] as const;
+const IP_BLOCK_ESCALATION_MINUTES = [15, 60, 360, 1440] as const;
 
 /** How far back prior blocks count toward escalation, and how long expired rows are retained. */
-export const IP_BLOCK_ESCALATION_LOOKBACK_DAYS = 7;
+const IP_BLOCK_ESCALATION_LOOKBACK_DAYS = 7;
 
 /** All brute-force and session thresholds, resolved from env with defaults (see .env.example). */
 export const security = {

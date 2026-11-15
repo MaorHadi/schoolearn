@@ -11,13 +11,9 @@ Project conventions for Claude Code sessions.
 
 ## Docs
 
-- Foundation design: `docs/superpowers/specs/2026-10-01-study-platform-foundation-design.md`.
-  Read it before changing the schema or the progression rules.
-- Content editor design: `docs/superpowers/specs/2026-11-04-content-editor-design.md`.
-- User management design: `docs/superpowers/specs/2026-11-05-user-management-design.md`.
-- Quiz design: `docs/superpowers/specs/2026-11-15-quiz-design.md`.
-- System settings design: `docs/superpowers/specs/2026-11-15-system-settings-design.md`.
-- Build log and open work: `docs/superpowers/plans/2026-10-01-study-platform-foundation.md`.
+- Design: `docs/design.md` (data model, progression, content, quiz, draft/publish, auth,
+  settings, what is not built). Read it before changing the schema or the progression rules,
+  and keep it describing the app as it is: no dates, stages or change history.
 
 ## Layout
 
@@ -75,9 +71,13 @@ Project conventions for Claude Code sessions.
 - Block renderers live in `app/components/lesson-content/blocks/` and are registered in
   `LessonContent.tsx`; the registry is exhaustive. New block type: schema → renderer → register.
 - The block editor is `app/components/content-editor/`: `BlockEditor` (state, form, preview),
-  `BlockCard`, one file per block type under `fields/`, `blocks.tsx` for shared constants.
+  `BlockCard`, one file per block type under `fields/`, `blocks.tsx` for shared constants. The
+  same folder holds what every reorderable list shares: `useDragOrder`, `DragHandle`,
+  `DraftSaveFooter`. Reordering is always `moveToPositionOf()` / `swapWithNeighbour()` from
+  `app/shared/ordering.ts` (on the server through `content/admin/ordering.server.ts`).
 - Direction: the shell is Hebrew RTL; content direction comes from `Subject.direction` with
-  per-block `dir`. All UI strings go through `t()` in `app/i18n`.
+  per-block `dir`. All UI strings go through `t()` in `app/i18n`; fill `{name}` placeholders
+  with its second argument (`t(key, { name })`), never with `.replace()`.
 - Storage goes through `StorageProvider` (`app/server/storage/`); uploads through
   `storeUploadedImage()` (magic-byte sniffing, the `uploadMaxBytes` system setting).
 - Lessons without questions are completed by the "complete" intent on the lesson route (score 100);
@@ -94,6 +94,8 @@ Project conventions for Claude Code sessions.
 - Roles are global: `USER` < `ADMIN` (`/admin`) < `SYSTEM_ADMIN` (`/system-admin`). Use
   `requireUser()` / `requireRole()` from `app/server/auth/context.server.ts` in every loader and
   action; each admin prefix also has a layout that enforces the role.
+- Route helpers: `parseIdParam()` and `notFound()` in `app/server/route-params.server.ts`;
+  toasts from an action with `flashFromContext()`; a refused form answers with `FormError`.
 
 ## UI
 
@@ -106,15 +108,22 @@ type (Heebo), flat saturated subject accents, strong ink, generous space.
   shadcn's theme variables are aliases of the tokens (the `@theme inline` block in `app.css`).
 - Tokens live only in `app/styles/tokens.css`; never raw hex in component CSS or Tailwind classes.
 - Forms stay React Router `<Form>` + server-side zod; shadcn primitives are used inside them, not
-  react-hook-form. Shared form pieces live in `app/components/forms/` (`DateRangeFields` posts
-  `from`/`to`; parse with `DateRangeQuerySchema`, resolve with `resolveDateRange()`).
+  react-hook-form. Shared form pieces live in `app/components/forms/`: `Field` (label, hint,
+  error; use it instead of a hand-written `<label className="field">`), `ConfirmSubmit`,
+  `DateRangeFields` (posts `from`/`to`; parse with `DateRangeQuerySchema`, resolve with
+  `resolveDateRange()`). Per-field errors: `fieldErrorsFrom()` in the action and
+  `fieldErrorHelpers()` in the component (`app/shared/field-errors.ts`).
+- The element resets at the top of `app.css` are in `@layer base` so Tailwind utilities can
+  override them; keep them there. Unlayered rules always beat utilities.
 - Tailwind: logical utilities only (`ps-`, `pe-`, `ms-`, `me-`, `start-`, `end-`), never `pl-`/`ml-`/`left-`.
 - Theme: `<html data-theme="light|dark">` from the `theme` cookie; no attribute follows the system.
 - Per-subject accent: set `--accent` inline from `resolveSubjectTheme(subject)`; icons come from
   the allowlist in `app/shared/subject-theme.ts` via `SubjectIcon`.
 - Logical properties only (`inline-size`, `margin-inline-start`); mirrored icons get `.rtl-flip`.
-- Shared pieces: `AppHeader`, `AuthPage` + `Field`, `SubjectCard`, `lesson-path/LessonPath`,
-  `quiz/QuizRunner`.
+- Shared pieces: `AppHeader`, `AuthPage`, `PageHeader` (back link, title, lead), `EmptyState`,
+  `IconButton`, `ProgressBar`, `SubjectCard`, `lesson-path/LessonPath`, `quiz/QuizRunner`,
+  `admin/LessonEditorHeader`. Dates are shown with `formatDate()` / `formatDateTime()` from
+  `app/shared/format-date.ts`.
 - Self-hosted fonts (`--font-ui`, `--font-quote`); visible `:focus-visible` ring; motion respects
   `prefers-reduced-motion`. The empty `.rail__ad` slots on `/subjects` stay empty.
 

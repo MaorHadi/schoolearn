@@ -9,7 +9,7 @@
     --ink       primary text
     --ink-2     secondary text
     --line      hairlines, borders
-    --accent    the current subject's color (set per page via data attribute / inline var)
+    --accent    the current subject's color (set per page through an inline variable)
     --accent-ink text on top of --accent
     --ok / --warn / --danger semantic
     --focus     focus ring
@@ -90,8 +90,7 @@
 }
 
 /* Dark palette: applied when the user chose dark, or when following the OS and it is dark. */
-:root[data-theme="dark"],
-:root:not([data-theme="light"]):not([data-theme="dark"]).theme-system-dark {
+:root[data-theme="dark"] {
   color-scheme: dark;
   --bg: #0f1a33;
   --surface: #172342;

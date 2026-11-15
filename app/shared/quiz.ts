@@ -1,18 +1,19 @@
 // Shared (client-safe). Grading rule for a lesson's quiz; the only place a score is computed.
+import type { QuestionType } from "~/schemas/questions";
 
-export interface AnswerKeyQuestion {
+interface AnswerKeyQuestion {
   id: number;
   correctOptionIds: number[];
 }
 
-export interface QuestionResult {
+interface QuestionResult {
   questionId: number;
   correct: boolean;
   selectedOptionIds: number[];
   correctOptionIds: number[];
 }
 
-export interface QuizGrade {
+interface QuizGrade {
   /** Whole percent of questions answered correctly. */
   score: number;
   results: QuestionResult[];
@@ -21,7 +22,7 @@ export interface QuizGrade {
 /** A question as the learner sees it: no hint of which options are correct. */
 export interface QuizQuestion {
   id: number;
-  type: "MULTIPLE_CHOICE" | "MULTIPLE_ANSWER";
+  type: QuestionType;
   prompt: string;
   options: { id: number; text: string }[];
 }

@@ -1,6 +1,11 @@
 // Shared (client-safe). Maps zod issues to one user-facing message key per field.
 import type { ZodError } from "zod";
-import type { TranslationKey } from "~/i18n";
+import { t, type TranslationKey } from "~/i18n";
+
+/** What an action answers with when the whole form (not one field) was refused. */
+export interface FormError {
+  formError: TranslationKey;
+}
 
 /**
  * For each failed top-level field that has an entry in `messages`, pick that field's message.
@@ -18,4 +23,17 @@ export function fieldErrorsFrom<Field extends string>(
     }
   }
   return errors;
+}
+
+/** What a form needs per field from the action's errors: the message and `aria-invalid`. */
+export function fieldErrorHelpers<Field extends string>(
+  fieldErrors: Partial<Record<Field, TranslationKey>> = {},
+) {
+  return {
+    errorFor: (field: Field): string | undefined => {
+      const key = fieldErrors[field];
+      return key ? t(key) : undefined;
+    },
+    invalid: (field: Field): true | undefined => (fieldErrors[field] ? true : undefined),
+  };
 }

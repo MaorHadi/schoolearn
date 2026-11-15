@@ -13,7 +13,7 @@ import { z } from "zod";
 
 export const Direction = z.enum(["rtl", "ltr"]);
 
-export const InlineMark = z.enum(["bold", "italic", "highlight"]);
+const InlineMark = z.enum(["bold", "italic", "highlight"]);
 export const InlineSpan = z.object({ text: z.string(), marks: z.array(InlineMark).default([]) });
 export const RichText = z.array(InlineSpan);
 
@@ -23,13 +23,13 @@ const Base = z.object({
   dir: Direction.optional(),
 });
 
-export const HeadingBlock = Base.extend({
+const HeadingBlock = Base.extend({
   type: z.literal("heading"),
   level: z.union([z.literal(1), z.literal(2), z.literal(3)]),
   text: z.string(),
 });
 
-export const ParagraphBlock = Base.extend({
+const ParagraphBlock = Base.extend({
   type: z.literal("paragraph"),
   content: RichText,
 });
@@ -39,7 +39,7 @@ const HighlightRange = z.object({
   end: z.number().int().min(0),
 });
 
-export const QuoteBlock = Base.extend({
+const QuoteBlock = Base.extend({
   type: z.literal("quote"),
   text: z.string(),
   /** e.g. a chapter/verse reference, "Magna Carta s.39", "Frost, 1916" */
@@ -69,14 +69,14 @@ export const QuoteBlock = Base.extend({
   });
 });
 
-export const ImageBlock = Base.extend({
+const ImageBlock = Base.extend({
   type: z.literal("image"),
   assetId: z.number().int().positive(),
   alt: z.string().min(1),
   caption: z.string().optional(),
 });
 
-export const ListBlock = Base.extend({
+const ListBlock = Base.extend({
   type: z.literal("list"),
   ordered: z.boolean(),
   items: z.array(RichText),
@@ -106,3 +106,6 @@ export type RichText = z.infer<typeof RichText>;
 export type ContentBlock = z.infer<typeof ContentBlock>;
 export type ContentBlockType = ContentBlock["type"];
 export type LessonContent = z.infer<typeof LessonContent>;
+
+/** The block shape of one type, e.g. `BlockOf<"quote">`. */
+export type BlockOf<Type extends ContentBlockType> = Extract<ContentBlock, { type: Type }>;

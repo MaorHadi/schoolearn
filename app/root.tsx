@@ -5,9 +5,9 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useRouteLoaderData,
 } from "react-router";
 import type { Route } from "./+types/root";
-import { useRouteLoaderData } from "react-router";
 import { Toaster } from "~/components/Toaster";
 import { t } from "~/i18n";
 import { sessionContext } from "~/server/auth/context.server";

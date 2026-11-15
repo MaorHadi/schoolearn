@@ -6,8 +6,7 @@ import { countRecentRegistrations, recordRegisterAttempt } from "./auth-log.serv
 import { UNKNOWN_IP } from "./client-ip.server";
 import { hashPassword } from "./password.server";
 
-export type RegisterResult =
-  { ok: true; userId: number } | { ok: false; reason: RegisterFailureReason };
+type RegisterResult = { ok: true; userId: number } | { ok: false; reason: RegisterFailureReason };
 
 /**
  * Registration entry point for routes: refuses while the `registrationOpen` system setting is

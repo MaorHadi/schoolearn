@@ -2,6 +2,8 @@ import { Library, Plus, Upload } from "lucide-react";
 import { Link } from "react-router";
 import type { Route } from "./+types/index";
 import { SubjectStatusPill } from "~/components/admin/StatusPill";
+import { EmptyState } from "~/components/EmptyState";
+import { PageHeader } from "~/components/PageHeader";
 import { t } from "~/i18n";
 import { requireRole } from "~/server/auth/context.server";
 import { listSubjectsForAdmin } from "~/server/content/admin.server";
@@ -17,10 +19,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 
   return (
     <main className="container page">
-      <header className="page__head">
-        <h1 className="page__title">{t("admin.title")}</h1>
-        <p className="page__lead">{t("admin.lead")}</p>
-      </header>
+      <PageHeader title={t("admin.title")} lead={t("admin.lead")} />
 
       <nav className="link-list" aria-label={t("admin.title")}>
         <Link to="/admin/subjects/new" className="btn btn--primary">
@@ -35,10 +34,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
       </nav>
 
       {subjects.length === 0 ? (
-        <div className="empty empty--rich">
-          <Library size={28} aria-hidden="true" />
-          <p>{t("admin.subjects.empty")}</p>
-        </div>
+        <EmptyState icon={Library}>{t("admin.subjects.empty")}</EmptyState>
       ) : (
         <table className="admin-table">
           <thead>

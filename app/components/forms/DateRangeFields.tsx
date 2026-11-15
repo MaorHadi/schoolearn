@@ -70,7 +70,7 @@ function DatePicker({
   );
 }
 
-export interface DateRangeFieldsProps {
+interface DateRangeFieldsProps {
   /** Field names submitted with the form; default `from` and `to`. */
   names?: { from: string; to: string };
   /** Initial values as `yyyy-mm-dd`. */

@@ -2,6 +2,7 @@ import { Check, RotateCcw, X } from "lucide-react";
 import { Form, Link, useNavigation } from "react-router";
 import { t } from "~/i18n";
 import type { QuizOutcome, QuizQuestion } from "~/shared/quiz";
+import type { TextDirection } from "~/shared/direction";
 
 const ANSWER_INTENT = "answer";
 
@@ -18,7 +19,7 @@ export function QuizRunner({
 }: {
   questions: QuizQuestion[];
   passingScore: number;
-  direction: "rtl" | "ltr";
+  direction: TextDirection;
   outcome?: QuizOutcome;
 }) {
   const navigation = useNavigation();
@@ -31,9 +32,7 @@ export function QuizRunner({
       <h2 id="quiz-title" className="next-station__title">
         {t("lesson.quiz.title")}
       </h2>
-      <p className="next-station__text">
-        {t("lesson.quiz.lead").replace("{passing}", String(passingScore))}
-      </p>
+      <p className="next-station__text">{t("lesson.quiz.lead", { passing: passingScore })}</p>
 
       {/* Keyed on the mode so a graded quiz and a fresh one never share input state. */}
       <Form
@@ -121,10 +120,8 @@ export function QuizRunner({
         {result ? (
           <p className={result.passed ? "banner" : "alert"} role="status">
             {result.passed
-              ? t("lesson.quiz.passed").replace("{score}", String(result.score))
-              : t("lesson.quiz.failed")
-                  .replace("{score}", String(result.score))
-                  .replace("{passing}", String(result.passingScore))}
+              ? t("lesson.quiz.passed", { score: result.score })
+              : t("lesson.quiz.failed", { score: result.score, passing: result.passingScore })}
           </p>
         ) : null}
 

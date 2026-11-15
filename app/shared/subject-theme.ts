@@ -18,7 +18,7 @@ export const SUBJECT_ICONS = [
 ] as const;
 export type SubjectIcon = (typeof SUBJECT_ICONS)[number];
 
-export const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
+const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 
 export const SubjectThemeSchema = z.object({
   accentColor: z.string().regex(HEX_COLOR_RE, "accentColor must be a 6-digit hex color"),

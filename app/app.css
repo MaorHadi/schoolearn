@@ -13,7 +13,17 @@
 /* Only app/ is scanned for class names, so words in docs and tests never become utilities. */
 @source "../app";
 
-@custom-variant dark (&:is([data-theme="dark"] *, .theme-system-dark *));
+/* `dark:` follows the same rule as the tokens: the chosen theme, else the OS preference. */
+@custom-variant dark {
+  &:is([data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:is(:root:not([data-theme="light"]):not([data-theme="dark"]) *) {
+      @slot;
+    }
+  }
+}
 
 /*
   Scoped preflight: shadcn components assume Tailwind's reset. Without it, browser defaults
@@ -73,72 +83,81 @@
   --radius-xl: var(--radius-lg);
 }
 
-/* --- Reset-ish --- */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+/*
+  --- Reset-ish ---
+  In the base layer so Tailwind utilities (a later layer) can override these element defaults.
+  Unlayered rules always beat layered ones, so outside a layer `p { margin }` would silently win
+  over `m-0`, and `button { color: inherit }` over a shadcn button's text colour.
+*/
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 
-html {
-  font-family: var(--font-ui);
-  font-size: 100%;
-  -webkit-text-size-adjust: 100%;
-  background: var(--bg);
-  color: var(--ink);
-}
+  html {
+    font-family: var(--font-ui);
+    font-size: 100%;
+    -webkit-text-size-adjust: 100%;
+    background: var(--bg);
+    color: var(--ink);
+  }
 
-body {
-  margin: 0;
-  min-height: 100dvh;
-  font-size: var(--text-md);
-  line-height: var(--leading-body);
-  font-weight: var(--weight-regular);
-  background: var(--bg);
-  color: var(--ink);
-  text-rendering: optimizeLegibility;
-}
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    font-size: var(--text-md);
+    line-height: var(--leading-body);
+    font-weight: var(--weight-regular);
+    background: var(--bg);
+    color: var(--ink);
+    text-rendering: optimizeLegibility;
+  }
 
-h1,
-h2,
-h3 {
-  line-height: var(--leading-tight);
-  font-weight: var(--weight-black);
-  letter-spacing: -0.01em;
-  margin-block: 0 var(--space-3);
-}
+  h1,
+  h2,
+  h3 {
+    line-height: var(--leading-tight);
+    font-weight: var(--weight-black);
+    letter-spacing: -0.01em;
+    margin-block: 0 var(--space-3);
+  }
 
-h1 {
-  font-size: var(--text-2xl);
-}
-h2 {
-  font-size: var(--text-xl);
-}
-h3 {
-  font-size: var(--text-lg);
-}
+  h1 {
+    font-size: var(--text-2xl);
+  }
+  h2 {
+    font-size: var(--text-xl);
+  }
+  h3 {
+    font-size: var(--text-lg);
+  }
 
-p {
-  margin-block: 0 var(--space-4);
-}
+  p {
+    margin-block: 0 var(--space-4);
+  }
 
-a {
-  color: inherit;
-  text-decoration-color: var(--accent);
-  text-decoration-thickness: 0.125em;
-  text-underline-offset: 0.15em;
-}
+  a {
+    color: inherit;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 0.125em;
+    text-underline-offset: 0.15em;
+  }
 
-img,
-svg {
-  display: block;
-  max-width: 100%;
-}
+  img,
+  svg {
+    display: block;
+    max-width: 100%;
+  }
 
-button,
-input {
-  font: inherit;
-  color: inherit;
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+    color: inherit;
+  }
 }
 
 /* --- Focus: visible, consistent, never removed --- */
@@ -169,10 +188,6 @@ input {
 
 .container--narrow {
   width: min(100% - 2 * var(--gutter), var(--content-max));
-}
-
-.stack > * + * {
-  margin-block-start: var(--space-4);
 }
 
 /* --- App header --- */
@@ -490,10 +505,6 @@ input {
   color: var(--ink-2);
 }
 
-.locked {
-  opacity: 0.55;
-}
-
 /* --- Lesson content blocks --- */
 .lesson-content {
   font-size: var(--text-md);
@@ -799,7 +810,6 @@ mark {
 .field__input--multiline {
   min-block-size: 8rem;
   resize: vertical;
-  font: inherit;
 }
 
 /* --- Suggestions list (system admin) --- */
@@ -826,16 +836,6 @@ mark {
   font-weight: var(--weight-bold);
 }
 
-.suggestion__status {
-  padding-inline: var(--space-2);
-  border-radius: var(--radius-pill);
-  background: var(--surface-2);
-}
-
-.suggestion__status--DONE {
-  background: color-mix(in oklab, var(--ok) 18%, var(--bg));
-}
-
 .suggestion__body {
   margin: 0;
   white-space: pre-wrap;
@@ -856,12 +856,6 @@ mark {
   border: 2px solid var(--line);
   background: var(--bg);
   color: var(--ink);
-  font: inherit;
-}
-
-.suggestion__select:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
 }
 
 .btn--small {
@@ -929,21 +923,25 @@ mark {
   color: var(--ink-2);
 }
 
-.subject-card__progress {
+/* Progress bar (ProgressBar): the fill follows --progress, set by an ancestor. */
+.progress {
   block-size: 0.5rem;
   border-radius: var(--radius-pill);
   background: var(--line);
   overflow: hidden;
-  margin-block-start: var(--space-2);
 }
 
-.subject-card__progress-fill {
+.progress__fill {
   display: block;
   block-size: 100%;
   inline-size: var(--progress, 0%);
   background: var(--accent);
   border-radius: inherit;
   transition: inline-size var(--dur-base) var(--ease-out);
+}
+
+.subject-card .progress {
+  margin-block-start: var(--space-2);
 }
 
 .subject-card__meta {
@@ -1009,21 +1007,6 @@ mark {
   grid-column: 1 / -1;
   display: grid;
   gap: var(--space-2);
-}
-
-.subject-head__bar {
-  block-size: 0.5rem;
-  border-radius: var(--radius-pill);
-  background: var(--line);
-  overflow: hidden;
-}
-
-.subject-head__bar span {
-  display: block;
-  block-size: 100%;
-  inline-size: var(--progress, 0%);
-  background: var(--accent);
-  border-radius: inherit;
 }
 
 .subject-head__meta {
@@ -1302,7 +1285,7 @@ a.station__inner:hover {
   }
 }
 
-/* --- Next station: where questions will live --- */
+/* --- Next station: the quiz and the way onward at the end of a lesson --- */
 .next-station {
   display: grid;
   gap: var(--space-2);
@@ -1404,11 +1387,6 @@ a.station__inner:hover {
   background: var(--surface-2);
 }
 
-.toast__close:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
-}
-
 @keyframes toast-in {
   from {
     opacity: 0;
@@ -1426,7 +1404,7 @@ a.station__inner:hover {
   }
 }
 
-/* --- Richer empty state for stub pages --- */
+/* --- Empty state with an icon --- */
 .empty--rich {
   display: grid;
   justify-items: center;
@@ -1438,7 +1416,7 @@ a.station__inner:hover {
   margin: 0;
 }
 
-/* --- Admin content editor --- */
+/* --- Shared admin pieces: hidden labels, badges, buttons, pills, tables, the editors --- */
 .visually-hidden {
   position: absolute;
   inline-size: 1px;
@@ -1677,10 +1655,6 @@ a.station__inner:hover {
   }
 }
 
-.admin-form {
-  margin-block-start: 0;
-}
-
 .danger-zone {
   margin-block-start: var(--space-6);
   padding-block-start: var(--space-4);
@@ -1787,15 +1761,8 @@ a.station__inner:hover {
 }
 
 .editor__form {
-  margin-block-start: 0;
   display: grid;
   gap: var(--space-4);
-}
-
-.editor__preview {
-  padding: var(--space-5);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
 }
 
 .editor__preview-body {
@@ -1809,7 +1776,7 @@ a.station__inner:hover {
   gap: var(--space-2);
 }
 
-.block-list {
+.editor-list {
   display: grid;
   gap: var(--space-4);
   margin: 0;

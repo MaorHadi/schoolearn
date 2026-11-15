@@ -1,5 +1,6 @@
 import type { LessonContent } from "../../app/schemas/content-blocks";
 import type { LessonQuestions } from "../../app/schemas/questions";
+import type { TextDirection } from "../../app/shared/direction";
 
 export interface SeedLesson {
   title: string;
@@ -22,7 +23,7 @@ export interface SeedSubject {
   name: string;
   description: string;
   locale: string;
-  direction: "rtl" | "ltr";
+  direction: TextDirection;
   /** Validated by SubjectThemeSchema at seed time. */
   accentColor: string;
   icon: string;

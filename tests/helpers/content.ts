@@ -76,3 +76,13 @@ export async function makeSubjectWithLessons(
   }
   return { subject, lessonIds };
 }
+
+/** The first bytes of a PNG file, enough for the upload sniffer to accept a buffer as an image. */
+export const PNG_HEADER = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+
+/** The id of a fixture lesson by section and position (both 0-based); throws when it is missing. */
+export function lessonAt(lessonIds: number[][], section = 0, lesson = 0): number {
+  const id = lessonIds[section]?.[lesson];
+  if (id === undefined) throw new Error("fixture missing lesson");
+  return id;
+}

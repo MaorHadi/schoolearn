@@ -1,6 +1,7 @@
 import { Form, Link, data, redirect, useNavigation } from "react-router";
 import type { Route } from "./+types/register";
-import { AuthPage, Field } from "~/components/AuthPage";
+import { AuthPage } from "~/components/AuthPage";
+import { Field } from "~/components/forms/Field";
 import { t } from "~/i18n";
 import { RegisterSchema } from "~/schemas/auth";
 import { getClientIp } from "~/server/auth/client-ip.server";
@@ -8,6 +9,7 @@ import { register } from "~/server/auth/register.server";
 import { replaceSession } from "~/server/auth/session.server";
 import { getSystemSettings } from "~/server/settings/settings.server";
 import { registerFieldErrors, type FieldErrors } from "~/shared/auth-errors";
+import { fieldErrorHelpers } from "~/shared/field-errors";
 
 interface ActionResult {
   fieldErrors?: FieldErrors;
@@ -43,7 +45,7 @@ export async function action({ request }: Route.ActionArgs) {
 export default function Register({ loaderData, actionData }: Route.ComponentProps) {
   const navigation = useNavigation();
   const busy = navigation.state !== "idle";
-  const fieldErrors = actionData?.fieldErrors ?? {};
+  const { errorFor, invalid } = fieldErrorHelpers(actionData?.fieldErrors);
   if (!loaderData.registrationOpen) {
     return (
       <AuthPage title={t("auth.register")} lead={t("auth.registerLead")}>
@@ -59,39 +61,33 @@ export default function Register({ loaderData, actionData }: Route.ComponentProp
   return (
     <AuthPage title={t("auth.register")} lead={t("auth.registerLead")}>
       <Form method="post" className="form" noValidate>
-        <Field
-          label={t("auth.username")}
-          error={fieldErrors.username ? t(fieldErrors.username) : undefined}
-        >
+        <Field label={t("auth.username")} error={errorFor("username")}>
           <input
             className="field__input"
             name="username"
             autoComplete="username"
             required
             autoFocus
-            aria-invalid={fieldErrors.username ? true : undefined}
+            aria-invalid={invalid("username")}
           />
         </Field>
-        <Field label={t("auth.email")} error={fieldErrors.email ? t(fieldErrors.email) : undefined}>
+        <Field label={t("auth.email")} error={errorFor("email")}>
           <input
             className="field__input"
             name="email"
             type="email"
             autoComplete="email"
-            aria-invalid={fieldErrors.email ? true : undefined}
+            aria-invalid={invalid("email")}
           />
         </Field>
-        <Field
-          label={t("auth.password")}
-          error={fieldErrors.password ? t(fieldErrors.password) : undefined}
-        >
+        <Field label={t("auth.password")} error={errorFor("password")}>
           <input
             className="field__input"
             name="password"
             type="password"
             autoComplete="new-password"
             required
-            aria-invalid={fieldErrors.password ? true : undefined}
+            aria-invalid={invalid("password")}
           />
         </Field>
         {actionData?.error ? (

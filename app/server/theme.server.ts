@@ -2,7 +2,7 @@ import { createCookie } from "react-router";
 import { parseTheme, type Theme } from "~/shared/theme";
 
 /** Unsigned preference cookie; a tampered value just falls back to "system". */
-export const themeCookie = createCookie("theme", {
+const themeCookie = createCookie("theme", {
   path: "/",
   sameSite: "lax",
   httpOnly: true,

@@ -9,13 +9,7 @@ import { getLessonForUser } from "~/server/content/lessons.server";
 import { recordAttempt } from "~/server/progress/attempts.server";
 import { prisma } from "~/server/database.server";
 import { resetDb } from "../helpers/db";
-import { makeSubjectWithLessons } from "../helpers/content";
-
-function lessonAt(lessonIds: number[][], section: number, lesson: number): number {
-  const id = lessonIds[section]?.[lesson];
-  if (id === undefined) throw new Error("fixture missing lesson");
-  return id;
-}
+import { lessonAt, makeSubjectWithLessons } from "../helpers/content";
 
 describe("subjects", () => {
   let userId: number;

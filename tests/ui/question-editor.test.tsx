@@ -9,8 +9,7 @@ import { sampleQuestions } from "../helpers/content";
 
 afterEach(cleanup);
 
-const numbered = (key: Parameters<typeof t>[0], position: number) =>
-  t(key).replace("{number}", String(position));
+const numbered = (key: Parameters<typeof t>[0], position: number) => t(key, { number: position });
 
 function renderEditor(questions: QuestionDraft[] = sampleQuestions()) {
   const Stub = createRoutesStub([

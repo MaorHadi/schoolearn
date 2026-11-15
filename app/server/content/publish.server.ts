@@ -13,9 +13,9 @@ import {
 } from "~/server/lesson-questions.server";
 import { sweepOrphanAssets } from "~/server/storage/sweep.server";
 
-export type PublishFailureReason = "INVALID_CONTENT" | "UNKNOWN_ASSET" | "INVALID_QUESTIONS";
+type PublishFailureReason = "INVALID_CONTENT" | "UNKNOWN_ASSET" | "INVALID_QUESTIONS";
 
-export interface PublishResult {
+interface PublishResult {
   /** Subjects that were published. Unknown ids are neither published nor failed. */
   published: number;
   /** Subjects left exactly as they were because a draft could not become live content. */

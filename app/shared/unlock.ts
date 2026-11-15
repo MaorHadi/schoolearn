@@ -7,7 +7,7 @@
 //    i.e. every lesson in it is completed. An empty section counts as completed.
 //  - Completion is permanent: it is derived from LessonProgress.completedAt, which is never cleared.
 
-export interface LessonNode {
+interface LessonNode {
   id: number;
   title: string;
   sortOrder: number;
@@ -23,7 +23,7 @@ export interface SectionNode {
   lessons: LessonNode[];
 }
 
-export interface ProgressRow {
+interface ProgressRow {
   lessonId: number;
   bestScore: number;
   completedAt: Date | null;
@@ -97,10 +97,5 @@ export function findNextLesson(tree: SectionState[], lessonId: number): LessonSt
 }
 
 export function isLessonUnlocked(tree: SectionState[], lessonId: number): boolean {
-  for (const section of tree) {
-    for (const lessonState of section.lessons) {
-      if (lessonState.id === lessonId) return lessonState.unlocked;
-    }
-  }
-  return false;
+  return findLesson(tree, lessonId)?.unlocked ?? false;
 }

@@ -13,7 +13,7 @@ import {
 } from "~/components/ui/alert-dialog";
 import { t } from "~/i18n";
 
-export interface ConfirmSubmitProps {
+interface ConfirmSubmitProps {
   /** The button that opens the dialog; rendered as-is (it must accept a ref and onClick). */
   trigger: ReactNode;
   title: string;

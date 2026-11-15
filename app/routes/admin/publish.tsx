@@ -1,7 +1,9 @@
 import { CheckCircle2, Upload } from "lucide-react";
-import { Form, Link, data, redirect, useNavigation } from "react-router";
+import { Form, data, redirect, useNavigation } from "react-router";
 import type { Route } from "./+types/publish";
 import { SubjectStatusPill } from "~/components/admin/StatusPill";
+import { EmptyState } from "~/components/EmptyState";
+import { PageHeader } from "~/components/PageHeader";
 import { t } from "~/i18n";
 import { PublishFormSchema } from "~/schemas/admin-content";
 import { requireRole } from "~/server/auth/context.server";
@@ -47,19 +49,14 @@ export default function PublishSubjects({ loaderData }: Route.ComponentProps) {
 
   return (
     <main className="container page page--narrow">
-      <p className="page__back page__back--top">
-        <Link to="/admin">{t("admin.subjects.backToList")}</Link>
-      </p>
-      <header className="page__head">
-        <h1 className="page__title">{t("admin.publish.title")}</h1>
-        <p className="page__lead">{t("admin.publish.lead")}</p>
-      </header>
+      <PageHeader
+        back={{ to: "/admin", label: t("admin.subjects.backToList") }}
+        title={t("admin.publish.title")}
+        lead={t("admin.publish.lead")}
+      />
 
       {pending.length === 0 ? (
-        <div className="empty empty--rich">
-          <CheckCircle2 size={28} aria-hidden="true" />
-          <p>{t("admin.publish.empty")}</p>
-        </div>
+        <EmptyState icon={CheckCircle2}>{t("admin.publish.empty")}</EmptyState>
       ) : (
         <Form method="post" className="form">
           <ul className="publish-list">

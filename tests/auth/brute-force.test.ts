@@ -55,6 +55,22 @@ describe("login with brute-force protection", () => {
     expect(last?.failureReason).toBe("IP_BLOCKED");
   });
 
+  it("attempts made while the IP is blocked do not escalate or extend the block", async () => {
+    for (let attempt = 0; attempt < security.ipMaxFailures; attempt++) {
+      await login({ username: `ghost${attempt}`, password: "bad" }, "10.9.9.9");
+    }
+    const block = await prisma.ipBlock.findUniqueOrThrow({ where: { ipAddress: "10.9.9.9" } });
+    expect(block.strikeCount).toBe(1);
+
+    // Keep trying while blocked: logged as IP_BLOCKED, and the block stays exactly as it was.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await login({ username: "alice", password: "password1" }, "10.9.9.9");
+    }
+    const after = await prisma.ipBlock.findUniqueOrThrow({ where: { ipAddress: "10.9.9.9" } });
+    expect(after.strikeCount).toBe(1);
+    expect(after.expiresAt).toEqual(block.expiresAt);
+  });
+
   it("attempts made while locked do not extend the lockout", async () => {
     for (let attempt = 0; attempt < security.usernameMaxFailures; attempt++) {
       await login({ username: "alice", password: "bad" }, "10.0.0.1");

@@ -5,7 +5,7 @@ const AUTO_SCROLL_EDGE = 96;
 const AUTO_SCROLL_MAX_STEP = 24;
 
 /**
- * Native drag and drop blocks wheel scrolling, so while a block is dragged the page scrolls
+ * Native drag and drop blocks wheel scrolling, so while a row is dragged the page scrolls
  * itself when the pointer nears the top or bottom edge, faster the closer it gets.
  */
 export function useAutoScrollWhileDragging(active: boolean) {

@@ -1,7 +1,8 @@
 import { Save } from "lucide-react";
-import { Form, Link, data, useNavigation } from "react-router";
+import { Form, data, useNavigation } from "react-router";
 import type { Route } from "./+types/settings";
-import { Field } from "~/components/AuthPage";
+import { Field } from "~/components/forms/Field";
+import { PageHeader } from "~/components/PageHeader";
 import { t, type TranslationKey } from "~/i18n";
 import {
   MEBIBYTE,
@@ -13,7 +14,7 @@ import {
 import { requireRole } from "~/server/auth/context.server";
 import { flashFromContext } from "~/server/flash.server";
 import { getSystemSettings, updateSystemSettings } from "~/server/settings/settings.server";
-import { fieldErrorsFrom } from "~/shared/field-errors";
+import { fieldErrorHelpers, fieldErrorsFrom } from "~/shared/field-errors";
 
 type FieldErrors = Partial<Record<SystemSettingsFormField, TranslationKey>>;
 
@@ -61,22 +62,15 @@ export async function action({ request, context }: Route.ActionArgs) {
 export default function SystemSettingsPage({ loaderData, actionData }: Route.ComponentProps) {
   const navigation = useNavigation();
   const busy = navigation.state !== "idle";
-  const fieldErrors: FieldErrors = actionData?.fieldErrors ?? {};
-  const errorFor = (field: SystemSettingsFormField) => {
-    const key = fieldErrors[field];
-    return key ? t(key) : undefined;
-  };
-  const invalid = (field: SystemSettingsFormField) => (fieldErrors[field] ? true : undefined);
+  const { errorFor, invalid } = fieldErrorHelpers(actionData?.fieldErrors);
 
   return (
     <main className="container page page--narrow">
-      <p className="page__back page__back--top">
-        <Link to="/system-admin">{t("systemAdmin.settings.back")}</Link>
-      </p>
-      <header className="page__head">
-        <h1 className="page__title">{t("systemAdmin.settings.title")}</h1>
-        <p className="page__lead">{t("systemAdmin.settings.lead")}</p>
-      </header>
+      <PageHeader
+        back={{ to: "/system-admin", label: t("systemAdmin.backToIndex") }}
+        title={t("systemAdmin.settings.title")}
+        lead={t("systemAdmin.settings.lead")}
+      />
 
       <Form method="post" className="form admin-form" noValidate>
         <label className="field field--inline">

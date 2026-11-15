@@ -3,7 +3,7 @@ import type { ZodError } from "zod";
 import type { TranslationKey } from "~/i18n";
 import { fieldErrorsFrom } from "./field-errors";
 
-export type RegisterField = "username" | "email" | "password";
+type RegisterField = "username" | "email" | "password";
 export type FieldErrors = Partial<Record<RegisterField, TranslationKey>>;
 
 const FIELD_MESSAGE: Record<RegisterField, TranslationKey> = {

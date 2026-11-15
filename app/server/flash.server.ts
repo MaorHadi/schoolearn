@@ -14,8 +14,7 @@ import { prisma } from "~/server/database.server";
 
 const FLASH_KEY = "flash";
 
-function readData(session: SessionWithUser): Record<string, unknown> {
-  const raw: unknown = session.sessionData;
+function asRecord(raw: unknown): Record<string, unknown> {
   return raw && typeof raw === "object" && !Array.isArray(raw)
     ? (raw as Record<string, unknown>)
     : {};
@@ -32,19 +31,17 @@ export async function setFlash(
     select: { sessionData: true },
   });
   if (!session) return;
-  const existing: unknown = session.sessionData;
-  const base =
-    existing && typeof existing === "object" && !Array.isArray(existing)
-      ? (existing as Record<string, unknown>)
-      : {};
   const toast: Toast = { id: crypto.randomUUID(), kind, key, ...(values ? { values } : {}) };
-  const sessionData = { ...base, [FLASH_KEY]: toast } as unknown as Prisma.InputJsonObject;
+  const sessionData = {
+    ...asRecord(session.sessionData),
+    [FLASH_KEY]: toast,
+  } as unknown as Prisma.InputJsonObject;
   await prisma.session.update({ where: { id: sessionId }, data: { sessionData } });
 }
 
 /** Return the pending toast (if any) and clear it. Writes only when there was one. */
 export async function takeFlash(session: SessionWithUser): Promise<Toast | null> {
-  const base = readData(session);
+  const base = asRecord(session.sessionData);
   if (!(FLASH_KEY in base)) return null;
 
   const parsed = ToastSchema.safeParse(base[FLASH_KEY]);

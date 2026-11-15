@@ -1,13 +1,13 @@
 import { Form, Link, data, useNavigation } from "react-router";
 import type { Route } from "./+types/suggestions";
-import { Field } from "~/components/AuthPage";
-import { t } from "~/i18n";
+import { Field } from "~/components/forms/Field";
+import { PageHeader } from "~/components/PageHeader";
+import { t, type TranslationKey } from "~/i18n";
 import { SUGGESTION_MAX_LENGTH, SuggestionSchema } from "~/schemas/feedback";
-import { requireUser, sessionContext } from "~/server/auth/context.server";
+import { requireUser } from "~/server/auth/context.server";
 import { createSuggestion } from "~/server/feedback/suggestions.server";
-import { setFlash } from "~/server/flash.server";
-import { fieldErrorsFrom } from "~/shared/field-errors";
-import type { TranslationKey } from "~/i18n";
+import { flashFromContext } from "~/server/flash.server";
+import { fieldErrorHelpers, fieldErrorsFrom } from "~/shared/field-errors";
 
 interface ActionResult {
   fieldErrors?: Partial<Record<"body", TranslationKey>>;
@@ -35,26 +35,22 @@ export async function action({ request, context }: Route.ActionArgs) {
   if (!result.ok) {
     return data<ActionResult>({ error: t("suggestions.throttled") }, { status: 429 });
   }
-  const session = context.get(sessionContext);
-  if (session) await setFlash(session.id, "success", "toast.suggestionSent");
+  await flashFromContext(context, "success", "toast.suggestionSent");
   return data<ActionResult>({ sent: true });
 }
 
 export default function Suggestions({ actionData }: Route.ComponentProps) {
   const navigation = useNavigation();
   const busy = navigation.state !== "idle";
-  const bodyError = actionData?.fieldErrors?.body;
+  const { errorFor, invalid } = fieldErrorHelpers(actionData?.fieldErrors);
 
   return (
     <main className="container page page--narrow">
-      <header className="page__head">
-        <h1 className="page__title">{t("suggestions.title")}</h1>
-        <p className="page__lead">{t("suggestions.lead")}</p>
-      </header>
+      <PageHeader title={t("suggestions.title")} lead={t("suggestions.lead")} />
 
       {/* Remounting after a successful send clears the textarea. */}
       <Form method="post" className="form" noValidate key={actionData?.sent ? "sent" : "edit"}>
-        <Field label={t("suggestions.label")} error={bodyError ? t(bodyError) : undefined}>
+        <Field label={t("suggestions.label")} error={errorFor("body")}>
           <textarea
             className="field__input field__input--multiline"
             name="body"
@@ -62,7 +58,7 @@ export default function Suggestions({ actionData }: Route.ComponentProps) {
             maxLength={SUGGESTION_MAX_LENGTH}
             placeholder={t("suggestions.placeholder")}
             required
-            aria-invalid={bodyError ? true : undefined}
+            aria-invalid={invalid("body")}
           />
         </Field>
         {actionData?.error ? (

@@ -96,8 +96,7 @@ Code layout: `app/routes/` pages, `app/components/` UI, `app/schemas/` zod schem
 both sides, `app/shared/` pure helpers, `app/server/` server-only code with one folder per
 domain, `prisma/` schema, migrations and seed, `tests/` mirroring `app/`.
 
-The design documents are in `docs/superpowers/specs/`, and `docs/superpowers/plans/` holds the
-build log.
+The design, with the reasoning behind it, is in [docs/design.md](docs/design.md).
 
 ## Configuration
 

@@ -13,22 +13,51 @@ const CREDENTIAL_FAILURES: LoginFailureReason[] = [
   "USER_DISABLED",
 ];
 
-export async function recordAuthAttempt(attempt: {
-  ip: string;
-  username: string;
-  ok: boolean;
-  reason?: LoginFailureReason;
-}): Promise<void> {
+/** True for a wrong guess, false for an attempt refused because a lock or block was in place. */
+export function isCredentialFailure(reason: LoginFailureReason): boolean {
+  return CREDENTIAL_FAILURES.includes(reason);
+}
+
+/** Every attempt is logged, successful or not; `type` separates logins from registrations. */
+async function recordAttempt(
+  type: "login" | "register",
+  attempt: { ip: string; username: string; ok: boolean; reason?: string },
+): Promise<void> {
   await prisma.authLog.create({
     data: {
       ipAddress: attempt.ip,
       username: attempt.username,
       isSuccessful: attempt.ok,
       failureReason: attempt.ok ? null : (attempt.reason ?? null),
-      type: "login",
+      type,
     },
   });
 }
+
+export function recordAuthAttempt(attempt: {
+  ip: string;
+  username: string;
+  ok: boolean;
+  reason?: LoginFailureReason;
+}): Promise<void> {
+  return recordAttempt("login", attempt);
+}
+
+export function recordRegisterAttempt(attempt: {
+  ip: string;
+  username: string;
+  ok: boolean;
+  reason?: RegisterFailureReason;
+}): Promise<void> {
+  return recordAttempt("register", attempt);
+}
+
+/** The rows the lockout and IP-block counters look at. */
+const CREDENTIAL_FAILURE_FILTER = {
+  isSuccessful: false,
+  type: "login",
+  failureReason: { in: CREDENTIAL_FAILURES },
+} as const;
 
 /**
  * Count credential failures within the last `sinceMs`, filtered by IP and/or username.
@@ -44,9 +73,7 @@ export function countRecentFailures(filter: {
   const floor = filter.notBefore && filter.notBefore > windowStart ? filter.notBefore : windowStart;
   return prisma.authLog.count({
     where: {
-      isSuccessful: false,
-      type: "login",
-      failureReason: { in: CREDENTIAL_FAILURES },
+      ...CREDENTIAL_FAILURE_FILTER,
       createdAt: { gte: floor },
       ...(filter.ip ? { ipAddress: filter.ip } : {}),
       ...(filter.username ? { username: filter.username } : {}),
@@ -86,23 +113,6 @@ export async function lockoutStateFor(
     : { locked: false, failures, until: null };
 }
 
-export async function recordRegisterAttempt(attempt: {
-  ip: string;
-  username: string;
-  ok: boolean;
-  reason?: RegisterFailureReason;
-}): Promise<void> {
-  await prisma.authLog.create({
-    data: {
-      ipAddress: attempt.ip,
-      username: attempt.username,
-      isSuccessful: attempt.ok,
-      failureReason: attempt.ok ? null : (attempt.reason ?? null),
-      type: "register",
-    },
-  });
-}
-
 /** Registration attempts (successful or not) from one IP within the last `sinceMs`. */
 export function countRecentRegistrations(ip: string, sinceMs: number): Promise<number> {
   return prisma.authLog.count({
@@ -117,14 +127,9 @@ export function countRecentRegistrations(ip: string, sinceMs: number): Promise<n
 }
 
 /** Timestamp of the most recent credential failure for a username, or null. */
-export async function lastCredentialFailureAt(username: string): Promise<Date | null> {
+async function lastCredentialFailureAt(username: string): Promise<Date | null> {
   const row = await prisma.authLog.findFirst({
-    where: {
-      username,
-      isSuccessful: false,
-      type: "login",
-      failureReason: { in: CREDENTIAL_FAILURES },
-    },
+    where: { username, ...CREDENTIAL_FAILURE_FILTER },
     orderBy: { createdAt: "desc" },
     select: { createdAt: true },
   });
