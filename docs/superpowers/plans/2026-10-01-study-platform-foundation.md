@@ -49,7 +49,7 @@ lesson page; README and CLAUDE.md.
 
 ## Stage 8 — Subjects page shell (2026-11-04, done)
 
-Rails beside the subject grid: Forum link (`/forum` is a `StubPage`, `TODO(forum)`), reserved ad
+Rails beside the subject grid (a forum link stood here until the forum was dropped): reserved ad
 slots (keep empty), Suggestions form writing `Suggestion` through `createSuggestion()` with a
 per-user daily throttle, teacher contact `mailto:` to `CONTACT_EMAIL`. `/system-admin/suggestions`
 lists them.
@@ -106,12 +106,20 @@ Spec: `docs/superpowers/specs/2026-11-15-quiz-design.md`.
   `prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script` and
   applied with `npm run db:deploy`.
 
+## Stage 12 — Forum removed, system settings, subject passing score (2026-11-15, done)
+
+Spec: `docs/superpowers/specs/2026-11-15-system-settings-design.md`.
+
+- The forum stub (route, nav link, rail card, strings) and `StubPage` are removed.
+- Migration `system_settings`: table `SystemSetting`, column `Subject.defaultPassingScore`.
+- `app/server/settings/settings.server.ts` and `/system-admin/settings`: contact email,
+  suggestions per day, registration open/closed, upload size limit; `.env` values are defaults.
+- `effectivePassingScore(lesson, subject)`; the subject form edits the subject default.
+
 ## Open work
 
 - Quiz follow-ups: more question types, per-question explanations, attempt history for learners.
-- `TODO(forum)`: threads, replies, moderation. Needs its own spec.
 - `TODO(suggestions-triage)`: status changes, filters, pagination on the system-admin list.
-- `TODO(system-settings)`: `/system-admin` settings page, after the forum defines its keys.
 - User management follow-ups: forced password reset on next login, create/delete accounts,
   migrate the user pages fully to shadcn components.
 - `TODO(streaks)`: attempt timestamps and `User.timezone` are ready.

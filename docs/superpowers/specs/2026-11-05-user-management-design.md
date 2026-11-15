@@ -1,7 +1,7 @@
 # User management for SYSTEM_ADMIN — design
 
-Date: 2026-11-05. Replaces the `/system-admin/users` stub. System settings stay deferred until the
-forum defines what they hold.
+Date: 2026-11-05. Replaces the `/system-admin/users` stub. System settings came later:
+`2026-11-15-system-settings-design.md`.
 
 ## Goals
 

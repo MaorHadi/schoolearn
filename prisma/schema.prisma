@@ -70,6 +70,7 @@ model User {
   progress         LessonProgress[]
   assets           Asset[]
   suggestions      Suggestion[]
+  settings         SystemSetting[]
 
   @@index([createdAt])
 }
@@ -119,22 +120,24 @@ model IpBlock {
 // ---------------------------------------------------------------------------
 
 model Subject {
-  id          Int           @id @default(autoincrement())
-  slug        String        @unique
-  name        String
-  description String?       @db.Text
-  locale      String // BCP-47, e.g. "he", "en"
-  direction   TextDirection // content direction; UI shell stays RTL
+  id                  Int           @id @default(autoincrement())
+  slug                String        @unique
+  name                String
+  description         String?       @db.Text
+  locale              String // BCP-47, e.g. "he", "en"
+  direction           TextDirection // content direction; UI shell stays RTL
   /// Visible to learners. Set by publishing; new subjects start hidden in the editor.
-  isActive    Boolean       @default(false)
-  publishedAt DateTime? // last publish; null = never published
+  isActive            Boolean       @default(false)
+  publishedAt         DateTime? // last publish; null = never published
+  /// Passing score (percent) for lessons that set none; null -> env DEFAULT_LESSON_PASSING_SCORE.
+  defaultPassingScore Int?
   /// Per-subject theme, stored as data so no code knows about a specific subject.
-  accentColor String        @default("#2563EB") // hex, drives the subject's line/accent color
-  icon        String        @default("book-open") // lucide icon name (kebab-case)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  sections    Section[]
-  users       User[]
+  accentColor         String        @default("#2563EB") // hex, drives the subject's line/accent color
+  icon                String        @default("book-open") // lucide icon name (kebab-case)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  sections            Section[]
+  users               User[]
 }
 
 /// A difficulty bracket. Lowest sortOrder is easiest and defines unlock order.
@@ -161,7 +164,7 @@ model Lesson {
   sectionId      Int
   title          String
   sortOrder      Int
-  passingScore   Int? // percent 0-100; null -> env DEFAULT_LESSON_PASSING_SCORE
+  passingScore   Int? // percent 0-100; null -> Subject.defaultPassingScore, then the env default
   content        Json // ContentBlock[] validated by zod (app/schemas/content-blocks.ts); what learners read
   /// Unpublished edit of `content`, written by saveLessonDraft(); published copies it into `content`.
   draftContent   Json?
@@ -294,4 +297,18 @@ model Suggestion {
 
   @@index([userId, createdAt])
   @@index([status, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// System settings
+// ---------------------------------------------------------------------------
+
+/// One row per setting a SYSTEM_ADMIN saved; a missing row means the default applies (see
+/// app/server/settings/settings.server.ts). Values are validated by zod on every read.
+model SystemSetting {
+  key         String   @id @db.VarChar(64)
+  value       Json
+  updatedAt   DateTime @updatedAt
+  updatedBy   User?    @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+  updatedById Int?
 }

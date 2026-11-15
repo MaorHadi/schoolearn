@@ -67,7 +67,7 @@ The app refuses to start on an invalid or missing value.
 | `AUTH_REGISTER_MAX_PER_IP`                     | 5                          | Registrations allowed per IP within the window             |
 | `AUTH_REGISTER_WINDOW_MINUTES`                 | 60                         | Window for counting registrations                          |
 | `TRUSTED_PROXY_COUNT`                          | 0                          | Trusted `X-Forwarded-For` hops (see below)                 |
-| `DEFAULT_LESSON_PASSING_SCORE`                 | 60                         | Percent, when a lesson has no `passingScore`               |
+| `DEFAULT_LESSON_PASSING_SCORE`                 | 60                         | Percent, when lesson and subject set no passing score      |
 | `STORAGE_PROVIDER`                             | `local`                    | Asset storage backend                                      |
 | `STORAGE_LOCAL_DIR`                            | `./storage`                | Where the local provider writes files                      |
 | `SEED_ADMIN_USERNAME` / `_PASSWORD` / `_EMAIL` | `admin` / (set it) / empty | The seeded SYSTEM_ADMIN                                    |
@@ -177,6 +177,6 @@ by tests.
 
 ## Not yet built
 
-Streaks (attempt timestamps and `User.timezone` are in place), gamification, the forum, 2FA,
+Streaks (attempt timestamps and `User.timezone` are in place), gamification, 2FA,
 cloud storage,
 email verification, password reset. Each has a `TODO(<feature>)` marker where it plugs in.

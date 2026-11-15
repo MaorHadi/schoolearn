@@ -15,7 +15,6 @@ export default [
     route("subjects", "routes/app/subjects.tsx"),
     route("subjects/:slug", "routes/app/subjects.$slug.tsx"),
     route("subjects/:slug/lessons/:lessonId", "routes/app/subjects.$slug.lessons.$lessonId.tsx"),
-    route("forum", "routes/app/forum.tsx"),
     route("suggestions", "routes/app/suggestions.tsx"),
   ]),
 
@@ -38,6 +37,7 @@ export default [
       route("users", "routes/system-admin/users.tsx"),
       route("users/:userId", "routes/system-admin/users.$userId.tsx"),
       route("suggestions", "routes/system-admin/suggestions.tsx"),
+      route("settings", "routes/system-admin/settings.tsx"),
     ]),
   ]),
 ] satisfies RouteConfig;

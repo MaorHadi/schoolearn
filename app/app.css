@@ -692,8 +692,7 @@ mark {
   /* The shell spans the window (minus the gutter): the subject grid keeps its reading width in
      the middle and the rails take the remaining space out to the edges. The rails dissolve
      (display: contents) so their cards sit in the shell's own rows: the two top cards share a
-     row with the first subject row, the ad slots absorb the slack, the suggestions card sits at
-     the bottom. */
+     row with the first subject row and the ad slots absorb the slack below them. */
   .container.subjects-shell {
     width: calc(100% - 2 * var(--gutter));
     grid-template-areas:
@@ -724,10 +723,6 @@ mark {
 
   .rail--start > :nth-child(2) {
     grid-area: start-ad;
-  }
-
-  .rail--start > :nth-child(3) {
-    grid-area: start-bottom;
   }
 
   .rail--end > :nth-child(1) {

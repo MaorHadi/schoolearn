@@ -1,17 +1,22 @@
 import { MessageSquarePlus, SlidersHorizontal, Users } from "lucide-react";
 import { Link } from "react-router";
-import { StubPage } from "~/components/StubPage";
+import type { Route } from "./+types/index";
 import { t } from "~/i18n";
+import { requireRole } from "~/server/auth/context.server";
 
-// TODO(system-settings): SYSTEM_ADMIN system settings UI plugs in here.
+export function loader({ context }: Route.LoaderArgs) {
+  requireRole(context, "SYSTEM_ADMIN");
+  return null;
+}
+
+/** Hub of the system-admin area: one link per section. */
 export default function SystemAdminIndex() {
   return (
-    <StubPage
-      icon={SlidersHorizontal}
-      title={t("systemAdmin.title")}
-      lead={t("systemAdmin.lead")}
-      message={t("systemAdmin.todo")}
-    >
+    <main className="container page">
+      <header className="page__head">
+        <h1 className="page__title">{t("systemAdmin.title")}</h1>
+        <p className="page__lead">{t("systemAdmin.lead")}</p>
+      </header>
       <nav className="link-list" aria-label={t("systemAdmin.sections")}>
         <Link to="/system-admin/users" className="btn btn--ghost">
           <Users size={18} aria-hidden="true" />
@@ -21,7 +26,11 @@ export default function SystemAdminIndex() {
           <MessageSquarePlus size={18} aria-hidden="true" />
           {t("systemAdmin.suggestions.title")}
         </Link>
+        <Link to="/system-admin/settings" className="btn btn--ghost">
+          <SlidersHorizontal size={18} aria-hidden="true" />
+          {t("systemAdmin.settings.title")}
+        </Link>
       </nav>
-    </StubPage>
+    </main>
   );
 }

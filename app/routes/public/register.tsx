@@ -6,11 +6,16 @@ import { RegisterSchema } from "~/schemas/auth";
 import { getClientIp } from "~/server/auth/client-ip.server";
 import { register } from "~/server/auth/register.server";
 import { replaceSession } from "~/server/auth/session.server";
+import { getSystemSettings } from "~/server/settings/settings.server";
 import { registerFieldErrors, type FieldErrors } from "~/shared/auth-errors";
 
 interface ActionResult {
   fieldErrors?: FieldErrors;
   error?: string;
+}
+
+export async function loader() {
+  return { registrationOpen: (await getSystemSettings()).registrationOpen };
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -23,6 +28,9 @@ export async function action({ request }: Route.ActionArgs) {
 
   const clientIp = getClientIp(request);
   const result = await register(parsed.data, clientIp);
+  if (!result.ok && result.reason === "REGISTRATION_CLOSED") {
+    return data<ActionResult>({ error: t("auth.registrationClosed") }, { status: 403 });
+  }
   if (!result.ok) {
     // Duplicate or throttled: one message, so the form never confirms which names exist.
     return data<ActionResult>({ error: t("auth.registerFailed") }, { status: 400 });
@@ -32,10 +40,22 @@ export async function action({ request }: Route.ActionArgs) {
   return redirect("/subjects?welcome=1", { headers: { "Set-Cookie": cookie } });
 }
 
-export default function Register({ actionData }: Route.ComponentProps) {
+export default function Register({ loaderData, actionData }: Route.ComponentProps) {
   const navigation = useNavigation();
   const busy = navigation.state !== "idle";
   const fieldErrors = actionData?.fieldErrors ?? {};
+  if (!loaderData.registrationOpen) {
+    return (
+      <AuthPage title={t("auth.register")} lead={t("auth.registerLead")}>
+        <p className="alert" role="status">
+          {t("auth.registrationClosed")}
+        </p>
+        <p className="auth__switch">
+          {t("auth.haveAccount")} <Link to="/login">{t("auth.login")}</Link>
+        </p>
+      </AuthPage>
+    );
+  }
   return (
     <AuthPage title={t("auth.register")} lead={t("auth.registerLead")}>
       <Form method="post" className="form" noValidate>

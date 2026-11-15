@@ -30,6 +30,7 @@ const subjectInput = {
   description: null,
   locale: "en",
   direction: "ltr" as const,
+  defaultPassingScore: null,
   accentColor: "#059669",
   icon: "atom" as const,
 };

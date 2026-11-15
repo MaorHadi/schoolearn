@@ -23,9 +23,24 @@ describe("recordAttempt", () => {
     userId = registered.userId;
   });
 
-  it("uses lesson passingScore when set, else the env default", () => {
-    expect(effectivePassingScore({ passingScore: 80 })).toBe(80);
-    expect(effectivePassingScore({ passingScore: null })).toBe(env.DEFAULT_LESSON_PASSING_SCORE);
+  it("uses the lesson's passing score, else the subject default, else the env default", () => {
+    const withDefault = { defaultPassingScore: 70 };
+    const withoutDefault = { defaultPassingScore: null };
+    expect(effectivePassingScore({ passingScore: 80 }, withDefault)).toBe(80);
+    expect(effectivePassingScore({ passingScore: 0 }, withDefault)).toBe(0);
+    expect(effectivePassingScore({ passingScore: null }, withDefault)).toBe(70);
+    expect(effectivePassingScore({ passingScore: null }, withoutDefault)).toBe(
+      env.DEFAULT_LESSON_PASSING_SCORE,
+    );
+  });
+
+  it("applies the subject default when the lesson sets no passing score", async () => {
+    const { subject, lessonIds } = await makeSubjectWithLessons([1]);
+    const lessonId = firstLesson(lessonIds);
+    await prisma.subject.update({ where: { id: subject.id }, data: { defaultPassingScore: 90 } });
+
+    expect((await recordAttempt({ userId, lessonId, score: 85 })).passed).toBe(false);
+    expect((await recordAttempt({ userId, lessonId, score: 90 })).passed).toBe(true);
   });
 
   it("writes one attempt per try and keeps the best score and first completion", async () => {

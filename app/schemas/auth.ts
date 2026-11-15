@@ -17,7 +17,7 @@ export const LoginSchema = z.object({
 export type LoginInput = z.infer<typeof LoginSchema>;
 
 /** Internal reasons recorded in AuthLog for registration attempts. Never shown to the user. */
-export type RegisterFailureReason = "DUPLICATE" | "REGISTER_THROTTLED";
+export type RegisterFailureReason = "DUPLICATE" | "REGISTER_THROTTLED" | "REGISTRATION_CLOSED";
 
 /** Internal reasons recorded in AuthLog. Never shown to the user. */
 export type LoginFailureReason =

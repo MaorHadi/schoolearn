@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { createRoutesStub } from "react-router";
 import type { ReactNode } from "react";
-import { AdSlot, ForumLink, SuggestionsLink, TeacherCallout } from "~/components/SubjectsRails";
+import { AdSlot, SuggestionsLink, TeacherCallout } from "~/components/SubjectsRails";
 
 afterEach(cleanup);
 
@@ -27,14 +27,8 @@ describe("TeacherCallout", () => {
 });
 
 describe("rail links", () => {
-  it("point at the forum and suggestions pages", () => {
-    renderInRouter(
-      <>
-        <ForumLink />
-        <SuggestionsLink />
-      </>,
-    );
-    expect(screen.getByRole("link", { name: /פורום/ })).toHaveAttribute("href", "/forum");
+  it("point at the suggestions page", () => {
+    renderInRouter(<SuggestionsLink />);
     expect(screen.getByRole("link", { name: /הצעות לשיפור/ })).toHaveAttribute(
       "href",
       "/suggestions",

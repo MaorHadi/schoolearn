@@ -12,7 +12,7 @@ loop of the foundation spec (read → answer → unlock) and resolves `TODO(quiz
 - Two types: `MULTIPLE_CHOICE` (exactly one correct option) and `MULTIPLE_ANSWER` (one or more
   correct options, all or nothing).
 - Score = whole percent of fully correct questions. Passing is unchanged:
-  `score >= lesson.passingScore ?? DEFAULT_LESSON_PASSING_SCORE`.
+  the lesson's passing score, else its subject's default, else `DEFAULT_LESSON_PASSING_SCORE`.
 
 ## Data
 

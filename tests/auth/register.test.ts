@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { registerUser } from "~/server/auth/register.server";
+import { loader as registerLoader } from "~/routes/public/register";
+import { register, registerUser } from "~/server/auth/register.server";
 import { RegisterSchema } from "~/schemas/auth";
 import { prisma } from "~/server/database.server";
+import { getSystemSettings, updateSystemSettings } from "~/server/settings/settings.server";
 import { resetDb } from "../helpers/db";
 
 describe("RegisterSchema", () => {
@@ -35,6 +37,27 @@ describe("registerUser", () => {
     expect(user.role).toBe("USER");
     expect(user.passwordHash).not.toBe("password1");
     expect(user.email).toBeNull();
+  });
+
+  it("refuses everyone while registration is closed, without creating a user or a log row", async () => {
+    const admin = await prisma.user.create({
+      data: { username: "root", passwordHash: "x", role: "SYSTEM_ADMIN" },
+    });
+    const settings = await getSystemSettings();
+    await updateSystemSettings({ ...settings, registrationOpen: false }, admin.id);
+
+    expect(await register({ username: "alice", password: "password1" }, "203.0.113.9")).toEqual({
+      ok: false,
+      reason: "REGISTRATION_CLOSED",
+    });
+    expect(await prisma.user.count()).toBe(1);
+    expect(await prisma.authLog.count()).toBe(0);
+    expect((await registerLoader()).registrationOpen).toBe(false);
+
+    await updateSystemSettings({ ...settings, registrationOpen: true }, admin.id);
+    expect((await register({ username: "alice", password: "password1" }, "203.0.113.9")).ok).toBe(
+      true,
+    );
   });
 
   it("fails generically on duplicate username or email", async () => {

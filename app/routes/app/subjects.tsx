@@ -1,21 +1,21 @@
 import { data } from "react-router";
 import type { Route } from "./+types/subjects";
 import { SubjectCard } from "~/components/SubjectCard";
-import { AdSlot, ForumLink, SuggestionsLink, TeacherCallout } from "~/components/SubjectsRails";
+import { AdSlot, SuggestionsLink, TeacherCallout } from "~/components/SubjectsRails";
 import { t } from "~/i18n";
 import { requireUser, sessionContext } from "~/server/auth/context.server";
 import { enrollUser, listActiveSubjectsForUser } from "~/server/content/subjects.server";
-import { env } from "~/server/env.server";
 import { setFlash } from "~/server/flash.server";
+import { getSystemSettings } from "~/server/settings/settings.server";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const user = requireUser(context);
   const welcome = new URL(request.url).searchParams.has("welcome");
-  return {
-    subjects: await listActiveSubjectsForUser(user.id),
-    welcome,
-    contactEmail: env.CONTACT_EMAIL ?? null,
-  };
+  const [subjects, settings] = await Promise.all([
+    listActiveSubjectsForUser(user.id),
+    getSystemSettings(),
+  ]);
+  return { subjects, welcome, contactEmail: settings.contactEmail };
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -50,9 +50,8 @@ export default function Subjects({ loaderData }: Route.ComponentProps) {
       </header>
 
       <aside className="rail rail--start">
-        <ForumLink />
-        <AdSlot />
         <SuggestionsLink />
+        <AdSlot />
       </aside>
 
       <main className="subjects-main">

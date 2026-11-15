@@ -1,14 +1,15 @@
 import type { SuggestionStatus } from "~/schemas/feedback";
 import { prisma } from "~/server/database.server";
-import { env } from "~/server/env.server";
+import { getSystemSettings } from "~/server/settings/settings.server";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type CreateSuggestionResult = { ok: true; id: number } | { ok: false; reason: "THROTTLED" };
 
 /**
- * Writer of `Suggestion` rows (see also updateSuggestionStatus). Refuses once the user has already submitted
- * SUGGESTIONS_MAX_PER_DAY suggestions in the last 24 hours (counted from the table itself).
+ * Writer of `Suggestion` rows (see also updateSuggestionStatus). Refuses once the user has already
+ * submitted the daily maximum (the `suggestionsMaxPerDay` system setting) in the last 24 hours,
+ * counted from the table itself.
  */
 export async function createSuggestion(
   userId: number,
@@ -17,7 +18,8 @@ export async function createSuggestion(
 ): Promise<CreateSuggestionResult> {
   const since = new Date(now.getTime() - DAY_MS);
   const recent = await prisma.suggestion.count({ where: { userId, createdAt: { gte: since } } });
-  if (recent >= env.SUGGESTIONS_MAX_PER_DAY) return { ok: false, reason: "THROTTLED" };
+  const { suggestionsMaxPerDay } = await getSystemSettings();
+  if (recent >= suggestionsMaxPerDay) return { ok: false, reason: "THROTTLED" };
 
   const created = await prisma.suggestion.create({
     data: { userId, body, createdAt: now },

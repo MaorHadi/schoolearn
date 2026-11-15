@@ -17,6 +17,7 @@ export const SUBJECT_FIELD_MESSAGES: Record<SubjectFormField, TranslationKey> = 
   description: "admin.error.description",
   locale: "admin.error.locale",
   direction: "admin.error.direction",
+  defaultPassingScore: "admin.error.passingScore",
   accentColor: "admin.error.accentColor",
   icon: "admin.error.icon",
 };
@@ -29,6 +30,7 @@ export interface SubjectFormValues {
   description: string | null;
   locale: string;
   direction: "rtl" | "ltr";
+  defaultPassingScore: number | null;
   accentColor: string;
   icon: string;
 }
@@ -39,6 +41,7 @@ const EMPTY: SubjectFormValues = {
   description: null,
   locale: "he",
   direction: "rtl",
+  defaultPassingScore: null,
   accentColor: DEFAULT_SUBJECT_THEME.accentColor,
   icon: DEFAULT_SUBJECT_THEME.icon,
 };
@@ -128,6 +131,22 @@ export function SubjectForm({
           </select>
         </Field>
       </div>
+
+      <Field
+        label={t("admin.subject.form.defaultPassingScore")}
+        error={errorFor("defaultPassingScore")}
+      >
+        <input
+          className="field__input"
+          name="defaultPassingScore"
+          type="number"
+          min={0}
+          max={100}
+          placeholder="%"
+          defaultValue={values.defaultPassingScore ?? ""}
+          aria-invalid={invalid("defaultPassingScore")}
+        />
+      </Field>
 
       <Field label={t("admin.subject.form.accentColor")} error={errorFor("accentColor")}>
         <input

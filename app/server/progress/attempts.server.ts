@@ -1,8 +1,12 @@
 import { env } from "~/server/env.server";
 import { prisma } from "~/server/database.server";
 
-export function effectivePassingScore(lesson: { passingScore: number | null }): number {
-  return lesson.passingScore ?? env.DEFAULT_LESSON_PASSING_SCORE;
+/** The lesson's own passing score, else its subject's default, else the env default. */
+export function effectivePassingScore(
+  lesson: { passingScore: number | null },
+  subject: { defaultPassingScore: number | null },
+): number {
+  return lesson.passingScore ?? subject.defaultPassingScore ?? env.DEFAULT_LESSON_PASSING_SCORE;
 }
 
 export interface AttemptResult {
@@ -43,9 +47,12 @@ export async function recordAttempt(input: {
 
   const lesson = await prisma.lesson.findUniqueOrThrow({
     where: { id: input.lessonId },
-    select: { passingScore: true },
+    select: {
+      passingScore: true,
+      section: { select: { subject: { select: { defaultPassingScore: true } } } },
+    },
   });
-  const passed = input.score >= effectivePassingScore(lesson);
+  const passed = input.score >= effectivePassingScore(lesson, lesson.section.subject);
 
   for (let retry = 0; ; retry++) {
     try {

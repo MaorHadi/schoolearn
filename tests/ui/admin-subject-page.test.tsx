@@ -45,6 +45,7 @@ describe("SubjectForm", () => {
               description: null,
               locale: "en",
               direction: "ltr",
+              defaultPassingScore: 75,
               accentColor: "#112233",
               icon: "atom",
             }}
@@ -71,6 +72,7 @@ describe("SubjectForm", () => {
     expect(group.querySelectorAll("svg")).toHaveLength(SUBJECT_ICONS.length);
     expect(within(group).getByRole("radio", { name: t("admin.subject.icon.atom") })).toBeChecked();
     expect(container.querySelector('[name="sortOrder"]')).toBeNull();
+    expect(screen.getByLabelText(t("admin.subject.form.defaultPassingScore"))).toHaveValue(75);
   });
 });
 

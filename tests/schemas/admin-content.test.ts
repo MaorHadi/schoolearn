@@ -22,6 +22,13 @@ describe("SubjectInputSchema", () => {
     const parsed = SubjectInputSchema.parse({ ...validSubject, sortOrder: "2" });
     expect(parsed).toMatchObject({ slug: "my-subject", description: null, locale: "he" });
     expect(parsed).not.toHaveProperty("sortOrder");
+    expect(parsed.defaultPassingScore).toBeNull();
+    expect(
+      SubjectInputSchema.parse({ ...validSubject, defaultPassingScore: "75" }).defaultPassingScore,
+    ).toBe(75);
+    expect(
+      SubjectInputSchema.safeParse({ ...validSubject, defaultPassingScore: "101" }).success,
+    ).toBe(false);
   });
 
   it("rejects bad slugs, colours, icons, and languages outside the list", () => {

@@ -51,7 +51,7 @@ export async function loader({ context, params }: Route.LoaderArgs) {
       bestScore: state?.bestScore ?? null,
       completed: state?.completed ?? false,
       hasQuestions: questions.length > 0,
-      passingScore: effectivePassingScore(lesson),
+      passingScore: effectivePassingScore(lesson, subject),
     },
     questions,
     next: next ? { id: next.id, title: next.title } : null,
@@ -69,6 +69,7 @@ async function answerQuiz(
   form: FormData,
   userId: number,
   lesson: { id: number; title: string; passingScore: number | null },
+  subject: { defaultPassingScore: number | null },
   alreadyCompleted: boolean,
   sessionId: string | undefined,
 ) {
@@ -116,7 +117,7 @@ async function answerQuiz(
     kind: "result",
     score: grade.score,
     passed: attempt.passed,
-    passingScore: effectivePassingScore(lesson),
+    passingScore: effectivePassingScore(lesson, subject),
     results: grade.results,
   });
 }
@@ -146,6 +147,7 @@ export async function action({ request, context, params }: Route.ActionArgs) {
       form,
       user.id,
       lesson,
+      subject,
       state?.completed ?? false,
       context.get(sessionContext)?.id,
     );

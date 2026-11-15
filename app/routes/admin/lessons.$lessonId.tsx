@@ -13,12 +13,12 @@ import { t, type TranslationKey } from "~/i18n";
 import { BlocksFormSchema } from "~/schemas/admin-content";
 import { requireRole } from "~/server/auth/context.server";
 import { getLessonForAdmin, saveLessonDraft } from "~/server/content/admin.server";
-import { env } from "~/server/env.server";
 import { flashFromContext } from "~/server/flash.server";
+import { getSystemSettings } from "~/server/settings/settings.server";
 import { storeUploadedImage } from "~/server/storage/upload.server";
 import { resolveSubjectTheme } from "~/shared/subject-theme";
 
-/** Room for the multipart boundary and field headers around a file of UPLOAD_MAX_BYTES. */
+/** Room for the multipart boundary and field headers around the largest allowed file. */
 export const MULTIPART_OVERHEAD_BYTES = 64 * 1024;
 
 /** The save-draft action answers with this on validation failure; the editor stays mounted. */
@@ -37,11 +37,13 @@ function parseLessonId(raw: string | undefined): number {
 }
 
 /** True when a multipart body announces more bytes than any accepted upload could need. */
-function multipartTooLarge(request: Request): boolean {
+async function multipartTooLarge(request: Request): Promise<boolean> {
   const contentType = request.headers.get("content-type") ?? "";
   if (!contentType.startsWith("multipart/form-data")) return false;
   const declared = Number(request.headers.get("content-length"));
-  return Number.isFinite(declared) && declared > env.UPLOAD_MAX_BYTES + MULTIPART_OVERHEAD_BYTES;
+  if (!Number.isFinite(declared)) return false;
+  const { uploadMaxBytes } = await getSystemSettings();
+  return declared > uploadMaxBytes + MULTIPART_OVERHEAD_BYTES;
 }
 
 export async function loader({ context, params }: Route.LoaderArgs) {
@@ -78,7 +80,7 @@ export async function action({ request, context, params }: Route.ActionArgs) {
   const user = requireRole(context, "ADMIN");
   const lessonId = parseLessonId(params.lessonId);
 
-  if (multipartTooLarge(request)) {
+  if (await multipartTooLarge(request)) {
     // The block id lives inside the unparsed body; the per-card fetcher still knows its owner.
     return data<LessonActionResult>(
       { ok: false, blockId: "", reason: "TOO_LARGE" },

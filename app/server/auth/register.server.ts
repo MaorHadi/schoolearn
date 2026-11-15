@@ -1,5 +1,6 @@
 import { prisma } from "~/server/database.server";
 import { security } from "~/server/security.server";
+import { getSystemSettings } from "~/server/settings/settings.server";
 import type { RegisterFailureReason, RegisterInput } from "~/schemas/auth";
 import { countRecentRegistrations, recordRegisterAttempt } from "./auth-log.server";
 import { UNKNOWN_IP } from "./client-ip.server";
@@ -9,10 +10,14 @@ export type RegisterResult =
   { ok: true; userId: number } | { ok: false; reason: RegisterFailureReason };
 
 /**
- * Registration entry point for routes: applies the per-IP throttle and logs every attempt.
+ * Registration entry point for routes: refuses while the `registrationOpen` system setting is
+ * off, then applies the per-IP throttle and logs every attempt that got past the switch.
  * The "unknown" IP is never throttled, so a missing proxy config cannot close registration.
  */
 export async function register(input: RegisterInput, ip: string): Promise<RegisterResult> {
+  if (!(await getSystemSettings()).registrationOpen) {
+    return { ok: false, reason: "REGISTRATION_CLOSED" };
+  }
   if (ip !== UNKNOWN_IP) {
     const recent = await countRecentRegistrations(ip, security.registerWindowMs);
     if (recent >= security.registerMaxPerIp) {

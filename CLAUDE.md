@@ -16,6 +16,7 @@ Project conventions for Claude Code sessions.
 - Content editor design: `docs/superpowers/specs/2026-11-04-content-editor-design.md`.
 - User management design: `docs/superpowers/specs/2026-11-05-user-management-design.md`.
 - Quiz design: `docs/superpowers/specs/2026-11-15-quiz-design.md`.
+- System settings design: `docs/superpowers/specs/2026-11-15-system-settings-design.md`.
 - Build log and open work: `docs/superpowers/plans/2026-10-01-study-platform-foundation.md`.
 
 ## Layout
@@ -53,7 +54,13 @@ Project conventions for Claude Code sessions.
 - `LessonAttempt` / `LessonProgress`: `recordAttempt()` in `app/server/progress/attempts.server.ts`.
   Unlock rules only in `computeTree()` (`app/shared/unlock.ts`). `sortOrder` is not unique.
 - `Suggestion`: `createSuggestion()` / `updateSuggestionStatus()` in
-  `app/server/feedback/suggestions.server.ts` (daily throttle `SUGGESTIONS_MAX_PER_DAY`).
+  `app/server/feedback/suggestions.server.ts` (daily throttle: the `suggestionsMaxPerDay` system setting).
+- `SystemSetting`: `getSystemSettings()` / `updateSystemSettings()` in
+  `app/server/settings/settings.server.ts` (contact email, suggestions per day, registration
+  open/closed, upload size). The `.env` values are only the defaults; read these settings
+  through `getSystemSettings()`, never from `env`.
+- Passing score: `effectivePassingScore(lesson, subject)` in `attempts.server.ts` (lesson, then
+  `Subject.defaultPassingScore`, then `DEFAULT_LESSON_PASSING_SCORE`).
 - `User.role` / `isDisabled` / `lockoutClearedAt`: `app/server/users/user.server.ts` (guards:
   never your own account, never the last active SYSTEM_ADMIN; disabling ends sessions). The
   lockout rule is `lockoutStateFor()` in `app/server/auth/auth-log.server.ts`; failures before
@@ -72,7 +79,7 @@ Project conventions for Claude Code sessions.
 - Direction: the shell is Hebrew RTL; content direction comes from `Subject.direction` with
   per-block `dir`. All UI strings go through `t()` in `app/i18n`.
 - Storage goes through `StorageProvider` (`app/server/storage/`); uploads through
-  `storeUploadedImage()` (magic-byte sniffing, `UPLOAD_MAX_BYTES`).
+  `storeUploadedImage()` (magic-byte sniffing, the `uploadMaxBytes` system setting).
 - Lessons without questions are completed by the "complete" intent on the lesson route (score 100);
   lessons with questions by the "answer" intent (`QuizRunner`). Question edits are drafts like
   content and go live on publish. The question editor is `app/components/question-editor/`.
@@ -81,7 +88,7 @@ Project conventions for Claude Code sessions.
 
 - argon2id passwords; DB sessions with a signed `__session` cookie; sliding expiry re-issues the
   cookie. `login()` and `register()` are the route entry points (they log to `AuthLog` and apply
-  lockout, IP blocks and the registration throttle). Routes sign in with `replaceSession()`.
+  lockout, IP blocks, the registration throttle and the `registrationOpen` setting). Routes sign in with `replaceSession()`.
 - The `"unknown"` IP sentinel is never blocked or throttled. Thresholds are env-backed in
   `app/server/security.server.ts`; the escalation table is a code constant.
 - Roles are global: `USER` < `ADMIN` (`/admin`) < `SYSTEM_ADMIN` (`/system-admin`). Use
@@ -107,7 +114,7 @@ type (Heebo), flat saturated subject accents, strong ink, generous space.
   the allowlist in `app/shared/subject-theme.ts` via `SubjectIcon`.
 - Logical properties only (`inline-size`, `margin-inline-start`); mirrored icons get `.rtl-flip`.
 - Shared pieces: `AppHeader`, `AuthPage` + `Field`, `SubjectCard`, `lesson-path/LessonPath`,
-  `quiz/QuizRunner`, `StubPage`.
+  `quiz/QuizRunner`.
 - Self-hosted fonts (`--font-ui`, `--font-quote`); visible `:focus-visible` ring; motion respects
   `prefers-reduced-motion`. The empty `.rail__ad` slots on `/subjects` stay empty.
 
@@ -121,6 +128,5 @@ type (Heebo), flat saturated subject accents, strong ink, generous space.
 - Tests live in `tests/` mirroring `app/`. DB tests call `resetDb()` against `study_test`
   (forced in `tests/setup.ts`; `npm run db:test:migrate` after migrations). Component tests opt
   into jsdom with `// @vitest-environment jsdom`. TDD: failing test first.
-- Future hooks are `TODO(<feature>)`: `system-settings`,
-  `cloud-storage`, `streaks`, `2fa`, `forum`, `suggestions-triage`.
+- Future hooks are `TODO(<feature>)`: `cloud-storage`, `streaks`, `2fa`, `suggestions-triage`.
 - Run `npm run lint && npm run typecheck && npm test` before claiming work is done.

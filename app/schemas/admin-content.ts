@@ -32,6 +32,8 @@ export const SubjectInputSchema = SubjectThemeSchema.extend({
   description: optionalText(DESCRIPTION_MAX_LENGTH),
   locale: z.enum(CONTENT_LOCALES),
   direction: z.enum(["rtl", "ltr"]),
+  /** Passing score for the subject's lessons that set none; empty means the site default. */
+  defaultPassingScore: optionalPercent,
 });
 export type SubjectFormInput = z.infer<typeof SubjectInputSchema>;
 export type SubjectFormField = keyof SubjectFormInput;

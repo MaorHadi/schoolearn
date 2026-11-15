@@ -61,7 +61,8 @@ progress.
 
 - Lesson 1 of section 1 is always unlocked. Lesson n is unlocked when lesson n-1 in the same
   section is completed. Section k is unlocked when every lesson of section k-1 is completed.
-- Passing: `score >= lesson.passingScore ?? DEFAULT_LESSON_PASSING_SCORE`.
+- Passing: `score >= lesson.passingScore ?? subject.defaultPassingScore ??
+DEFAULT_LESSON_PASSING_SCORE`.
 - `recordAttempt(userId, lessonId, score)` in one transaction inserts the attempt and upserts
   progress with `bestScore = max(old, score)` and `completedAt = completedAt ?? (passed ? now)`.
   Retakes never re-lock anything.
@@ -137,6 +138,6 @@ sliding expiry, seed idempotence, `recordAttempt` invariants. No end-to-end test
 
 ## 11. Reserved hooks
 
-`TODO(system-settings)`, `TODO(cloud-storage)`,
-`TODO(streaks)`, `TODO(2fa)`, `TODO(forum)`, `TODO(suggestions-triage)`. Email verification,
+`TODO(cloud-storage)`,
+`TODO(streaks)`, `TODO(2fa)`, `TODO(suggestions-triage)`. Email verification,
 password reset and an explicit Enrollment table are not planned yet.

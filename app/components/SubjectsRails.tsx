@@ -1,10 +1,10 @@
-import { GraduationCap, Mail, MessageSquarePlus, MessagesSquare } from "lucide-react";
+import { GraduationCap, Mail, MessageSquarePlus } from "lucide-react";
 import { Link } from "react-router";
 import { t } from "~/i18n";
 
 /**
- * Side-rail pieces for the subjects page: a callout for teachers, links to the forum and the
- * suggestions form, and reserved (empty) advertising slots.
+ * Side-rail pieces for the subjects page: a callout for teachers, a link to the suggestions
+ * form, and reserved (empty) advertising slots.
  */
 
 export function TeacherCallout({ email }: { email: string | null }) {
@@ -21,16 +21,6 @@ export function TeacherCallout({ email }: { email: string | null }) {
         {t("rail.teachers.contact")}
       </a>
     </section>
-  );
-}
-
-export function ForumLink() {
-  return (
-    <Link to="/forum" className="rail__card rail__card--link">
-      <MessagesSquare className="rail__icon" size={28} aria-hidden="true" />
-      <span className="rail__title">{t("rail.forum")}</span>
-      <span className="rail__lead">{t("rail.forumLead")}</span>
-    </Link>
   );
 }
 

@@ -9,6 +9,7 @@ export interface SubjectInput extends SubjectTheme {
   description: string | null;
   locale: string;
   direction: "rtl" | "ltr";
+  defaultPassingScore: number | null;
 }
 
 export type CreateResult =

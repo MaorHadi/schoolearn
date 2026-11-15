@@ -4,7 +4,9 @@ import { userContext } from "~/server/auth/context.server";
 import { applyIpBlock, findActiveIpBlock } from "~/server/auth/ip-block.server";
 import { createSession } from "~/server/auth/session.server";
 import { prisma } from "~/server/database.server";
+import { action as settingsAction, loader as settingsLoader } from "~/routes/system-admin/settings";
 import { action as suggestionsAction } from "~/routes/system-admin/suggestions";
+import { getSystemSettings } from "~/server/settings/settings.server";
 import { loader as usersLoader } from "~/routes/system-admin/users";
 import { action as userAction } from "~/routes/system-admin/users.$userId";
 import { resetDb } from "../helpers/db";
@@ -114,5 +116,69 @@ describe("system-admin users", () => {
     await expect(
       userAction(userArgs(context, target.id, { intent: "nonsense" })),
     ).rejects.toMatchObject({ init: { status: 400 } });
+  });
+});
+
+describe("system-admin settings", () => {
+  beforeEach(resetDb);
+
+  const settingsArgs = (context: RouterContextProvider, fields: Record<string, string>) =>
+    ({
+      request: formRequest("http://x/system-admin/settings", fields),
+      context,
+      params: {},
+    }) as never;
+  const validFields = {
+    contactEmail: "teachers@example.org",
+    suggestionsMaxPerDay: "3",
+    registrationOpen: "on",
+    uploadMaxMegabytes: "8",
+  };
+
+  it("refuses ADMIN on the page and the save", async () => {
+    const { context } = await contextFor("ADMIN");
+    await expect(settingsLoader({ context, params: {} } as never)).rejects.toMatchObject({
+      init: { status: 403 },
+    });
+    await expect(settingsAction(settingsArgs(context, validFields))).rejects.toMatchObject({
+      init: { status: 403 },
+    });
+    expect(await prisma.systemSetting.count()).toBe(0);
+  });
+
+  it("saves the settings and shows them back in the form's units", async () => {
+    const { context } = await contextFor("SYSTEM_ADMIN");
+    const { registrationOpen: _registrationOpen, ...closed } = validFields;
+    expect(await settingsAction(settingsArgs(context, closed))).toBeNull();
+
+    expect(await getSystemSettings()).toEqual({
+      contactEmail: "teachers@example.org",
+      suggestionsMaxPerDay: 3,
+      registrationOpen: false,
+      uploadMaxBytes: 8 * 1024 * 1024,
+    });
+    expect(await settingsLoader({ context, params: {} } as never)).toEqual({
+      contactEmail: "teachers@example.org",
+      suggestionsMaxPerDay: 3,
+      registrationOpen: false,
+      uploadMaxMegabytes: 8,
+    });
+  });
+
+  it("answers invalid input with field errors and saves nothing", async () => {
+    const { context } = await contextFor("SYSTEM_ADMIN");
+    const invalid = await settingsAction(
+      settingsArgs(context, { ...validFields, contactEmail: "nope", uploadMaxMegabytes: "500" }),
+    );
+    expect(invalid).toMatchObject({
+      init: { status: 400 },
+      data: {
+        fieldErrors: {
+          contactEmail: "systemAdmin.settings.error.contactEmail",
+          uploadMaxMegabytes: "systemAdmin.settings.error.uploadMaxMegabytes",
+        },
+      },
+    });
+    expect(await prisma.systemSetting.count()).toBe(0);
   });
 });
